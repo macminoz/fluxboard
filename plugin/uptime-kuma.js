@@ -1,13 +1,13 @@
-// Uptime Kuma: lo stato di ogni monitor di una pagina di stato pubblica. Unisce le due API
-// pubbliche di Kuma (elenco dei monitor e ultimi battiti), che da sole non bastano: la prima ha
-// i nomi, la seconda gli stati. Una riga per monitor:
+// Uptime Kuma: the status of each monitor of a public status page. Merges Kuma's two public
+// APIs (list of monitors and latest heartbeats), which are not enough alone: the first has
+// the names, the second the states. One row per monitor:
 //   { nome, tipo, codice, stato, msg, dal, uptime }
-//   codice: 0 giù · 1 ok · 2 in attesa · 3 manutenzione   ·   dal: da quando è in quello stato
+//   codice: 0 down · 1 ok · 2 pending · 3 maintenance   ·   dal: since when it is in that state
 //
-// sorgente: { tipo: uptime-kuma, url: http://192.168.1.33:3001/ }
-// dati:     { sorgente: <nome>, pagina: <slug della pagina di stato> }
+// source: { tipo: uptime-kuma, url: http://192.168.1.33:3001/ }
+// dati:   { sorgente: <name>, pagina: <slug of the status page> }
 //
-// Per vedere solo i problemi: nella tile `elabora: [ { filtra: "codice != 1" } ]`.
+// To see only the problems: in the tile `elabora: [ { filtra: "codice != 1" } ]`.
 
 export const tipo = 'uptime-kuma';
 export const nome = 'Uptime Kuma';
@@ -31,7 +31,7 @@ export async function prova(sorgente, { signal }) {
 
 const STATI = { 0: 'giù', 1: 'ok', 2: 'in attesa', 3: 'manutenzione' };
 
-// Kuma scrive gli orari in UTC senza fuso ("2026-11-04 09:21:28.196").
+// Kuma writes times in UTC without a time zone ("2026-11-04 09:21:28.196").
 const comeData = (t) => (t ? new Date(`${t.replace(' ', 'T')}Z`).toISOString() : null);
 
 async function leggiJson(url, signal) {
@@ -50,7 +50,7 @@ export async function leggi(sorgente, dati, { signal }) {
   return monitor.map((m) => {
     const elenco = battiti.heartbeatList?.[m.id] || [];
     const ultimo = elenco.at(-1);
-    // Da quando: il primo battito della serie finale con lo stesso stato.
+    // Since when: the first heartbeat of the final run with the same status.
     let i = elenco.length - 1;
     while (i > 0 && elenco[i - 1].status === ultimo?.status) i--;
     return {

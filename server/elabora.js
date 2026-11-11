@@ -1,16 +1,17 @@
-// Passaggi di elaborazione dichiarati nel YAML di una tile (`elabora:`), applicati alle righe
-// restituite da qualunque connettore. Servono a rendere le tile indipendenti dalla sorgente:
-// se cambia il database o l'API, si adatta la forma dei dati qui, non nel codice.
+// Processing steps declared in a tile's YAML (`elabora:`), applied to the rows returned by any
+// connector. They make tiles independent from the source: if the database or the API changes,
+// the shape of the data is adapted here, not in the code. English names work too (process,
+// rename, scale, map, filter, sort, limit, select, append).
 //
 //   elabora:
-//     - rinomina: { source: apparato }
+//     - rinomina: { source: device }
 //     - scala: { set: 0.1, live: 0.1 }
-//     - traduci: { stanza: { BagnoPT: "Bagno PT" } }
+//     - traduci: { room: { BathGF: "Bath GF" } }
 //     - filtra: "codice % 2 == 1"
-//     - ordina: "-n"                          // o più chiavi: "-n, nome"
+//     - ordina: "-n"                          // or several keys: "-n, nome"
 //     - limita: 5
-//     - seleziona: [stanza, set, live]
-//     - aggiungi: [ { nome: prova, codice: 0 } ]     // righe finte in coda, per prove
+//     - seleziona: [room, set, live]
+//     - aggiungi: [ { nome: test, codice: 0 } ]     // fake rows at the end, for tests
 
 import { compilaCondizione } from '../public/condizione.js';
 
@@ -31,7 +32,7 @@ const PASSAGGI = {
     return n;
   }),
   filtra: (righe, cond) => righe.filter(compilaCondizione(cond)),
-  // Una o più chiavi separate da virgola: "-da_aggiornare, nome" (la seconda decide a parità).
+  // One or more keys separated by commas: "-da_aggiornare, nome" (the second breaks ties).
   ordina: (righe, campo) => {
     const chiavi = String(campo).split(',').map((k) => k.trim()).filter(Boolean)
       .map((k) => ({ desc: k.startsWith('-'), c: k.replace(/^-/, '') }));
@@ -46,8 +47,8 @@ const PASSAGGI = {
     });
   },
   limita: (righe, n) => righe.slice(0, Number(n)),
-  // Righe scritte a mano in coda a quelle vere: per vedere com'è una tile in una situazione che
-  // adesso non c'è (un host giù, un allarme). Da togliere quando la prova è finita.
+  // Rows written by hand after the real ones: to see how a tile looks in a situation that is not
+  // happening now (a host down, an alarm). Remove them when the test is over.
   aggiungi: (righe, nuove) => [...righe, ...(Array.isArray(nuove) ? nuove : [nuove]).filter((x) => x && typeof x === 'object')],
 };
 

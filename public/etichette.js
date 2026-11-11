@@ -1,9 +1,9 @@
-// Etichette (temperatura, allarmi, sicurezza…): ogni tile ne ha una e da lei prende colore,
-// icona e la sezione della dashboard in cui sta. Si scelgono e si creano al volo, dal menu della
-// tile in Modifica o dall'editor, senza passare dalle Impostazioni.
-// Nel file global.yaml la chiave si chiama ancora "argomenti" (compatibilità con la 0.1).
+// Labels (temperature, alarms, security…): each tile has one and takes from it colour, icon and the
+// dashboard section it sits in. They are chosen and created on the fly, from the tile menu in Edit
+// or from the editor, without going through the Settings. In global.yaml the key is still called
+// "argomenti" (or "labels" in English).
 
-export const ALTRO = '_altro';          // la sezione delle tile senza etichetta
+export const ALTRO = '_altro';          // the section of the tiles without a label
 export const COLORI = ['blu', 'azzurro', 'verde', 'giallo', 'arancio', 'rosso', 'viola', 'rosa', 'ciano', 'indaco', 'lime', 'ambra', 'marrone', 'grigio'];
 
 export function nomeEtichetta(n) {
@@ -15,7 +15,7 @@ export function nomeEtichetta(n) {
 export const slugEtichetta = (s) => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
 
-// Crea un'etichetta con il primo colore non ancora usato; restituisce le etichette aggiornate.
+// Creates a label with the first colour not yet used; returns the updated labels.
 export async function creaEtichetta(nome, etichette) {
   const usati = new Set(Object.values(etichette || {}).map((a) => (typeof a === 'string' ? a : a?.colore)));
   const colore = COLORI.find((c) => !usati.has(c) && c !== 'grigio') || 'grigio';
@@ -32,7 +32,7 @@ export async function salvaEtichette(etichette) {
   if (!r.ok || esito.ok === false) throw new Error(esito.errore || (esito.errori || []).join('; ') || `errore ${r.status}`);
 }
 
-// Chiede il nome di un'etichetta nuova (null se annullato).
+// Asks for the name of a new label (null if cancelled).
 export function chiediNuovaEtichetta() {
   return slugEtichetta(prompt('Nome della nuova etichetta (es. sicurezza, luci, rete)') || '') || null;
 }

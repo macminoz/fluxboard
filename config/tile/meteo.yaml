@@ -1,25 +1,24 @@
-# Meteo da Open-Meteo (gratuito, senza chiave): cambia latitudine e longitudine con le tue.
-titolo: Meteo
-tipo: valori
-etichetta: meteo
-icona: sole
-priorita: 95
-larghezza: media
-ogni: 15m
-scadenza: 2h
-dati:
-  sorgente: "open-meteo"
-  url: "v1/forecast?latitude=41.89&longitude=12.49&current=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=auto"
-  campi:
-    temperatura: current.temperature_2m
-    pioggia: current.precipitation_probability
-    cielo: current.weather_code
-    vento: current.wind_speed_10m
-elabora:
-  - traduci:
-      cielo: { 0: sereno, 1: poco nuvoloso, 2: parzialmente nuvoloso, 3: coperto, 45: nebbia, 48: nebbia gelata, 51: pioviggine, 53: pioviggine, 55: pioviggine fitta, 61: pioggia debole, 63: pioggia, 65: pioggia forte, 71: neve debole, 73: neve, 75: neve forte, 80: rovesci, 81: rovesci, 82: rovesci forti, 95: temporale, 96: temporale con grandine, 99: temporale con grandine }
-voci:
-  - { etichetta: Adesso, valore: "{temperatura:1}°", tono: { "temperatura < 3": freddo, "temperatura >= 32": caldo } }
-  - { etichetta: Cielo, valore: "{cielo}" }
-  - { etichetta: Pioggia, valore: "{pioggia}%", livello: intermedia, tono: { "pioggia >= 60": info } }
-  - { etichetta: Vento, valore: "{vento:0} km/h", livello: avanzata }
+# Weather from Open-Meteo (free, no key): change latitude and longitude to yours.
+title: Weather
+type: values
+label: weather
+icon: sun
+priority: 95
+width: medium
+every: 15m
+stale_after: 2h
+data:
+  source: open-meteo
+  url: v1/forecast?latitude=41.89&longitude=12.49&current=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=auto
+  fields:
+    temperature: current.temperature_2m
+    rain: current.precipitation_probability
+    sky: current.weather_code
+    wind: current.wind_speed_10m
+process:
+  - { map: { sky: { "0": clear, "1": mostly clear, "2": partly cloudy, "3": overcast, "45": fog, "48": freezing fog, "51": drizzle, "53": drizzle, "55": heavy drizzle, "61": light rain, "63": rain, "65": heavy rain, "71": light snow, "73": snow, "75": heavy snow, "80": showers, "81": showers, "82": heavy showers, "95": thunderstorm, "96": thunderstorm with hail, "99": temporale con grandine } } }
+items:
+  - { label: Now, value: "{temperature:1}°", tone: { temperature < 3: cold, temperature >= 32: hot } }
+  - { label: Sky, value: "{sky}" }
+  - { label: Rain, value: "{rain}%", level: intermediate, tone: { rain >= 60: info } }
+  - { label: Wind, value: "{wind:0} km/h", level: advanced }

@@ -1,6 +1,6 @@
-// Client WebSocket minimale, senza dipendenze, per Node 20 (che non ha WebSocket integrato).
-// Solo quello che serve ai connettori: connessione ws:// o wss://, messaggi di testo in entrata e
-// in uscita, chiusura. Niente estensioni né frammentazione in uscita.
+// Minimal WebSocket client, without dependencies, for Node 20 (which has no built-in WebSocket).
+// Only what the connectors need: ws:// or wss:// connection, incoming and outgoing text messages,
+// close. No extensions and no outgoing fragmentation.
 
 import { randomBytes } from 'node:crypto';
 
@@ -18,7 +18,8 @@ export function apriWebSocket(indirizzo, { suMessaggio, signal } = {}) {
         let buffer = Buffer.alloc(0);
         socket.on('data', (pezzo) => {
           buffer = Buffer.concat([buffer, pezzo]);
-          // Un frame: [FIN|opcode] [MASK|lunghezza] [lunghezza estesa] [dati] (dal server non mascherati).
+          // A frame: [FIN|opcode] [MASK|length] [extended length] [data] (not masked from the
+          // server).
           while (buffer.length >= 2) {
             const opcode = buffer[0] & 0x0f;
             let lunghezza = buffer[1] & 0x7f, inizio = 2;

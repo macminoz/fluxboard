@@ -1,9 +1,10 @@
-// Tile "grafico": linee nel tempo, disegnate in SVG senza librerie (il touch panel non va su
-// Internet). Regole: un solo asse verticale, linee da 2 px, griglia sottile, legenda sopra con
-// due o più serie, valore finale scritto accanto a ogni linea, mirino con riquadro al passaggio
-// del mouse e tabella nascosta per chi usa un lettore di schermo. I colori delle serie vengono
-// da --serie-1… in stile.css, in ordine fisso e verificati per i daltonici.
+// "Chart" tile: lines over time, drawn in SVG without libraries (the touch panel does not go on the
+// Internet). Rules: a single vertical axis, 2 px lines, a thin grid, legend above with two or more
+// series, final value written next to each line, crosshair with a box on hover and a hidden table
+// for screen readers. Series colours come from --serie-1… in stile.css, in a fixed order and
+// checked for colour blindness.
 
+import { locale } from './lingua.js';
 import { proteggi, comeData } from './formato.js';
 import { compilaCondizione } from './condizione.js';
 
@@ -23,26 +24,27 @@ function scalaY(min, max, n = 4) {
   return { da, a, tacche };
 }
 
-// passoFisso: ms fra una tacca e l'altra (tile con `tacche: 3h`); senza, quante ne stanno.
+// passoFisso: ms between one tick and the next (tiles with `tacche: 3h`); without it, as many as
+// fit.
 function tacchetempo(t0, t1, fuso, quante = 5, passoFisso = 0) {
   const ore = (t1 - t0) / 3_600_000;
   const passo = passoFisso || ([1, 2, 3, 6, 12, 24, 48, 168].find((h) => ore / h <= quante) || 168) * 3_600_000;
   const tacche = [];
-  // Tacche sulle ore "tonde" dell'ora locale (00, 03, 06…), non di UTC.
+  // Ticks on the "round" hours of local time (00, 03, 06…), not UTC.
   const scarto = -new Date(t0).getTimezoneOffset() * 60_000;
   for (let t = Math.ceil((t0 + scarto) / passo) * passo - scarto; t <= t1; t += passo) tacche.push(t);
   const formato = passo >= 86_400_000 ? { day: 'numeric', month: 'short' } : { hour: '2-digit', minute: '2-digit' };
-  return tacche.map((t) => ({ t, testo: new Date(t).toLocaleString('it-IT', { ...formato, timeZone: fuso }) }));
+  return tacche.map((t) => ({ t, testo: new Date(t).toLocaleString(locale(), { ...formato, timeZone: fuso }) }));
 }
 
-// Un campo vuoto non è zero: Number('') varrebbe 0 e disegnerebbe un crollo inesistente.
+// An empty field is not zero: Number('') would be 0 and draw a drop that never happened.
 const num = (v) => (v === '' || v == null ? NaN : Number(v));
-const numero = (v, decimali) => Number(v).toLocaleString('it-IT', { minimumFractionDigits: decimali, maximumFractionDigits: decimali });
+const numero = (v, decimali) => Number(v).toLocaleString(locale(), { minimumFractionDigits: decimali, maximumFractionDigits: decimali });
 
-// testa: HTML da mettere sulla stessa riga della legenda (le "voci" di un grafico all-in-one).
-// ctx.misure { l, a }: i pixel veri dello spazio, misurati dalla pagina dopo il primo disegno.
-// Così le scritte restano della loro misura anche in una tile stretta, e in una tile ad altezza
-// fissa il grafico occupa lo spazio che resta invece di scorrere. Senza misure: 640 × 190.
+// testa: HTML to put on the same row as the legend (the "items" of an all-in-one chart). ctx.misure
+// { l, a }: the real pixels of the space, measured by the page after the first drawing. So the text
+// keeps its size even in a narrow tile, and in a fixed-height tile the chart takes the space left
+// instead of scrolling. Without sizes: 640 × 190.
 export function disegnaGrafico(t, s, ctx, testa = '') {
   const L = Math.round(Math.max(ctx.misure?.l || 640, 160));
   const A = Math.round(Math.min(Math.max(ctx.misure?.a || 190, 64), 600));
@@ -53,7 +55,7 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
   const punti = (s?.righe || []).map((r) => ({ t: comeData(r[asse])?.getTime(), r })).filter((p) => Number.isFinite(p.t)).sort((a, b) => a.t - b.t);
   if (punti.length < 2 || !serie.length) return `${testa}<p class="vuoto">${proteggi(t.vuoto || 'Pochi dati per un grafico')}</p>`;
 
-  // "soglie": linee orizzontali di riferimento (es. il limite del contatore), sempre dentro la scala.
+  // "soglie": horizontal reference lines (e.g. the meter limit), always inside the scale.
   const soglie = (Array.isArray(t.soglie) ? t.soglie : []).filter((x) => Number.isFinite(Number(x?.valore)));
   const valori = [...punti.flatMap((p) => serie.map((x) => num(p.r[x.campo]))), ...soglie.map((x) => Number(x.valore))].filter(Number.isFinite);
   const y = scalaY(Math.min(...valori), Math.max(...valori), Math.min(Math.max(Math.floor((A - M.su - M.giu) / 22), 2), 4));
@@ -73,8 +75,8 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
   const asseX = tacchetempo(t0, t1, ctx.fuso, Math.max(Math.floor((L - M.sinistra - M.destra) / 70), 2), passoTacche).map(({ t: tt, testo }) =>
     `<text class="g-asse" x="${px(tt)}" y="${A - 6}" text-anchor="middle">${proteggi(testo)}</text>`).join('');
 
-  // Le scritte in fondo alle linee non si sovrappongono: se due valori finali sono vicini, si
-  // allontanano in verticale quanto basta per leggerli entrambi (il pallino resta sul punto vero).
+  // Labels at the end of the lines do not overlap: if two final values are close, they move apart
+  // vertically as much as needed to read both (the dot stays on the real point).
   const fini = serie.map((x, i) => {
     const pts = punti.filter((p) => Number.isFinite(num(p.r[x.campo])));
     return pts.length ? { i, y: py(num(pts.at(-1).r[x.campo])) } : null;
@@ -89,7 +91,7 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
     pts.forEach((p, j) => {
       const X = px(p.t).toFixed(1), Y = py(num(p.r[x.campo])).toFixed(1);
       if (!j) d += `M${X},${Y}`;
-      else if (x.gradino) d += `H${X}V${Y}`;    // un setpoint cambia a scatti, non in diagonale
+      else if (x.gradino) d += `H${X}V${Y}`;    // a setpoint changes in steps, not diagonally
       else d += `L${X},${Y}`;
     });
     const ultimo = pts.at(-1);
@@ -99,8 +101,8 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
       <text class="g-etichetta" x="${ex + 8}" y="${(yScritta[i] ?? ey) + 4}" style="--c: var(--serie-${(i % 8) + 1})">${numero(ultimo.r[x.campo], decimali)}${proteggi(unita)}</text>`;
   }).join('');
 
-  // "fasce": i tratti di tempo in cui una condizione è vera (es. la valvola aperta), come bande
-  // verticali dietro alle linee. Ogni punto vale fino al successivo; l'ultimo fino a fine grafico.
+  // "fasce": the stretches of time when a condition is true (e.g. the valve open), as vertical
+  // bands behind the lines. Each point holds until the next; the last until the end of the chart.
   const fasce = (Array.isArray(t.fasce) ? t.fasce : t.fasce ? [t.fasce] : []).filter((f) => f?.se);
   const bande = fasce.map((f) => {
     let vera;
@@ -120,14 +122,15 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
 
   const legenda = ctx.legendaInTesta ? '' : legendaGrafico(t);
 
-  // Dati per il mirino: tempi e valori già in coordinate, così il passaggio del mouse non ricalcola.
+  // Data for the crosshair: times and values already in coordinates, so hovering does not
+  // recompute.
   const dati = {
     l: L, x: punti.map((p) => px(p.t)), t: punti.map((p) => p.t), fuso: ctx.fuso, unita, decimali,
     fasce: fasce.map((f) => { let v = () => false; try { v = compilaCondizione(f.se); } catch { /* segnalata dal validatore */ } return { nome: f.etichetta || f.se, v: punti.map((p) => Boolean(v(p.r))) }; }),
     serie: serie.map((x, i) => ({ nome: x.etichetta || x.campo, colore: `var(--serie-${(i % 8) + 1})`, v: punti.map((p) => p.r[x.campo] ?? null), y: punti.map((p) => (Number.isFinite(num(p.r[x.campo])) ? py(num(p.r[x.campo])) : null)) })),
   };
   const tabella = `<table class="solo-lettore"><caption>${proteggi(t.titolo || 'Grafico')}</caption><thead><tr><th>Ora</th>${serie.map((x) => `<th>${proteggi(x.etichetta || x.campo)}</th>`).join('')}</tr></thead><tbody>${
-    punti.map((p) => `<tr><td>${new Date(p.t).toLocaleString('it-IT', { timeZone: ctx.fuso })}</td>${serie.map((x) => `<td>${p.r[x.campo] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    punti.map((p) => `<tr><td>${new Date(p.t).toLocaleString(locale(), { timeZone: ctx.fuso })}</td>${serie.map((x) => `<td>${p.r[x.campo] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 
   const capo = testa || legenda ? `<div class="g-capo">${testa}${legenda}</div>` : '';
   return `<div class="grafico" data-grafico='${proteggi(JSON.stringify(dati))}'>${capo}
@@ -137,8 +140,8 @@ export function disegnaGrafico(t, s, ctx, testa = '') {
     </svg><div class="g-riquadro" hidden></div>${tabella}</div>`;
 }
 
-// La legenda dipende solo dalla configurazione (serie e fasce), non dai dati: la pagina la mette
-// sulla riga del titolo della tile, dove c'è spazio libero, e il disegno ha una riga in più.
+// The legend depends only on the configuration (series and bands), not on the data: the page puts
+// it on the tile's title row, where there is free space, and the drawing gets one more row.
 export function legendaGrafico(t) {
   const serie = (t.serie || []).filter((x) => x?.campo);
   const fasce = (Array.isArray(t.fasce) ? t.fasce : t.fasce ? [t.fasce] : []).filter((f) => f?.se);
@@ -148,8 +151,8 @@ export function legendaGrafico(t) {
     `<span><i class="fascia" data-tono="${proteggi(f.tono || 'caldo')}"></i>${proteggi(f.etichetta || f.se)}</span>`).join('')}</div>`;
 }
 
-// Un solo ascoltatore per tutta la pagina: il mirino segue il puntatore e si aggancia al punto
-// più vicino; il riquadro elenca tutte le serie in quel momento.
+// A single listener for the whole page: the crosshair follows the pointer and snaps to the nearest
+// point; the box lists every series at that moment.
 export function attivaGrafici(radice = document) {
   radice.addEventListener('pointermove', (e) => {
     const g = e.target.closest?.('.grafico');
@@ -175,10 +178,10 @@ export function attivaGrafici(radice = document) {
     }
     const riquadro = g.querySelector('.g-riquadro');
     riquadro.hidden = false;
-    // textContent: i nomi delle serie possono venire da una sorgente esterna.
+    // textContent: series names can come from an external source.
     riquadro.replaceChildren();
     const ora = document.createElement('b');
-    ora.textContent = new Date(dati.t[i]).toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', timeZone: dati.fuso });
+    ora.textContent = new Date(dati.t[i]).toLocaleString(locale(), { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', timeZone: dati.fuso });
     riquadro.append(ora);
     for (const s of dati.serie) {
       const r = document.createElement('span');

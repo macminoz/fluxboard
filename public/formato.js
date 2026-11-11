@@ -1,7 +1,10 @@
-// Template delle tile: "{campo}", "{campo:1}" (decimali), "{campo:rel}" (tempo relativo),
-// "{campo:durata}" ("5m", "3h", "2g"), "{campo:ora}", "{campo:data}", "{campo:%}" (percentuale),
-// "{campo:nome}" (nome host breve: "nas.casa.lan" → "nas", gli IP restano interi)
-// "{campo:casella}" (indirizzo email senza dominio) e "{a|b}" (il primo dei campi che ha un valore). Il risultato è HTML già protetto.
+// Tile templates: "{field}", "{field:1}" (decimals), "{field:rel}" (relative time),
+// "{field:durata}" ("5m", "3h", "2d"), "{field:ora}", "{field:data}", "{field:%}" (percentage),
+// "{field:nome}" (short host name: "nas.home.lan" → "nas", IPs stay whole), "{field:casella}"
+// (email address without the domain) and "{a|b}" (the first of the fields that has a value). The
+// result is already escaped HTML.
+
+import { t, locale } from './lingua.js';
 
 export function proteggi(testo) {
   return String(testo).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,7 +17,7 @@ export function comeData(v) {
   return null;
 }
 
-// Compatto, per stare nelle colonne: "40s", "20m", "3h", "2g".
+// Compact, to fit in columns: "40s", "20m", "3h", "2g".
 function tempo(a) {
   return a < 60 ? `${Math.max(1, a)}s` : a < 3600 ? `${Math.round(a / 60)}m` : a < 86400 ? `${Math.round(a / 3600)}h` : `${Math.round(a / 86400)}g`;
 }
@@ -23,42 +26,46 @@ export function relativo(quando, ora = Date.now()) {
   const d = comeData(quando);
   if (!d) return '—';
   const s = Math.round((ora - d.getTime()) / 1000);
-  return s < 0 ? `fra ${tempo(-s)}` : `${tempo(s)} fa`;
+  return s < 0 ? t('fra {}', tempo(-s)) : t('{} fa', tempo(s));
 }
 
-// Quanto tempo è passato, senza "fa": "giù da {dal:durata}" → "giù da 5m".
+// How much time has passed, without "ago": "down for {since:duration}" → "down for 5m".
 export function durata(quando, ora = Date.now()) {
   const d = comeData(quando);
   return d ? tempo(Math.abs(Math.round((ora - d.getTime()) / 1000))) : '—';
 }
 
-function formattaValore(v, formato, fuso) {
+// English names of the formats: {x:duration}, {x:name}, {x:time}, {x:date}, {x:mailbox}.
+const FORMATI = { duration: 'durata', name: 'nome', time: 'ora', date: 'data', mailbox: 'casella' };
+
+function formattaValore(v, formato0, fuso) {
+  const formato = FORMATI[formato0] || formato0;
   if (v === undefined || v === null || v === '') return '—';
-  if (!formato) return typeof v === 'number' ? v.toLocaleString('it-IT') : v;
+  if (!formato) return typeof v === 'number' ? v.toLocaleString(locale()) : v;
   if (/^\d$/.test(formato)) {
     const n = Number(v);
-    return Number.isFinite(n) ? n.toLocaleString('it-IT', { minimumFractionDigits: +formato, maximumFractionDigits: +formato }) : v;
+    return Number.isFinite(n) ? n.toLocaleString(locale(), { minimumFractionDigits: +formato, maximumFractionDigits: +formato }) : v;
   }
   if (formato === '%') return `${Math.round(Number(v) * 100)}%`;
-  // "mario@posta.lan" → "mario": la casella senza dominio, anche dentro un testo più lungo.
+  // "mario@mail.lan" → "mario": the mailbox without the domain, also inside a longer text.
   if (formato === 'casella') return String(v).replace(/([^\s@<>"]+)@[\w-]+(\.[\w-]+)+/g, '$1');
   if (formato === 'nome') return /^[\d.]+$|:/.test(String(v)) ? v : String(v).split('.')[0];
   const d = comeData(v);
   if (formato === 'rel') return relativo(d);
   if (formato === 'durata') return durata(d);
-  if (formato === 'ora') return d ? d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: fuso }) : v;
-  if (formato === 'data') return d ? d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', timeZone: fuso }) : v;
+  if (formato === 'ora') return d ? d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', timeZone: fuso }) : v;
+  if (formato === 'data') return d ? d.toLocaleDateString(locale(), { day: 'numeric', month: 'long', timeZone: fuso }) : v;
   return v;
 }
 
 const vuoto = (v) => v === undefined || v === null || v === '';
 const unCampo = (riga, campo) => campo.split('.').reduce((o, k) => (o == null ? undefined : o[k]), riga);
-// "host|origine_ip": il primo che ha un valore.
+// "host|origine_ip": the first that has a value.
 const valoreDi = (riga, campi) => campi.split('|').map((c) => unCampo(riga, c)).find((v) => !vuoto(v));
 const SEGNAPOSTO = /\{([\w.|]+)(?::([\w%]+))?\}/g;
 
-// Le parti fra [quadre] sono facoltative: spariscono se uno dei loro campi manca.
-// Esempio: "{stanza} · {live:1}°[ · fino alle {spegnimento:ora}]"
+// Parts in [brackets] are optional: they disappear if one of their fields is missing. Example:
+// "{room} · {live:1}°[ · until {off_at:time}]"
 export function riempi(modello, riga, fuso) {
   const conFacoltative = String(modello).replace(/\[([^\]]*)\]/g, (_, parte) =>
     [...parte.matchAll(SEGNAPOSTO)].some(([, campo]) => vuoto(valoreDi(riga, campo))) ? '' : parte);
@@ -66,8 +73,8 @@ export function riempi(modello, riga, fuso) {
     proteggi(formattaValore(valoreDi(riga, campo), formato, fuso)));
 }
 
-// Un testo può essere una stringa oppure { base, intermedia, avanzata }: si prende il livello
-// richiesto, altrimenti il più vicino (prima verso il basso, poi verso l'alto).
+// A text can be a string or { base, intermedia, avanzata }: the requested level is taken, otherwise
+// the nearest (lower first, then higher).
 export function perLivello(testo, livello, livelli) {
   if (testo == null || typeof testo === 'string') return testo;
   const i = livelli.indexOf(livello);

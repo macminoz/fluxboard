@@ -1,13 +1,13 @@
-// Gli avvisi del centro avvisi (server/avvisi.js): i messaggi critici raccolti dalle tile con un
-// blocco `avvisi:`, raggruppati e tenuti finché non vengono confermati.
+// The alerts of the alert centre (server/avvisi.js): the critical messages collected by tiles with an
+// `avvisi:` block, grouped and kept until they are acknowledged.
 //
-// dati: { tipo: avvisi }   (nessuna sorgente)
-// Righe: { chiave, messaggio, host, gravita, origine, primo, ultimo, volte, attivo, confermato, da_vedere }
+// dati: { tipo: avvisi }   (no source)
+// Rows: { chiave, messaggio, host, gravita, origine, primo, ultimo, volte, attivo, confermato, da_vedere }
 //
-// Azioni (senza password: segnare come visto non cambia niente fuori da Fluxboard):
+// Actions (no password: marking as seen changes nothing outside Fluxboard):
 //   { id: visto, etichetta: Visto, operazione: conferma, chiave: chiave, parametri: { chiave: "{chiave}" }, subito: true }
 //   { id: tutti, etichetta: Visti tutti, operazione: conferma_tutti, globale: true }
-//   { id: ignora, etichetta: Ignora, operazione: ignora, chiave: chiave, parametri: { chiave: "{chiave}" } }   per sempre
+//   { id: ignora, etichetta: Ignora, operazione: ignora, chiave: chiave, parametri: { chiave: "{chiave}" } }   for good
 //   { id: ripristina, etichetta: Ripristina ignorati, operazione: ripristina_ignorati, globale: true }
 
 import { avvisi } from '../avvisi.js';

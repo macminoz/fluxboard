@@ -1,7 +1,7 @@
-# Il centro avvisi: raccoglie i problemi segnalati dalle altre tile (qui: i servizi che non
-# rispondono), con Ack (24 ore) e Ignora (per sempre, con storico per riammetterli).
-genere: messaggi
-titolo: Messaggi critici
-campi: {}
-etichetta: allarmi
-priorita: 92
+# The alert centre: collects the problems reported by the other tiles (here: services that do
+# not answer), with Ack (24 hours) and Ignore (forever, with a history to readmit them).
+kind: messages
+title: Critical messages
+fields: {}
+label: alarms
+priority: 92

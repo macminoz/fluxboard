@@ -1,25 +1,25 @@
-// Nuove versioni dei software di casa: per ogni software, l'ultima versione pubblicata su GitHub
-// e (se si sa leggere) quella installata, letta dal servizio stesso. Una riga per software:
+// New versions of your software: for each program, the latest version published on GitHub
+// and (if it can be read) the installed one, read from the service itself. One row per program:
 //   { nome, installata, ultima, uscita, da_aggiornare, stato, link, come }
 //   stato: "aggiornato" · "da aggiornare" · "installata più nuova" · "installata sconosciuta"
-//   come:  da dove viene la versione installata ("letta" dal servizio o "scritta a mano")
+//   come:  where the installed version comes from ("letta" from the service or "scritta a mano")
 //
-// sorgente: { tipo: versioni, token: ${GITHUB_TOKEN} }   // token facoltativo: senza, 60 letture l'ora
-// dati:     { sorgente: <nome>, software: [ … ] } (senza software: l'elenco "software" della sorgente), dove ogni software ha:
-//   nome, repo (proprietario/nome su GitHub), ramo (es. "v2." per restare sulla serie 2),
-//   tag: true          per i progetti che non pubblicano release ma solo tag (es. Mosquitto)
-//   prefisso: "b"      solo i tag che iniziano così (llama.cpp: b12000, non master-…)
-//   installata:        come leggere la versione installata
-//     "2.0.11"                                        scritta a mano (da aggiornare a ogni upgrade)
-//     { url, campo: version }                         JSON senza credenziali
-//     { url, campo: [major, minor, patch] }           più campi, uniti con i punti (Immich)
-//     { url, cerca: "tags-(v[0-9.]+)" }               testo qualsiasi, il primo gruppo dell'espressione
-//     { sorgente: adguard, url: control/status }      attraverso una sorgente http (con le sue credenziali)
-//     { url, cerca: …, decodifica: base64, campo: … } valore nascosto in base64 dentro una pagina
-//     certificato_ca: certificati/home-root-ca.pem, nome_certificato: …   https con la CA di casa
-//     verifica_certificato: false                     solo per leggere un numero da un certificato scaduto
+// source: { tipo: versioni, token: ${GITHUB_TOKEN} }   // optional token: without it, 60 reads an hour
+// dati:   { sorgente: <name>, software: [ … ] } (without software: the source's "software" list), where each program has:
+//   nome, repo (owner/name on GitHub), ramo (e.g. "v2." to stay on the 2.x series),
+//   tag: true          for projects that publish only tags, not releases (e.g. Mosquitto)
+//   prefisso: "b"      only the tags starting like this (llama.cpp: b12000, not master-…)
+//   installata:        how to read the installed version
+//     "2.0.11"                                        written by hand (update it after each upgrade)
+//     { url, campo: version }                         JSON without credentials
+//     { url, campo: [major, minor, patch] }           several fields, joined with dots (Immich)
+//     { url, cerca: "tags-(v[0-9.]+)" }               any text, the first group of the expression
+//     { sorgente: adguard, url: control/status }      through an http source (with its credentials)
+//     { url, cerca: …, decodifica: base64, campo: … } value hidden as base64 inside a page
+//     certificato_ca: certificati/home-root-ca.pem, nome_certificato: …   https with your home CA
+//     verifica_certificato: false                     only to read a number behind an expired certificate
 //
-// Le release in anteprima (rc, beta…) non contano. Una tile che legge ogni 6 ore basta e avanza.
+// Pre-releases (rc, beta…) do not count. A tile reading every 6 hours is more than enough.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -43,13 +43,13 @@ export const moduloDati = [
     aiuto: 'Vuoto = l\'elenco scritto nella sorgente (condiviso da più tile). Un elenco YAML: <code>nome</code>, <code>repo</code> GitHub (proprietario/nome), <code>ramo</code> per restare su una serie (es. <code>v2.</code>) e <code>installata</code>: un testo, oppure <code>url</code> + <code>campo</code> (JSON) o <code>cerca</code> (espressione con un gruppo).' },
 ];
 export const campiSorgente = [];
-export const campiDati = [];   // senza "software" nella tile vale quello della sorgente
+export const campiDati = [];   // without "software" in the tile the source's list applies
 
 const ANTEPRIMA = /(alpha|beta|rc|pre|preview|nightly|dev)/i;
 
 // "v2.9.1", "victoria-logs-…-v1.53.0", "13.1.0+security-01" → [2,9,1]
 export function numeri(v) {
-  // Prima un numero con i punti ("n8n@2.8.4" → 2.8.4, non l'8 di "n8n"), solo dopo un numero isolato.
+  // First a dotted number ("n8n@2.8.4" → 2.8.4, not the 8 of "n8n"), only then a lone number.
   const t = String(v ?? '');
   const m = t.match(/\d+(?:\.\d+)+/) || t.match(/\d+/);
   return m ? m[0].split('.').map(Number) : null;
@@ -64,9 +64,9 @@ export function confronta(a, b) {
   return 0;
 }
 
-// Le risposte di GitHub si ricordano: per un'ora non si richiedono, poi si chiede "è cambiato?"
-// (If-None-Match), e le risposte 304 GitHub non le conta nel limite di 60 letture l'ora. Se il
-// limite è raggiunto lo stesso, vale l'ultima risposta buona invece di un errore.
+// GitHub's answers are remembered: for an hour they are not asked again, then "has it changed?" is
+// asked (If-None-Match), and GitHub does not count 304 answers in the 60 reads an hour. If the
+// limit is reached anyway, the last good answer is used instead of an error.
 const ricordate = new Map();   // url → { etag, dati, quando }
 const FRESCA = 60 * 60 * 1000;
 
@@ -95,7 +95,7 @@ async function ultima(sw, sorgente, signal) {
   const buone = elenco.filter((r) => !r.draft && !r.prerelease && !ANTEPRIMA.test(r.tag_name) && numeri(r.tag_name)
     && (!ramo || numeri(r.tag_name).join('.').startsWith(ramo))
     && (!sw.prefisso || r.tag_name.startsWith(sw.prefisso)));
-  // La più alta per numero, non la più recente per data (le serie vecchie ricevono ancora patch).
+  // The highest by number, not the most recent by date (old series still get patches).
   buone.sort((a, b) => confronta(b.tag_name, a.tag_name));
   const r = buone[0];
   return r ? { ultima: r.tag_name, uscita: r.published_at, link: r.html_url } : { ultima: null, uscita: null, link: `https://github.com/${sw.repo}/releases` };
@@ -111,7 +111,7 @@ async function testoDa(i, { signal, sorgenti, cartella }) {
     if (!r.ok) throw new Error(`HTTP ${r.status} da ${senzaSegreti(url)}`);
     return r.text();
   }
-  // Certificato della CA di casa (servizi interni in https), relativo alla cartella della configurazione.
+  // Your home CA certificate (internal https services), relative to the configuration folder.
   const ca = i.certificato_ca ? await fs.readFile(path.resolve(cartella || '.', i.certificato_ca), 'utf8') : undefined;
   const r = await richiestaJson(new URL(i.url), { signal, ca, nomeServer: i.nome_certificato, verifica: i.verifica_certificato !== false, intestazioni: { Accept: 'application/json, text/plain, */*' } });
   if (r.stato >= 400) throw new Error(`HTTP ${r.stato}`);
@@ -130,23 +130,23 @@ async function installata(sw, ctx) {
     if (!i.campo) return testo;
   }
   const o = JSON.parse(testo);
-  if (typeof o !== 'object' || o === null) return String(o);   // es. Vaultwarden: "1.34.3-a2ad1dc7"
-  // Più campi (es. Immich: major, minor, patch) diventano una versione con i punti.
+  if (typeof o !== 'object' || o === null) return String(o);   // e.g. Vaultwarden: "1.34.3-a2ad1dc7"
+  // Several fields (e.g. Immich: major, minor, patch) become a dotted version.
   if (Array.isArray(i.campo)) { const parti = i.campo.map((c) => leggiPercorso(o, c)); return parti.some((x) => x == null) ? null : parti.join('.'); }
   const v = leggiPercorso(o, i.campo || 'version');
   return v == null ? null : String(v);
 }
 
 export async function leggi(sorgente, dati, { signal, sorgenti }) {
-  // Molte richieste in parallelo sullo stesso segnale: oltre 10 Node avvisa di una (finta) perdita.
+  // Many requests in parallel on the same signal: past 10 Node warns about a (false) leak.
   if (signal) setMaxListeners(200, signal);
-  // Dal modulo dell'editor l'elenco arriva come testo YAML; scritto nel file è già un elenco.
-  // L'elenco può stare nella tile oppure nella sorgente, condiviso da più tile (aggiornamenti e inventario).
+  // From the editor's form the list arrives as YAML text; written in the file it is already a list.
+  // The list can be in the tile or in the source, shared by several tiles.
   const scritto = dati.software ?? sorgente.software;
   const elenco = typeof scritto === 'string' ? YAML.parse(scritto) || [] : Array.isArray(scritto) ? scritto : [];
   if (!elenco.length) throw new Error('manca "software": un elenco di { nome, repo, installata }');
   const righe = await Promise.all(elenco.map(async (sw) => {
-    // "link: https://github.com/owner/repo" basta al posto di "repo".
+    // "link: https://github.com/owner/repo" is enough instead of "repo".
     if (!sw.repo && /github\.com\/[\w.-]+\/[\w.-]+/.test(String(sw.link || ''))) sw = { ...sw, repo: String(sw.link).match(/github\.com\/([\w.-]+\/[\w.-]+?)(?:\.git)?(?:[/?#]|$)/)[1] };
     const riga = { nome: sw.nome || sw.repo, installata: null, ultima: null, uscita: null, link: sw.link || null, errore: null,
       come: sw.installata == null ? null : typeof sw.installata === 'object' ? 'letta' : 'scritta a mano' };
@@ -160,8 +160,8 @@ export async function leggi(sorgente, dati, { signal, sorgenti }) {
     riga.stato = !riga.ultima ? 'ultima sconosciuta' : c == null ? 'installata sconosciuta' : c < 0 ? 'da aggiornare' : c > 0 ? 'installata più nuova' : 'aggiornato';
     return riga;
   }));
-  // GitHub ha rifiutato tutto (limite di letture): meglio un errore, così la tile tiene l'ultimo
-  // dato buono invece di sostituirlo con una tabella di "ultima sconosciuta".
+  // GitHub refused everything (read limit): better an error, so the tile keeps the last good data
+  // instead of replacing it with a table of "latest unknown".
   const daGithub = righe.filter((r, i) => elenco[i].repo);
   if (daGithub.length && daGithub.every((r) => /limite di letture/.test(r.errore || ''))) {
     throw new Error('GitHub: limite di letture raggiunto, riprovo più tardi (con un token nella sorgente il limite sale a 5000 l\'ora)');
@@ -171,7 +171,8 @@ export async function leggi(sorgente, dati, { signal, sorgenti }) {
 
 export async function prova(sorgente, { signal }) {
   const intestazioni = sorgente.token ? { Authorization: `Bearer ${sorgente.token}` } : {};
-  // Diretta, senza la memoria: deve dire quante letture restano adesso (e non consuma il limite).
+  // Direct, without the memory: it must tell how many reads are left now (and it does not use up
+  // the limit).
   const r = await (await fetch('https://api.github.com/rate_limit', { signal, headers: { Accept: 'application/json', 'User-Agent': 'fluxboard', ...intestazioni } })).json();
   return `GitHub raggiungibile: ${r.rate?.remaining ?? '?'} letture disponibili su ${r.rate?.limit ?? '?'} ${sorgente.token ? '(con token)' : '(senza token)'}`;
 }

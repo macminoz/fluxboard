@@ -1,8 +1,8 @@
-// Modalità "Modifica" della dashboard, sul modello delle dashboard più diffuse (Home Assistant,
-// Grafana, schermata Home di iOS): un pulsante la attiva, ogni tile mostra i suoi comandi
-// (modifica, duplica, elimina), si trascina per spostarla e si tira l'angolo per ridimensionarla,
-// "+ Aggiungi tile" apre la scelta del tipo. Ogni modifica è salvata subito; l'eliminazione si può
-// annullare dall'avviso che compare in basso, senza finestre di conferma.
+// The dashboard's "Edit" mode, modelled on the most common dashboards (Home Assistant, Grafana, the
+// iOS Home screen): a button turns it on, each tile shows its tools (edit, duplicate, delete), drag
+// to move it and pull the corner to resize it, "+ Add tile" opens the choice of type. Every change
+// is saved right away; a deletion can be undone from the notice at the bottom, without confirmation
+// windows.
 
 import { scegliTipo, apriEditor } from './editor-tile.js';
 import { gestisciSorgenti } from './editor-sorgente.js';
@@ -15,7 +15,7 @@ import { apriImpostazioni } from './impostazioni.js';
 import { apriMenu } from './menu.js';
 import { ALTRO, COLORI, nomeEtichetta, creaEtichetta, salvaEtichette, chiediNuovaEtichetta } from './etichette.js';
 
-const SOGLIA_TRASCINAMENTO = 6;   // px prima che un clic diventi un trascinamento
+const SOGLIA_TRASCINAMENTO = 6;   // px before a click becomes a drag
 const PASSO_ALTEZZA = 8;
 const ALTEZZA_MINIMA = 60;
 const SOSTA_SEZIONE = 300;          // ms sopra un'altra sezione prima che diventi la destinazione
@@ -30,8 +30,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
   const tileDi = (id) => pagina().tile.find((t) => t.id === id);
 
   function entra() {
-    // In Allarmi e Completa si dispone la vista stessa: la sua disposizione è a parte e non tocca
-    // quella delle altre viste (né degli altri workspace).
+    // In Alarms and Full the view itself is arranged: its layout is separate and does not touch the
+    // other views' (nor the other workspaces').
     disposizionePropria();
     stato.attiva = true;
     stato.nascoste = false;
@@ -39,7 +39,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     document.body.classList.add('disponendo');
     barra.hidden = false;
     componi();
-    // Il giro dei workspace si ferma finché si modifica (app.js).
+    // The workspace tour stops while editing (app.js).
     document.dispatchEvent(new CustomEvent('fluxboard:modifica', { detail: true }));
   }
   function esci() {
@@ -50,7 +50,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     document.dispatchEvent(new CustomEvent('fluxboard:modifica', { detail: false }));
   }
 
-  // ------------------------------------------------------------ avvisi con "Annulla"
+  // ------------------------------------------------------------ notices with "Undo"
 
 
   async function api(percorso, metodo, corpo) {
@@ -64,7 +64,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     return esito;
   }
 
-  // ------------------------------------------------------------ disposizione, salvata subito
+  // ------------------------------------------------------------ layout, saved right away
 
   function salvaDisposizione() {
     clearTimeout(attesaSalvataggio);
@@ -81,21 +81,21 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     }, 400);
   }
 
-  // Sposta la tile nella cella sotto la copia che segue il puntatore: colonna e riga dell'angolo in
-  // alto a sinistra della copia. Le tile che stanno lì scendono (o salgono, se la si trascina oltre
-  // il loro centro), poi tutto risale a chiudere i vuoti. Sopra un'altra sezione la tile ne prende
-  // l'etichetta e ci entra nella stessa cella.
+  // Moves the tile to the cell under the copy following the pointer: column and row of the copy's
+  // top left corner. Tiles there move down (or up, if dragged past their centre), then everything
+  // rises to close the gaps. Over another section the tile takes its label and enters it in the
+  // same cell.
   function sposta(e) {
     const sotto = document.elementsFromPoint(e.clientX, e.clientY);
     const sezione = sotto.find((el) => el.classList?.contains('sezione'));
-    // Con le sezioni, fra una sezione e l'altra non c'è una griglia dove posarla: si aspetta.
+    // With sections, between one section and another there is no grid to drop it on: wait.
     if (!sezione && griglia.classList.contains('con-sezioni')) return;
     const contenitore = sezione ? sezione.querySelector('.griglia-sezione') : griglia;
     if (!contenitore || (sezione && sezione.classList.contains('chiusa'))) return;
     const mossa = tileDi(gesto.id);
     gesto.ultimoEvento = e;
-    // Un'altra sezione diventa la destinazione solo se il puntatore ci resta un attimo: passandoci
-    // sopra per arrivare più in là, la tile non deve prenderne l'etichetta.
+    // Another section becomes the target only if the pointer stays on it for a moment: passing over
+    // it on the way further, the tile must not take its label.
     const nuova = sezione?.dataset.etichetta;
     griglia.querySelectorAll('.sezione.destinazione').forEach((x) => { if (x !== sezione) x.classList.remove('destinazione'); });
     if (nuova && nuova !== (mossa.argomento || ALTRO)) {
@@ -136,7 +136,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     });
   }
 
-  // FLIP: si misurano le tile prima e dopo il riordino e ognuna scivola dal posto vecchio al nuovo.
+  // FLIP: tiles are measured before and after reordering and each slides from the old place to the
+  // new one.
   function animaRiordino(fai) {
     const prima = new Map([...griglia.querySelectorAll('.tile, .sezione')].map((el) => [el, el.getBoundingClientRect()]));
     fai();
@@ -150,7 +151,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     }
   }
 
-  // La tile "sollevata": una copia che segue il puntatore. Al suo posto resta una sagoma.
+  // The "lifted" tile: a copy following the pointer. A silhouette stays in its place.
   function solleva(g) {
     const r = g.el.getBoundingClientRect();
     const f = g.el.cloneNode(true);
@@ -167,7 +168,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     const r0 = parseFloat(g.fantasma.style.left), t0 = parseFloat(g.fantasma.style.top);
     g.fantasma.style.transform = `translate(${e.clientX - g.presaX - r0}px, ${e.clientY - g.presaY - t0}px) rotate(.6deg) scale(1.02)`;
   }
-  // Al rilascio la copia vola nel posto nuovo, poi sparisce e la tile vera ricompare.
+  // On release the copy flies to the new place, then disappears and the real tile shows again.
   function posa(g) {
     const f = g.fantasma;
     if (!f) return;
@@ -191,7 +192,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     gesto.etichetta = n;
   }
 
-  // Larghezza in colonne della griglia che contiene la tile (la sezione o la pagina).
+  // Width in columns of the grid holding the tile (the section or the page).
   function misuraGriglia(contenitore, totale) {
     const gr = contenitore.getBoundingClientRect();
     const gap = parseFloat(getComputedStyle(contenitore).columnGap) || 0;
@@ -203,12 +204,12 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     const contenitore = gesto.el.parentElement;
     const totale = parseInt(contenitore.style.getPropertyValue('--colonne'), 10) || pagina().display.colonne || 4;
     const { gr, gap, colonna } = misuraGriglia(contenitore, totale);
-    // Posizione riletta a ogni movimento: la pagina può spostarsi durante il gesto.
+    // Position re-read at every move: the page can move during the gesture.
     const r = gesto.el.getBoundingClientRect();
     const colonne = Math.round((e.clientX - r.left + gap) / (colonna + gap));
     const altezza = Math.round((e.clientY - r.top) / PASSO_ALTEZZA) * PASSO_ALTEZZA;
-    // Oltre il bordo della sezione: la sezione si allarga con la tile, fino alla pagina intera.
-    // Le colonne della sezione sono quelle della pagina, quindi la tile cresce allo stesso passo.
+    // Past the section's edge: the section widens with the tile, up to the whole page. The
+    // section's columns are the page's, so the tile grows at the same step.
     const sezione = gesto.el.closest('.sezione');
     const pagina_ = pagina().display.colonne || 4;
     if (sezione && colonne > totale && totale < pagina_) {
@@ -224,26 +225,27 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
       return;
     }
     const nuove = Math.max(1, Math.min(totale, colonne));
-    // Allargando solo in orizzontale l'altezza resta com'era (automatica, se lo era): così la tile
-    // continua ad adattarsi al suo contenuto. L'altezza si fissa solo tirando anche in verticale.
-    // Le tile di testo e tabelle sono sempre alte quanto il contenuto (si "zippano" con Riduci).
+    // Widening only horizontally the height stays as it was (automatic, if it was): the tile keeps
+    // adapting to its content. The height is fixed only when pulling vertically too. Text tiles and
+    // tables are always as tall as their content (they "zip" with Shrink).
     const verticale = Math.abs(e.clientY - gesto.y) > 16 && !ALTEZZA_AUTOMATICA.has(t.tipo);
     const alta = verticale ? Math.max(ALTEZZA_MINIMA, altezza) : gesto.altezzaIniziale;
     if (nuove === gesto.ultime?.c && alta === gesto.ultime?.h) return;
     gesto.ultime = { c: nuove, h: alta };
     t.colonne = nuove;
     t.altezza_px = alta;
-    // Una tile ridotta mostra solo l'inizio e ignorerebbe l'altezza: tirarla vuol dire volerla così.
+    // A shrunk tile shows only the beginning and would ignore the height: pulling it means wanting
+    // it that way.
     if (t.ridotta) { t.ridotta = false; gesto.el.classList.remove('ridotta'); }
     applicaDimensioni(gesto.el, t);
-    // Le tile che la nuova misura copre scendono sotto; nessuna cambia larghezza.
+    // Tiles covered by the new size move below; none changes width.
     ridisponi({ mosso: t.id });
     mostraMisura(`${t.colonne} di ${totale} colonne · ${t.altezza_px ? `${t.altezza_px} px` : 'altezza automatica'}`, e);
     gesto.cambiato = true;
   }
 
-  // Sezioni: si allargano dall'angolo (a colonne della pagina) e si riordinano trascinandone
-  // l'intestazione; l'ordine è quello delle etichette nelle Impostazioni.
+  // Sections: widened from the corner (in page columns) and reordered by dragging their heading;
+  // the order is the labels' in the Settings.
   function ridimensionaSezione(e) {
     const p = pagina();
     const totale = p.display.colonne || 4;
@@ -258,8 +260,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     mostraMisura(`Sezione ${nomeEtichetta(gesto.id)}: ${colonne} di ${totale} colonne`, e);
   }
 
-  // Una sezione si trascina dall'intestazione dove si vuole nella pagina, anche lasciando spazio
-  // libero a sinistra o sopra: le altre le fanno posto come fanno le tile.
+  // A section is dragged by its heading anywhere on the page, even leaving free space on the left
+  // or above: the others make room for it as tiles do.
   function spostaSezione(e) {
     const p = pagina();
     const totale = p.display.colonne || 4;
@@ -276,15 +278,15 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     mostraMisura(`Sezione ${nomeEtichetta(gesto.id)}: colonna ${x + 1}`, e);
   }
 
-  // Durante un ridimensionamento fuori da Modifica la misura compare vicino al puntatore.
+  // While resizing outside Edit the size shows near the pointer.
   function mostraMisura(testo, e) {
     misura.textContent = testo;
     if (stato.attiva) return;
     const bolla = document.getElementById('misura-volante');
     bolla.hidden = false;
     bolla.textContent = testo;
-    // Accanto al puntatore, ma sempre dentro la finestra: vicino al bordo destro (o in basso) passa
-    // dall'altra parte del puntatore invece di uscire dallo schermo.
+    // Next to the pointer, but always inside the window: near the right (or bottom) edge it moves
+    // to the other side of the pointer instead of leaving the screen.
     const { width: l, height: a } = bolla.getBoundingClientRect();
     const margine = 8;
     const x = e.clientX + 14 + l > innerWidth - margine ? e.clientX - 14 - l : e.clientX + 14;
@@ -293,15 +295,15 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     bolla.style.top = `${Math.max(margine, Math.min(y, innerHeight - a - margine))}px`;
   }
 
-  // Il ridimensionamento funziona anche fuori da Modifica (angolo ◢ al passaggio del mouse), così
-  // si vede la disposizione vera, senza le tile nascoste che in Modifica occupano posto.
+  // Resizing works outside Edit too (corner ◢ on hover), so the real layout is visible, without the
+  // hidden tiles that take room in Edit.
   griglia.addEventListener('pointerdown', (e) => {
-    // L'etichetta sulla tile è un pulsante (click = menu) ma da lì si può anche trascinare.
+    // The label on the tile is a button (click = menu) but it can be dragged from there too.
     if (e.button > 0 || e.target.closest('.strumenti, .aggiungi-tile, .aggiungi-qui, .icona-qui, .maniglia-colonna')) return;
     const maniglia = e.target.classList.contains('maniglia');
     const presa = e.target.classList.contains('presa');
     if (!stato.attiva && !((maniglia || presa) && pagina().globale.editor)) return;
-    // Allarmi e Completa si dispongono da sole, a misure fisse: lì non si sposta né si ridimensiona.
+    // Alarms and Full arrange themselves, at fixed sizes: nothing is moved or resized there.
     if (['allarmi', 'completa'].includes(document.body.dataset.vista) && !stato.attiva) return;
     const sezione = e.target.closest('.sezione');
     let tipo, el;
@@ -345,7 +347,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
   addEventListener('pointerup', finisciGesto);
   addEventListener('pointercancel', finisciGesto);
 
-  // Doppio click sulla maniglia: torna all'altezza automatica (la larghezza resta).
+  // Double click on the handle: back to the automatic height (the width stays).
   griglia.addEventListener('dblclick', (e) => {
     if (!e.target.classList.contains('maniglia') || !(stato.attiva || pagina().globale.editor)) return;
     const el = e.target.closest('.tile');
@@ -357,8 +359,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     salvaDisposizione();
   });
 
-  // Etichetta della tile. Se il file usava ancora "colore: <etichetta>" (0.1), quel colore si
-  // toglie, altrimenti continuerebbe a valere.
+  // Label of the tile. If the file still used "colore: <label>" (0.1), that colour is removed,
+  // otherwise it would keep applying.
   async function impostaEtichetta(id, n, { ricarica: rileggi = true } = {}) {
     const { oggetto } = await api(`/tile?id=${encodeURIComponent(id)}`, 'GET');
     const etichette = pagina().globale.argomenti || {};
@@ -369,7 +371,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     if (rileggi) await ricarica();
   }
 
-  // Icona di un'etichetta (vale per tutte le sue tile e per la sezione).
+  // Icon of a label (applies to all its tiles and to the section).
   async function iconaEtichetta(n, ancora) {
     if (!n || n === ALTRO) { avvisa('Le tile senza gruppo non hanno un\'etichetta'); return; }
     const etichette = pagina().globale.argomenti || {};
@@ -383,8 +385,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     await ricarica();
   }
 
-  // Dove compare la tile (👁), senza aprire l'editor: le viste, oppure da nessuna parte (esclusa,
-  // resta salvata); per una tile di un altro workspace, toglierla da questo.
+  // Where the tile shows (👁), without opening the editor: the views, or nowhere (excluded, it stays
+  // saved); for a tile from another workspace, remove it from this one.
   async function visteTile(id, ancora) {
     const t = tileDi(id);
     const scelta = await sceltaViste(ancora, { scelte: t.viste || [], viste: VISTE, esclusa: Boolean(t.spenta), ospite: t.ospite });
@@ -419,7 +421,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     await impostaEtichetta(id, n);
   }
 
-  // ------------------------------------------------------------ comandi delle tile
+  // ------------------------------------------------------------ tile tools
 
   async function modificaTile(id) {
     const { livello, fuso } = contesto();
@@ -427,8 +429,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     if (esito) { avvisa('Tile salvata'); await ricarica(); }
   }
 
-  // Aggiungi tile = il market: un genere da zero (editor con i campi del genere), una tile pronta
-  // (aggiunta subito: si vede evidenziata, anche se adesso non ha niente da dire), una tile libera.
+  // Add tile = the market: a kind from scratch (editor with the kind's fields), a ready-made tile
+  // (added right away: it shows highlighted, even if it has nothing to say now), a free tile.
   async function aggiungiTile({ etichetta } = {}) {
     const p = pagina();
     const ws = p.workspace.attuale;
@@ -472,11 +474,10 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     await ricarica();
   }
 
-  // Riordina: prima gli argomenti nell'ordine delle Impostazioni (la loro priorità), poi le tile
-  // senza argomento; dentro ogni argomento la "priorita" della tile, poi il titolo. Le escluse in
-  // fondo. Tutte della stessa misura: un terzo di pagina (due terzi le tabelle larghe), altezza
-  // automatica; ogni sezione larga quanto le sue tile, così le sezioni si affiancano. "Annulla"
-  // riporta tutto com'era.
+  // Tidy up: first the labels in the Settings' order (their priority), then the tiles without a
+  // label; inside each label the tile's "priorita", then the title. The excluded ones at the end.
+  // All the same size: a third of the page (two thirds for wide tables), automatic height; each
+  // section as wide as its tiles, so sections sit side by side. "Undo" puts everything back.
   async function riordina() {
     const p = pagina();
     const ordine = Object.keys(p.globale.argomenti || {});
@@ -490,13 +491,13 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     const terzo = Math.max(1, Math.round(totale / 3));
     const larghezza = (t) => (t.larghezza === 'larga' ? Math.min(totale, terzo * 2) : terzo);
     for (const t of p.tile) { t.x = undefined; t.y = undefined; t.colonne = larghezza(t); t.altezza_px = undefined; t.ridotta = undefined; }
-    // Sezioni: tante colonne quante ne servono per le loro tile in fila, fino alla pagina intera.
+    // Sections: as many columns as their tiles need in a row, up to the whole page.
     const perSezione = {};
     for (const t of p.tile.filter((x) => !x.spenta)) perSezione[t.argomento || ALTRO] = (perSezione[t.argomento || ALTRO] || 0) + t.colonne;
     p.sezioni = Object.fromEntries(Object.entries(perSezione).map(([n, c]) => [n, { colonne: Math.min(totale, c) }]));
     componi();
     salvaDisposizione();
-    // Dopo il salvataggio la pagina si ricarica: l'annullamento rimette l'ordine per id su quella attuale.
+    // After saving the page reloads: undo puts the order back by id on the current one.
     avvisa('Tile riordinate per argomento, tutte della stessa misura', async () => {
       const ora = pagina();
       ora.tile.sort((a, b) => (prima.indexOf(a.id) + 1 || 1e9) - (prima.indexOf(b.id) + 1 || 1e9));
@@ -507,7 +508,8 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     });
   }
 
-  // Occhio sulla tile: spegne/riaccende la tile; se viene da un altro workspace la toglie da qui.
+  // Eye on the tile: switches the tile off/on; if it comes from another workspace it removes it
+  // from here.
   async function includiTile(id) {
     const t = tileDi(id);
     const ws = pagina().workspace.attuale;
@@ -536,7 +538,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     const comando = e.target.closest('.strumenti button, .etichetta-tile');
     if (!aggiungi && !comando) return;
     e.stopPropagation();
-    if (comando?.closest('.tile').dataset.appenaRidimensionata) return;   // era un trascinamento
+    if (comando?.closest('.tile').dataset.appenaRidimensionata) return;   // it was a drag
     const id = comando?.closest('.tile').dataset.id;
     const azione = aggiungi ? aggiungiTile({ etichetta: aggiungi.dataset.etichetta || aggiungi.closest('.sezione')?.dataset.etichetta }) : ({
       modifica: () => modificaTile(id),
@@ -548,7 +550,7 @@ export function avviaModifica({ stato, griglia, pagina, componi, applicaDimensio
     Promise.resolve(azione).catch((err) => avvisa(err.message));
   }, true);
 
-  // "Nascoste": le tile che adesso non si vedono compaiono al loro posto, in trasparenza.
+  // "Hidden": the tiles not visible now show in their place, faded.
   document.getElementById('modifica-nascoste').addEventListener('click', () => { stato.nascoste = !stato.nascoste; componi(); });
 
   document.getElementById('modifica').addEventListener('click', () => (stato.attiva ? esci() : entra()));

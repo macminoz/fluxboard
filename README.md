@@ -1,168 +1,155 @@
 # Fluxboard
 
-Fotografia istantanea di casa e dell'homelab: poche informazioni, leggibili da chiunque, che
-compaiono quando c'è qualcosa da dire e spariscono quando non c'è. È un **framework**: sorgenti,
-query e API stanno nei file YAML, il codice non sa nulla di casa.
+A snapshot of your home and homelab: a few pieces of information, readable by anyone, that
+show up when there is something to say and disappear when there isn't. It is a **framework**:
+sources, queries and APIs live in YAML files, the code knows nothing about your home.
 
-Versione **1.0.0-alpha.1** (branch `1.0.0`) · [CHANGELOG](CHANGELOG.md)
+**English** · [Italiano](README.it.md)
 
-- **[Guida alla configurazione](docs/guida-configurazione.md)**: riferimento completo di tutte le
-  chiavi, con ricette pronte. È il documento da leggere per creare o modificare una tile.
-- [Istruzioni per agenti IA](AGENTS.md): regole per chi modifica il progetto con un'IA.
-- [Architettura e motivazioni](docs/architettura.md).
+Version **1.0.1-CURRENT** · [CHANGELOG](CHANGELOG.md)
 
-## Avvio
+- **[Configuration guide](docs/guide.md)**: complete reference of every key, with ready-made
+  recipes. Read it to create or change a tile. ([Italiano](docs/guida-configurazione.md))
+
+The interface is in English (default) and Italian: `language: it` in `global.yaml`, in Settings,
+or `?lang=it` in the address. Keys in the YAML files work in both languages (`title` =
+`titolo`), even mixed in the same file.
+
+## Getting started
 
 ```bash
 npm install
-cp .env.example .env        # e compilare i segreti (es. INFLUX_TOKEN)
-npm start                   # http://localhost:8080 · editor su /config
+cp .env.example .env        # and fill in the secrets (e.g. INFLUX_TOKEN)
+npm start                   # http://localhost:8080 · editor at /config
 ```
 
-Requisiti: Node.js 20.12 o superiore (quello di Debian 13 va bene). Unica dipendenza: `yaml`.
+Requirements: Node.js 20.12 or newer (the one in Debian 13 is fine). One dependency: `yaml`.
+`config/` holds a small working example (clock, weather, service checks, critical messages,
+software updates): change it or replace it with your own.
 
-## Come è fatta la configurazione
+## How the configuration is organised
 
 ```
 config/
-  global.yaml             la cornice: titolo, tema, livello predefinito, profili dei display
-  sorgenti/<nome>.yaml    una connessione riusabile (InfluxDB, VictoriaLogs, un'API HTTP, ...)
-  tile/<nome>.yaml        una tile: cosa legge, come elabora i dati, quando compare, come si legge
-  layout/<display>.yaml   ordine e dimensioni delle tile su un display (scritto da "Disponi")
-  .storico/               copie automatiche delle versioni precedenti (le ultime 20 per file)
-  .cestino/               file eliminati dall'editor
+  global.yaml             the frame: title, language, theme, default level, display profiles
+  sorgenti/<name>.yaml    a reusable connection (InfluxDB, VictoriaLogs, an HTTP API, ...)
+  tile/<name>.yaml        a tile: what it reads, how it processes the data, when it shows, how it reads
+  layout/<display>.yaml   order and size of the tiles on a display (written by Edit)
+  .storico/               automatic copies of previous versions (the last 20 per file)
+  .cestino/               files deleted from the editor
 ```
 
-**Un'informazione = un file.** Aggiungere una tile significa creare un file in `config/tile/`,
-dalla dashboard (**✎ Modifica → + Aggiungi tile**), dall'editor avanzato `/config` o a mano. Nessun altro file va toccato: la pagina si
-dispone da sola in base a `priorita` e `larghezza`.
+**One piece of information = one file.** Adding a tile means creating a file in `config/tile/`,
+from the dashboard (**✎ Edit → + Add tile**), from the advanced editor `/config`, or by hand. No
+other file needs touching: the page arranges itself by `priority` and `width`.
 
-L'editor web valida mentre si scrive, rifiuta i file non validi (la dashboard non può rompersi per
-un errore di battitura), permette di **provare** la lettura dei dati di una tile prima di salvare
-e di recuperare le versioni precedenti. Salvare aggiorna subito tutti i display aperti. Anche le
-modifiche fatte a mano ai file vengono riprese da sole.
+The web editor validates while you type, refuses invalid files (the dashboard cannot break
+because of a typo), lets you **test** a tile's data before saving and recover previous versions.
+Saving updates every open display right away. Changes made by hand to the files are picked up
+too.
 
-### Una tile, in breve
+### A tile, in short
 
 ```yaml
-titolo: Riscaldamento
-tipo: elenco                 # valori | valore | elenco | testo | orologio | immagine | iframe
-colore: arancio              # facoltativo: blu azzurro verde giallo arancio rosso viola grigio
-priorita: 90                 # più alta = più in alto
-larghezza: media             # stretta | media | larga
-ogni: 1m                     # ogni quanto rileggere
-mostra_se: dati              # dati = sparisce se non ci sono righe | sempre
-livello_minimo: base         # da quale livello di lettura compare
-dati:
-  sorgente: influx-ng        # un file in config/sorgenti/
-  query: |                   # parametri del tipo di sorgente
+title: Heating
+type: list                   # values | value | list | chart | timeline | text | clock | image | iframe
+colour: orange               # optional: blue azure green yellow orange red purple pink cyan indigo lime amber brown grey
+priority: 90                 # higher = further up
+width: medium                # narrow | medium | wide
+every: 1m                    # how often to re-read
+show_if: data                # data = disappears when there are no rows | always
+data:
+  source: influx             # a file in config/sorgenti/
+  query: |                   # parameters of the source type
     ...
-elabora:                     # facoltativo: adatta i dati senza toccare la query
-  - filtra: "codice % 2 == 1"
-  - ordina: stanza
-riga:                        # un testo per livello di lettura
-  base: "{stanza}: {live:1}°"
-  intermedia: "{stanza} · Set {set:1} · Live {live:1}"
-  avanzata: "{stanza} · Set {set:1} · Live {live:1} · aperta {dal:rel}"
+process:                     # optional: adapts the data without touching the query
+  - filter: "code % 2 == 1"
+  - sort: room
+row:                         # one text per reading level
+  basic: "{room}: {live:1}°"
+  intermediate: "{room} · Set {set:1} · Live {live:1}"
+  advanced: "{room} · Set {set:1} · Live {live:1} · open {since:rel}"
 ```
 
-Con `tipo: valori` al posto di `riga`/`testo` si scrivono delle `voci` (etichetta piccola +
-valore grande, con un `tono` colorato facoltativo): è il formato più leggibile, vedi la
-[guida](docs/guida-configurazione.md#valori--più-numeri-affiancati-con-etichetta-il-più-leggibile-da-preferire).
+With `type: values`, instead of `row`/`text` you write `items` (small label + big value, with an
+optional coloured `tone`): it is the most readable format, see the [guide](docs/guide.md).
 
-Passaggi di `elabora`: `rinomina`, `scala`, `traduci`, `filtra`, `ordina`, `limita`, `seleziona`.
-Formati nei testi: `{campo}`, `{campo:1}` (decimali), `{campo:rel}`, `{campo:ora}`, `{campo:data}`,
-`{campo:%}`.
+Processing steps: `rename`, `scale`, `map`, `filter`, `sort`, `limit`, `select`.
+Formats in texts: `{field}`, `{field:1}` (decimals), `{field:rel}`, `{field:duration}`,
+`{field:time}`, `{field:date}`, `{field:%}`.
 
-### Sorgenti disponibili
+### Available sources
 
-| `tipo` | Per cosa |
+| `type` | For |
 |---|---|
-| `influx` | InfluxDB 2.x, query Flux |
-| `logsql` | VictoriaLogs, query LogsQL |
-| `http` | qualunque API JSON (le API pubbliche, Uptime Kuma, Jellyfin, ...) |
-| `statico` | righe scritte nella tile stessa (note, promemoria); si usa con `dati: { tipo: statico }` |
+| `influx` | InfluxDB 2.x, Flux queries |
+| `logsql` | VictoriaLogs, LogsQL queries |
+| `http` | any JSON API (public APIs, Uptime Kuma, Jellyfin, ...) |
+| `probes` | Fluxboard itself checks TCP ports, web pages and DNS servers |
+| `versions` | latest releases on GitHub compared with the installed ones |
+| `proxmox`, `panos` | Proxmox VE cluster, Palo Alto firewall (read only) |
+| `static` | rows written in the tile itself (notes, reminders); used with `data: { type: static }` |
 
-Un formato che `http` non copre si aggiunge con un plugin JS in `plugin/` (vedi `plugin/LEGGIMI.md`).
-I segreti si scrivono `${NOME}` nei file delle sorgenti e il valore va in `.env`: non arrivano
-mai al browser.
+A format `http` does not cover is added with a JS plugin in `plugin/` (Node-RED and Uptime Kuma
+are there). Secrets are written `${NAME}` in the source files and the value goes in `.env` or in
+**Settings → Secrets**: they never reach the browser.
 
-## Modificare la dashboard dalla pagina
+## Editing the dashboard from the page
 
-Tutto il lavoro quotidiano si fa dalla dashboard, senza aprire file. Lo schema è quello delle
-dashboard più diffuse (Home Assistant, Grafana, schermata Home di iOS):
+Everyday work happens on the dashboard, without opening files. The pattern is the one of the
+most common dashboards (Home Assistant, Grafana, the iOS Home screen):
 
-- **Rotella ⚙ su una tile** (compare al passaggio del mouse): apre l'editor di quella tile.
-- **✎ Modifica** in alto: attiva la modalità di modifica. Ogni tile mostra i suoi comandi
-  **⚙ modifica · ⧉ duplica · ✕ elimina**; si **trascina** per spostarla e si **tira l'angolo ◢**
-  per cambiarne larghezza e altezza (doppio click sull'angolo: altezza automatica). Si vedono anche
-  le tile nascoste in quel momento, segnate "nascosta adesso". **Fatto** chiude la modalità.
-- **+ Aggiungi tile** (il Tile market, nella barra di Modifica o nel "+" di una sezione): diviso per
-  genere (Andamento, Cronologia, Misura, Correlazione dati, Messaggi critici, Stream, Nota, Shell
-  output). Per ogni genere si parte **da zero** (l'editor chiede solo i campi del genere) o da una
-  **tile pronta** del catalogo (servizi critici, log critici, VM spente, aggiornamenti software,
-  meteo…), da aggiungere scegliendo la sorgente e pochi parametri; in fondo una tile libera, da
-  comporre a mano. Nella scheda **Le tue tile** ogni tile del workspace ha un interruttore per spegnerla
-  e riaccenderla senza perderne la configurazione. I modelli stanno in `catalogo/` (vedi
-  `catalogo/LEGGIMI.md` per scriverne di nuovi).
-- Ogni tile **resta dove la lasci, della misura che le dai** (come in Grafana): spostandone o
-  allargandone una, quelle che intralciano scendono sotto; poi tutto risale a chiudere i vuoti.
-- **Eliminare non chiede conferma**: compare un avviso in basso con **Annulla** per 8 secondi, e il
-  file resta comunque recuperabile in `config/.cestino/`.
-- Ogni cambiamento è **salvato subito**.
+- **✎ Edit** at the top turns on edit mode. Each tile shows its tools
+  **⚙ edit · 👁 views · ⧉ duplicate · ✕ delete**; **drag** it to move it and **pull the corner ◢**
+  to change width and height (double click on the corner: automatic height). Sections move by
+  their heading. **Done** leaves edit mode.
+- **+ Add tile** (the Tile market): split by kind (Trend, Timeline, Measure, Data correlation,
+  Critical messages, Stream, Note, Shell output). For each kind start **from scratch** (the editor
+  asks only for the kind's fields) or from a **ready-made tile** of the catalogue (critical
+  services, critical logs, stopped VMs, software updates, weather…). Recipes live in `catalogo/`.
+- Each tile **stays where you leave it, at the size you give it** (as in Grafana).
+- **Deleting does not ask for confirmation**: a notice with **Undo** shows for 8 seconds, and the
+  file can still be recovered from `config/.cestino/`.
+- Every change is **saved right away**.
 
-L'**editor della tile** ha due schede: **Impostazioni** (titolo, sorgente e query, testi per i tre
-livelli di lettura, quando compare, link al click) e **Codice** (il YAML completo, per ciò che i
-moduli non coprono, come i passaggi di `elabora`). A destra c'è l'**anteprima dal vivo** con i dati
-veri della sorgente, nei tre livelli, e l'elenco dei **campi disponibili**: un click inserisce
-`{campo}` nel testo. Salvando dalle Impostazioni si toccano solo i campi modificati: commenti e
-resto del file restano com'erano.
+The **tile editor** has a **Settings** tab and a **Code** tab (the full YAML), with a **live
+preview** using the source's real data and the list of available fields.
 
-La disposizione si salva per display in `config/layout/<display>.yaml`: smartphone e browser
-possono avere disposizioni diverse; le tile non ancora disposte si accodano per priorità. Per
-disporre un display senza controlli (tsw, eink) basta aprirlo con `?display=tsw&controlli`.
+## Displays, views, screens
 
-**Impostazioni avanzate** (`/config`) resta per il resto: sorgenti, cornice (`global.yaml`),
-storico delle versioni.
+- `?display=browser|mobile|panel|eink` picks a profile from `global.yaml`. A profile with
+  `panel: true` is read only and lightweight, for wall touch panels.
+- **Settings → Screens** lists who opened the page (address and browser) and gives each screen a
+  fixed profile.
+- **Views**: **Basic**, **Medium**, **Advanced** (how much detail each tile shows), **Alarms**
+  (only tiles with an alarm or warning) and **Full** (every active tile).
+- **Workspaces**: several pages with their own tiles and layout; the ↻ button tours them every
+  15/30/60 seconds.
+- **Alert signal**: when a tile on any workspace is in critical alert, a blinking signal shows in
+  the header (with an optional gentle sound), and push notifications can go to a webhook,
+  Node-RED or ntfy.
 
-## Display e viste
+## Resilience
 
-- `?display=browser|mobile|tsw|eink` sceglie il profilo definito in `global.yaml` (senza
-  parametro: `mobile` sotto i 700 px, altrimenti il primo).
-- Le **viste**, dal selettore in alto (ricordato dal browser), da `?vista=` o da `vista:` nel
-  profilo del display:
-  - **Base**, **Media**, **Avanzata**: quanto dettaglio mostra ogni tile (nei file i livelli si
-    chiamano `base`, `intermedia`, `avanzata`);
-  - **Allarmi**: solo le tile con un allarme o un'attenzione in corso (una regola `colore_se` che
-    accende rosso, arancio o giallo, o righe con tono allarme/attenzione);
-  - **Completa**: tutte le tile attive, anche quelle che di solito spariscono senza dati, per
-    sezione e priorità, con tutti i dettagli.
-  Allarmi e Completa si dispongono da sole e non toccano le posizioni salvate.
-- Sulla riga del titolo di ogni tile: ogni quanto si rilegge (`60s`) e, al passaggio del mouse,
-  quando l'ha fatto l'ultima volta.
+- Each tile reads on its own: a timeout or an error does not touch the others.
+- On error the last good data stays, marked with its age; past `stale_after` it shows as stale.
+- The last state is saved in `cache/` and survives restarts.
+- If the browser loses the server it says so.
+- Point critical sources at an IP address, so they work even with DNS down.
 
-## Resilienza
+## Where to run it
 
-- Ogni tile legge per conto suo: un timeout o un errore non tocca le altre.
-- In caso di errore resta l'ultimo dato buono, marcato con la sua età; oltre la `scadenza` viene
-  mostrato come vecchio.
-- L'ultimo stato è salvato in `cache/` e sopravvive ai riavvii.
-- Se il browser perde il server lo dice esplicitamente.
-- Le sorgenti critiche si indicano per IP, così funzionano anche a DNS spento.
+The project does not depend on the host: all the state is in `config/` and `cache/`, secrets in
+environment variables.
 
-## Dove farlo girare
+- **LXC / VM / Raspberry Pi**: `deploy/installa.sh root@<host>` copies the code, creates the
+  `fluxboard` user and installs `deploy/fluxboard.service` (systemd, port 80). An existing
+  configuration on the host is not touched.
+- **Container**: `deploy/Dockerfile`, with `config/` and `cache/` mounted in `/data`.
 
-Il progetto non dipende dall'host: tutto lo stato sta in `config/` e `cache/`, i segreti in
-variabili d'ambiente.
+The `/config` editor can write files: with `FLUXBOARD_ADMIN_PASSWORD` set it asks for a password.
+With `editor: false` in `global.yaml` it is off.
 
-- **LXC / VM / Raspberry Pi**: `deploy/installa.sh root@<host>` copia il codice, crea l'utente
-  `fluxboard` e installa `deploy/fluxboard.service` (systemd, porta 80). La configurazione già
-  presente sull'host non viene toccata.
-- **Container**: `deploy/Dockerfile`, con `config/` e `cache/` montati in `/data`.
-
-L'editor `/config` può scrivere i file: con `FLUXBOARD_ADMIN_PASSWORD` impostata chiede una
-password. Con `editor: false` in `global.yaml` è disattivato.
-
-## Licenza
+## Licence
 
 [MIT](LICENSE).

@@ -1,7 +1,7 @@
-// Tile market = "Aggiungi tile". I generi (generi/) sono i capitoli: per ognuno si parte da zero
-// (l'editor chiede solo i campi del genere) oppure da una tile pronta del catalogo (si sceglie la
-// sorgente e pochi parametri). Nella seconda scheda le tile del workspace con il loro interruttore:
-// una tile spenta resta salvata e si riaccende da qui senza perdere niente.
+// Tile market = "Add tile". The kinds (generi/) are the chapters: for each one start from scratch
+// (the editor asks only for the kind's fields) or from a ready-made tile of the catalogue (pick the
+// source and a few parameters). In the second tab the workspace's tiles with their switch: a
+// switched-off tile stays saved and is switched back on from here without losing anything.
 
 import { proteggi } from './formato.js';
 import { icona } from './icone.js';
@@ -18,7 +18,8 @@ async function api(percorso, opzioni = {}) {
   return corpo;
 }
 
-// "Sonde (porte, pagine web, DNS)" → "Sonde": il dettaglio fra parentesi sta già nella descrizione.
+// "Probes (ports, web pages, DNS)" → "Probes": the detail in brackets is already in the
+// description.
 const breve = (s) => String(s || '').replace(/\s*\(.*\)\s*$/, '');
 const NOMI_TIPI = { elenco: 'Elenco', valori: 'Valori', valore: 'Valore', grafico: 'Grafico', cronologia: 'Cronologia', testo: 'Testo', orologio: 'Orologio', immagine: 'Immagine', iframe: 'Pagina' };
 
@@ -29,14 +30,14 @@ export async function apriMercato({ workspace = 'default', ricarica, scheda = 'c
   const esito = dlg.querySelector('.esito');
   const cerca = dlg.querySelector('.cerca-mercato');
   let dati = await api(`/mercato?workspace=${encodeURIComponent(workspace)}`);
-  let aperto = null;          // id del modello con il modulo di aggiunta aperto
+  let aperto = null;          // id of the model with the add form open
   let cambiato = false;
-  const aggiunte = [];      // id delle tile aggiunte: alla chiusura la pagina le mostra
+  const aggiunte = [];      // ids of the added tiles: on closing the page shows them
   const segnala = (testo, errore = false) => { esito.innerHTML = testo ? `<p class="${errore ? 'errore' : 'ok'}">${errore ? '✕' : '✓'} ${proteggi(testo)}</p>` : ''; };
   const corrisponde = (...testi) => { const q = cerca.value.trim().toLowerCase(); return !q || testi.some((t) => String(t || '').toLowerCase().includes(q)); };
 
-  // L'esempio è un suggerimento, non un valore: un modello aggiunto senza guardare non deve
-  // finire sulla dashboard con indirizzi inventati. Per gli elenchi c'è "Usa l'esempio".
+  // The example is a hint, not a value: a model added without looking must not land on the
+  // dashboard with made-up addresses. For lists there is "Use the example".
   function campo(p) {
     const id = `mp-${p.nome}`;
     const esempio = proteggi(String(p.esempio ?? ''));
@@ -68,7 +69,8 @@ export async function apriMercato({ workspace = 'default', ricarica, scheda = 'c
       </div>${modulo}</article>`;
   }
 
-  // Un capitolo per genere: "Da zero" e le tile pronte di quel genere. Le pronte senza genere in fondo.
+  // One chapter per kind: "From scratch" and the ready-made tiles of that kind. The ready-made ones
+  // without a kind at the bottom.
   let filtroGenere = '';
   function disegnaCatalogo() {
     const voci = dati.catalogo.filter((v) => corrisponde(v.nome, v.descrizione, v.nomeSorgente));

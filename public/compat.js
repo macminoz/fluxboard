@@ -1,6 +1,6 @@
-// Piccoli ripieghi per i browser un po' vecchi (es. quello dei pannelli touch a muro, un Chrome
-// di qualche anno fa): aggiunge solo ciò che manca, senza toccare i browser che lo hanno già.
-// Script normale (non modulo), caricato prima di app.js.
+// Small fallbacks for slightly old browsers (e.g. the one of wall touch panels, a Chrome of a few
+// years ago): adds only what is missing, without touching browsers that already have it. Plain
+// script (not a module), loaded before app.js.
 (function () {
   function aggiungi(oggetto, nome, valore) {
     if (!(nome in oggetto)) Object.defineProperty(oggetto, nome, { value: valore, writable: true, configurable: true });

@@ -1,23 +1,23 @@
-// Immagini e telecamere attraverso Fluxboard: il browser chiede /api/immagine?id=<tile> e il
-// server prende l'immagine dall'indirizzo scritto nella tile. Così la telecamera si vede anche
-// da reti che non la raggiungono (client, VPN, telefono) e, per uno stream MJPEG, la telecamera
-// riceve una sola connessione qualunque sia il numero di schermi aperti.
-// Si possono chiedere solo gli indirizzi delle tile: non è un proxy aperto.
+// Images and cameras through Fluxboard: the browser asks /api/immagine?id=<tile> and the server
+// takes the image from the address written in the tile. The camera is visible from networks that
+// cannot reach it (clients, VPN, phone) and, for an MJPEG stream, the camera gets a single
+// connection whatever the number of open screens. Only the tiles' addresses can be requested: it is
+// not an open proxy.
 
-const ATTESA_CHIUSURA = 5_000;     // senza spettatori, lo stream verso la telecamera si chiude
-// Uno spettatore che non legge (telefono in background, scheda sospesa) non deve far crescere la
-// memoria: oltre questa coda i suoi fotogrammi si saltano e riparte dal primo fotogramma intero.
-// (Il 7/11/2026 il servizio è stato ucciso per memoria esaurita proprio così.)
+const ATTESA_CHIUSURA = 5_000;     // without viewers, the stream to the camera is closed
+// A viewer that does not read (phone in the background, suspended tab) must not make memory grow:
+// past this queue its frames are skipped and it restarts from the next whole frame. (On 7/11/2026
+// the service was killed for running out of memory exactly like this.)
 const CODA_MASSIMA = 1_000_000;
 
 export class Immagini {
   constructor(config) {
     this.config = config;
-    this.stream = new Map();       // id tile → { url, controllo, tipo, delimitatore, clienti: Map(res → { pronto }) }
+    this.stream = new Map();       // tile id → { url, controllo, tipo, delimitatore, clienti: Map(res → { pronto }) }
   }
 
-  // `fotogramma: true` (?fotogramma=1): l'ultimo fotogramma intero dello stream, come JPEG singolo.
-  // Lo usano gli schermi leggeri (modalità pannello) al posto dello stream continuo.
+  // `fotogramma: true` (?fotogramma=1): the last whole frame of the stream, as a single JPEG. Used
+  // by lightweight screens (panel mode) instead of the continuous stream.
   async servi(id, req, res, { fotogramma = false } = {}) {
     const t = this.config.tile[id];
     if (!t || !['immagine'].includes(t.tipo) || !/^https?:\/\//.test(t.url || '')) {
@@ -38,12 +38,12 @@ export class Immagini {
       return res.end(`telecamera non raggiungibile: ${s.errore.cause?.code || s.errore.message}`);
     }
     if (!s.delimitatore) {
-      // Un'immagine singola (JPEG): si inoltra così com'è e la connessione si chiude.
+      // A single image (JPEG): forwarded as it is and the connection closes.
       res.writeHead(200, { 'Content-Type': s.tipo, 'Cache-Control': 'no-store' });
       return res.end(s.corpo);
     }
     if (fotogramma) {
-      // Lo stream resta aperto finché qualcuno chiede fotogrammi (o lo guarda).
+      // The stream stays open as long as someone asks for frames (or watches it).
       clearTimeout(s.timer);
       if (!s.clienti.size) s.timer = setTimeout(() => this.#chiudi(id), ATTESA_CHIUSURA);
       for (let i = 0; !s.ultimo && i < 30; i++) await new Promise((ok) => setTimeout(ok, 100));
@@ -52,7 +52,7 @@ export class Immagini {
       return res.end(s.ultimo);
     }
     res.writeHead(200, { 'Content-Type': s.tipo, 'Cache-Control': 'no-store', Connection: 'close' });
-    // Un nuovo spettatore parte dal fotogramma successivo, non a metà di uno.
+    // A new viewer starts from the next frame, not halfway through one.
     s.clienti.set(res, { pronto: false });
     clearTimeout(s.timer);
     req.on('close', () => {
@@ -76,7 +76,7 @@ export class Immagini {
       try {
         for await (const pezzo of risposta.body) {
           const buf = Buffer.from(pezzo);
-          // L'ultimo fotogramma intero (da FFD8 a FFD9), per chi chiede un'immagine sola.
+          // The last whole frame (from FFD8 to FFD9), for whoever asks for a single image.
           s.accumulo = s.accumulo ? Buffer.concat([s.accumulo, buf]) : buf;
           const fine = s.accumulo.lastIndexOf(Buffer.from([0xff, 0xd9]));
           if (fine > 0) {

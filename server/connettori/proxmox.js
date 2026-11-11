@@ -1,19 +1,19 @@
-// Proxmox VE: VM e LXC del cluster con CPU e memoria, oppure i nodi. Azioni sugli ospiti
-// (avvia, spegni, riavvia) per le tile che le dichiarano.
+// Proxmox VE: cluster VMs and LXCs with CPU and memory, or the nodes. Actions on guests
+// (start, shut down, reboot) for the tiles that declare them.
 //
-// sorgente: { tipo: proxmox, url: https://192.168.1.2:8006, utente_token: fluxboard@pve!dashboard,
-//             segreto: ${PROXMOX_SEGRETO}, certificato_ca: certificati/home-root-ca.pem,
-//             nome_certificato: pve.casa.lan, protetti: [100, 101] }
-// dati:     { sorgente: <nome>, risorsa: ospiti | nodi }
+// source: { tipo: proxmox, url: https://192.168.1.2:8006, utente_token: fluxboard@pve!dashboard,
+//           segreto: ${PROXMOX_SEGRETO}, certificato_ca: certificati/home-root-ca.pem,
+//           nome_certificato: pve.home.lan, protetti: [100, 101] }
+// dati:   { sorgente: <name>, risorsa: ospiti | nodi }
 //
-// Righe "ospiti": { id, nome, tipo (VM|LXC), nodo, codice (running|stopped|…), stato (acceso|spento|…),
-//                   cpu (% dei core assegnati), core, memoria (%), memoria_gb, memoria_max_gb, acceso_da, tag,
-//                   protetto (in `protetti` della sorgente: nessuna azione) }
-// Righe "nodi":   { nodo, codice, stato, cpu, memoria, memoria_gb, memoria_max_gb, acceso_da }
+// "ospiti" rows: { id, nome, tipo (VM|LXC), nodo, codice (running|stopped|…), stato (acceso|spento|…),
+//                 cpu (% of the assigned cores), core, memoria (%), memoria_gb, memoria_max_gb, acceso_da, tag,
+//                 protetto (in the source's `protetti`: no actions) }
+// "nodi" rows:   { nodo, codice, stato, cpu, memoria, memoria_gb, memoria_max_gb, acceso_da }
 //
-// SICUREZZA: nessuna azione sui NODI, mai (né riavvio né spegnimento): il connettore non ne ha,
-// e il token va creato con un ruolo senza Sys.PowerMgmt, così non potrebbe comunque. Gli ospiti
-// in `protetti` (firewall, DNS…) non accettano azioni nemmeno se una tile le chiede.
+// SECURITY: no actions on NODES, ever (neither reboot nor shutdown): the connector has none,
+// and the token must be created with a role without Sys.PowerMgmt, so it could not anyway. Guests
+// in `protetti` (firewall, DNS…) refuse actions even if a tile asks for them.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -64,7 +64,7 @@ export function ospitiInRighe(risorse, adesso = Date.now(), protetti = []) {
     memoria_gb: arrotonda((r.mem || 0) / GB, 2), memoria_max_gb: arrotonda((r.maxmem || 0) / GB, 1),
     acceso_da: r.uptime ? new Date(adesso - r.uptime * 1000).toISOString() : null,
     tag: r.tags || '',
-    protetto: protetti.map(Number).includes(r.vmid),   // le tile non vi mostrano azioni
+    protetto: protetti.map(Number).includes(r.vmid),   // tiles show no actions on them
   }));
 }
 
@@ -77,10 +77,10 @@ export function nodiInRighe(risorse, adesso = Date.now()) {
   }));
 }
 
-// Spazio occupato di nodi, LXC accesi e storage (anche quelli sul NAS). Le VM non ci sono:
-// Proxmox ne conosce l'occupazione solo con il guest agent, senza dà 0. Gli storage condivisi che
-// stanno sullo stesso disco (stesse cifre, es. il NAS visto come NFS e come PBS da due nodi)
-// diventano una riga sola, con tutti i nomi.
+// Used space of nodes, running LXCs and storage (those on the NAS too). VMs are missing: Proxmox
+// knows their usage only through the guest agent, without it it reports 0. Shared storages on the
+// same disk (same figures, e.g. the NAS seen as NFS and as PBS from two nodes) become a single row,
+// with every name.
 export function spazioInRighe(risorse) {
   const GB_ = 1024 ** 3;
   const riga = (nome, tipo, dove, usato, totale) => {
@@ -95,13 +95,13 @@ export function spazioInRighe(risorse) {
   }
   const storage = new Map();
   for (const r of risorse.filter((x) => x.type === 'storage' && x.maxdisk && x.status === 'available')) {
-    // NFS e PBS sullo stesso NAS riportano byte appena diversi: conta la capacità, al GB.
+    // NFS and PBS on the same NAS report slightly different bytes: capacity counts, by the GB.
     const chiave = r.shared ? `condiviso:${Math.round(r.maxdisk / GB_)}` : `${r.node}:${r.storage}`;
     const s = storage.get(chiave) || { nomi: new Set(), nodi: new Set(), r };
     s.nomi.add(r.storage); s.nodi.add(r.node);
     storage.set(chiave, s);
   }
-  // Più nomi per lo stesso disco: uno per riga nella cella (le tabelle vanno a capo su "\n").
+  // Several names for the same disk: one per line in the cell (tables wrap on "\n").
   for (const { nomi, nodi, r } of storage.values()) righe.push(riga([...nomi].sort().join('\n'), r.shared ? 'Storage condiviso' : 'Storage', [...nodi].join(', '), r.disk, r.maxdisk));
   return righe.sort((a, b) => (b.percentuale ?? -1) - (a.percentuale ?? -1));
 }
@@ -119,7 +119,7 @@ export async function prova(sorgente, { signal }) {
   return `Proxmox VE ${v.version}: token valido, ${ospitiInRighe(risorse).length} VM/LXC visibili`;
 }
 
-// Azioni: solo sugli ospiti, con il loro id e nodo (dalla riga, non dal browser).
+// Actions: only on guests, with their id and node (from the row, not from the browser).
 async function sullOspite(sorgente, parametri, comando, signal) {
   const id = Number(parametri.id);
   if (!Number.isInteger(id) || id < 100) throw new Error('id dell\'ospite non valido');
@@ -134,6 +134,6 @@ async function sullOspite(sorgente, parametri, comando, signal) {
 
 export const azioni = {
   avvia: (sorgente, p, { signal }) => sullOspite(sorgente, p, 'start', signal),
-  spegni: (sorgente, p, { signal }) => sullOspite(sorgente, p, 'shutdown', signal),   // pulito, non "stop"
+  spegni: (sorgente, p, { signal }) => sullOspite(sorgente, p, 'shutdown', signal),   // clean, not "stop"
   riavvia: (sorgente, p, { signal }) => sullOspite(sorgente, p, 'reboot', signal),
 };

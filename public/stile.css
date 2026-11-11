@@ -1,4 +1,4 @@
-/* Tema: tutti i colori sono variabili, così un tema nuovo è solo un blocco di variabili. */
+/* Theme: every colour is a variable, so a new theme is just a block of variables. */
 :root {
   --sfondo: #f2f3f5;
   --superficie: #ffffff;
@@ -96,15 +96,15 @@ select, .pulsante, button {
 .avviso { background: var(--problema-sfondo); color: var(--problema); border-radius: var(--raggio); padding: 10px 14px; margin: 0 0 16px; }
 .tutto-tranquillo { color: var(--tenue); text-align: center; padding: 40px 0; }
 
-/* Griglia "a mattoni": righe sottili (--unita) e ogni tile occupa --c colonne e --r righe.
-   L'altezza automatica viene calcolata dal contenuto (app.js), quella fissa dalla disposizione. */
+/* "Brick" grid: thin rows (--unita) and each tile takes --c columns and --r rows.
+   The automatic height is computed from the content (app.js), the fixed one from the layout. */
 .griglia {
   display: grid;
   grid-template-columns: repeat(var(--colonne), minmax(0, 1fr));
   grid-auto-rows: var(--unita, 8px);
   grid-auto-flow: row dense;
   column-gap: var(--spazio, 18px);
-  row-gap: 0;               /* lo spazio verticale è il margine delle tile: altezze precise a 8 px */
+  row-gap: 0;               /* vertical space is the tiles' margin: heights exact to 8 px */
 }
 .tile {
   margin-bottom: var(--spazio, 18px);
@@ -121,7 +121,7 @@ select, .pulsante, button {
 @media (prefers-reduced-motion: reduce) { .tile.entra { animation: none; } }
 .tile.vecchio { opacity: .62; }
 
-/* Comandi della tile: rotella al passaggio del mouse; in modifica tutti e tre, sempre visibili */
+/* Tile tools: gear on hover; in edit mode all three, always visible */
 .strumenti { position: absolute; top: 8px; right: 8px; z-index: 3; display: none; gap: 4px; }
 .strumenti button {
   display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 8px;
@@ -134,7 +134,7 @@ select, .pulsante, button {
 }
 .disponendo .strumenti { display: flex; }
 
-/* Modalità Modifica */
+/* Edit mode */
 .maniglia { display: none; }
 .disponendo .tile { padding-top: 46px; cursor: grab; touch-action: none; user-select: none; outline: 1px dashed var(--accento); outline-offset: 2px; }
 .disponendo .tile * { pointer-events: none; }
@@ -165,13 +165,13 @@ select, .pulsante, button {
 #modifica { white-space: nowrap; }
 .disponendo #modifica { border-color: var(--accento); color: var(--accento); }
 
-/* Avvisi brevi in basso, con "Annulla" */
+/* Short notices at the bottom, with "Undo" */
 .avvisi { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 20; display: flex; flex-direction: column; gap: 8px; width: min(440px, calc(100vw - 32px)); }
 .avviso-breve { display: flex; align-items: center; gap: 12px; justify-content: space-between; background: var(--testo); color: var(--sfondo); border-radius: 10px; padding: 10px 14px; box-shadow: 0 6px 24px rgb(0 0 0 / 25%); font-size: .92rem; }
 .avviso-breve button { background: none; border: 0; color: var(--accento); font-weight: 600; padding: 2px 4px; }
 :root[data-theme="dark"] .avviso-breve button, :root:not([data-theme="light"]) .avviso-breve button { color: var(--accento); }
 
-/* Finestre: scelta del tipo ed editor della tile */
+/* Windows: choosing the type and the tile editor */
 .dlg { background: var(--superficie); color: var(--testo); border: 1px solid var(--bordo); border-radius: 16px; padding: 0; width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); box-shadow: 0 20px 60px rgb(0 0 0 / 30%); }
 .dlg-largo { width: min(1080px, calc(100vw - 32px)); }
 .dlg::backdrop { background: rgb(0 0 0 / 45%); }
@@ -215,7 +215,7 @@ select, .pulsante, button {
 .scelta-radio label, .spunta { display: flex !important; align-items: center; gap: 6px; color: var(--testo) !important; }
 .aiuto { font-size: .8rem; color: var(--tenue); margin: 4px 0 0; }
 
-/* Campi generati dai moduli dei connettori (public/moduli.js) */
+/* Fields generated from the connectors' forms (public/moduli.js) */
 .campo-modulo { margin: 0 0 12px; }
 .campo-modulo[hidden] { display: none; }
 .campo-modulo > label { display: block; margin: 0 0 4px; font-size: .88rem; color: var(--tenue); }
@@ -278,14 +278,14 @@ button.primario { background: var(--accento); color: #fff; border-color: var(--a
 .elenco li { padding: 8px 0; border-top: 1px solid var(--bordo); overflow-wrap: anywhere; line-height: 1.35; }
 .elenco li:first-child { border-top: 0; padding-top: 0; }
 
-/* Elenco come tabella: intestazioni piccole, righe sottili, numeri allineati a destra. */
+/* List as a table: small headings, thin rows, numbers aligned right. */
 .tabella { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .tabella th { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); text-align: left; padding: 0 8px 6px 0; border-bottom: 1px solid var(--bordo); }
 .tabella td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--bordo); vertical-align: middle; overflow-wrap: anywhere; }
 .tabella tr:last-child td { border-bottom: 0; padding-bottom: 0; }
 .tabella th:last-child, .tabella td:last-child { padding-right: 0; }
 .tabella .a-destra { text-align: right; white-space: nowrap; }
-/* Le intestazioni possono andare a capo anche sulle colonne di numeri: "Righe nell'ultima ora" non deve spingere fuori i pulsanti. */
+/* Headings can wrap even on number columns: a long heading must not push the buttons out. */
 .tabella th.a-destra { white-space: normal; }
 .tabella th { position: relative; }
 .tabella .cella-fissa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -297,8 +297,8 @@ body.allarga-colonna, body.allarga-colonna * { cursor: col-resize !important; us
 .tabella td:first-child { font-weight: 550; }
 .tabella td[data-tono] { color: var(--tono); font-weight: 600; }
 .tabella .azioni-riga { justify-content: flex-end; }
-/* Ack/Ignora non escono mai dalla tile: la colonna dei pulsanti è stretta quanto basta, i pulsanti
-   vanno uno sotto l'altro se non c'è posto, e la tabella non supera la larghezza della tile. */
+/* Ack/Ignore never leave the tile: the buttons column is as narrow as needed, buttons stack when
+   there is no room, and the table never exceeds the tile width. */
 .tabella { table-layout: auto; max-width: 100%; }
 .tabella td.colonna-azioni { width: 1%; white-space: normal; padding-left: 4px; }
 .tabella td.colonna-azioni .azioni-riga { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
@@ -320,7 +320,7 @@ body.allarga-colonna, body.allarga-colonna * { cursor: col-resize !important; us
 .piede { margin: 12px 0 0; padding-top: 8px; border-top: 1px dashed var(--bordo); font-size: .74rem; color: var(--tenue); }
 .piede.problema { color: var(--problema); }
 
-/* Profili dei display */
+/* Display profiles */
 body[data-display="mobile"] { padding: 12px; }
 body[data-display="mobile"] { --spazio: 12px; }
 body.pannello { font-size: 20px; }
@@ -334,14 +334,14 @@ body[data-display="eink"] .tile.vecchio { opacity: 1; border-style: dashed; }
   .tile { grid-column: 1 / -1; }
 }
 
-/* Colore della tile (chiave "colore"): una striscia in alto e il titolo nello stesso colore;
-   con "sfondo: true" anche il fondo, tinto leggermente (velo dietro al contenuto: niente color-mix,
-   che i browser dei touch panel non conoscono). */
+/* Tile colour (key "colore"): a strip at the top and the title in the same colour; with "sfondo:
+   true" the background too, lightly tinted (a veil behind the content: no color-mix, which touch
+   panel browsers do not know). */
 .tile { isolation: isolate; }
 .tile.con-sfondo::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--colore-tile); opacity: .10; pointer-events: none; }
 .tile.con-sfondo { border-color: var(--colore-tile); box-shadow: 0 0 0 1px var(--colore-tile), var(--ombra); }
 .tile.con-sfondo .titolo-tile { color: var(--colore-tile); }
-/* Il colore si vede nell'icona del titolo (un quadratino tinto), non in strisce o testi colorati. */
+/* The colour shows in the title icon (a tinted square), not in strips or coloured text. */
 .segno-tile { position: relative; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; flex: none; color: var(--tenue); isolation: isolate; }
 .segno-tile::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: currentColor; opacity: .13; z-index: -1; }
 .tile[data-colore] .segno-tile { color: var(--colore-tile); }
@@ -355,9 +355,9 @@ body[data-display="eink"] .tile.vecchio { opacity: 1; border-style: dashed; }
 .tile[data-colore="viola"] { --colore-tile: var(--c-viola); }
 .tile[data-colore="grigio"] { --colore-tile: var(--c-grigio); }
 
-/* Tile "valori": etichetta piccola sopra, valore grande sotto; si dispongono da sole in colonne. */
-/* Colonne uguali (--n dal disegno, massimo 4): in una tile stretta si passa a 2 per riga. Etichetta
-   sopra, numero grande con l'unità più piccola, tutti allineati sulla stessa linea di base. */
+/* "Values" tiles: small label above, big value below; they arrange themselves in columns. */
+/* Equal columns (--n from the drawing, at most 4): in a narrow tile 2 per row. Label above, big
+   number with a smaller unit, all on the same baseline. */
 .tile { container-type: inline-size; }
 .valori { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 14px 16px; margin: 0; align-items: start; }
 @container (max-width: 380px) { .valori[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -379,20 +379,20 @@ body[data-display="eink"] .tile.vecchio { opacity: 1; border-style: dashed; }
 .voce[data-tono="info"] { --tono: var(--tono-info); }
 .voce[data-tono="spento"] { --tono: var(--tono-spento); }
 
-/* Sull'e-ink niente colori: il tono resta solo come pallino. */
+/* No colours on e-ink: the tone stays only as a dot. */
 body[data-display="eink"] { background: #fff; }
 body[data-display="eink"] .tile[data-colore]::before, body[data-display="eink"] .tile.con-sfondo::after { display: none; }
 body[data-display="eink"] .tile h2, body[data-display="eink"] .voce[data-tono] { --colore-tile: #000; --tono: #000; color: #000; }
 
-/* Galleria dei tipi di tile, in due famiglie */
+/* Gallery of tile types, in two families */
 #dlg-tipo .galleria { display: block; }
 .famiglia h3 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 0 0 4px; }
 .famiglia + .famiglia { margin-top: 18px; }
 .galleria-tipi { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-top: 10px; }
 .collegamento { border: 0; background: none; padding: 0; color: var(--accento); text-decoration: underline; font-size: inherit; }
 
-/* Grafico: colori delle linee in ordine fisso, verificati (daltonismo e contrasto) sulle superfici
-   chiara e scura con lo script del metodo dataviz. Il testo resta nei colori del testo. */
+/* Chart: line colours in a fixed order, checked (colour blindness and contrast) on the light and
+   dark surfaces with the dataviz method script. Text stays in the text colours. */
 :root { --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a; --serie-4: #eda100; --serie-5: #e87ba4; --serie-6: #008300; --serie-7: #6250d6; --serie-8: #e34948; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70; --serie-4: #c98500; --serie-5: #d55181; --serie-6: #008300; --serie-7: #9085e9; --serie-8: #e66767; }
@@ -414,7 +414,7 @@ body[data-display="eink"] .tile h2, body[data-display="eink"] .voce[data-tono] {
 .solo-lettore { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 body[data-display="eink"] .g-linea { stroke: #000; }
 
-/* Azioni: piccoli pulsanti accanto alla riga o in fondo alla tile */
+/* Actions: small buttons next to the row or at the bottom of the tile */
 .elenco li { display: flex; align-items: center; gap: 10px; }
 .elenco li .testo-riga { flex: 1; min-width: 0; }
 .azioni-riga { display: inline-flex; gap: 6px; flex: none; }
@@ -422,7 +422,7 @@ body[data-display="eink"] .g-linea { stroke: #000; }
 .azione { font-size: .8rem; padding: 3px 10px; border-radius: 999px; }
 .azione[data-tono="ok"] { color: var(--tono-ok); border-color: var(--tono-ok); }
 .azione[data-tono="allarme"], .azione[data-tono="attenzione"] { color: var(--tono-allarme); border-color: var(--tono-allarme); }
-/* Ack verde pallido, Ignora grigio scuro: si distinguono a colpo d'occhio. */
+/* Ack pale green, Ignore dark grey: told apart at a glance. */
 .azione[data-tono="ack"] { background: #dff3e4; color: #1d5b31; border-color: #b5dfc1; }
 .azione[data-tono="ack"]:hover { background: #cdebd6; }
 .azione[data-tono="ignora"] { background: #4b5160; color: #f2f3f5; border-color: #4b5160; }
@@ -450,7 +450,7 @@ body[data-display="eink"] .g-linea { stroke: #000; }
 .tabella td[data-tono="ok"] { --tono: var(--tono-ok); } .tabella td[data-tono="allarme"] { --tono: var(--tono-allarme); }
 .tabella td[data-tono="attenzione"] { --tono: var(--tono-attenzione); } .tabella td[data-tono="spento"] { --tono: var(--tono-spento); }
 
-/* Workspace vuoto: un invito, non una pagina bianca muta */
+/* Empty workspace: an invitation, not a silent blank page */
 .ws-vuoto { max-width: 520px; margin: 12vh auto 0; text-align: center; padding: 32px; border: 1px dashed var(--bordo); border-radius: 16px; background: var(--superficie); }
 .ws-vuoto h2 { margin: 0 0 8px; font-size: 1.2rem; }
 .ws-vuoto p { color: var(--tenue); margin: 0 0 18px; }
@@ -462,8 +462,8 @@ body[data-display="eink"] .g-linea { stroke: #000; }
 .regola-colore input.mono, .regola-colore select { margin-top: 0 !important; }
 .regola-colore .spunta { margin: 0; white-space: nowrap; }
 
-/* Riduci / espandi: un pulsante a pillola sul bordo inferiore delle tile lunghe. Ridotta, la tile
-   mostra l'inizio e sfuma; passando sul pulsante si apre in anteprima, il click la fissa. */
+/* Shrink / expand: a pill button on the bottom edge of long tiles. Shrunk, the tile shows its
+   beginning and fades; hovering the button opens it as a preview, a click makes it stick. */
 .riduci { display: none; position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); z-index: 3;
   align-items: center; gap: 6px; padding: 3px 12px; font-size: .74rem; color: var(--tenue);
   background: var(--superficie); border: 1px solid var(--bordo); border-radius: 999px; box-shadow: var(--ombra); }
@@ -480,14 +480,14 @@ body[data-display="eink"] .g-linea { stroke: #000; }
 .tile.anteprima-estesa { z-index: 5; align-self: start; height: max-content !important; box-shadow: 0 16px 40px rgb(0 0 0 / 22%); }
 .disponendo .riduci { display: none !important; }
 
-/* Blocco secondario di una tile "valori" (es. le fasce): separato da una riga, valori più piccoli. */
+/* Secondary block of a "values" tile (e.g. the bands): separated by a line, smaller values. */
 .gruppo-voci { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bordo); }
 .gruppo-voci h3 { margin: 0 0 8px; font-size: .72rem; font-weight: 600; color: var(--tenue); text-transform: uppercase; letter-spacing: .06em; }
 .valori.piccoli dd { font-size: 1.15rem; letter-spacing: 0; }
 .valori.piccoli .voce[data-tono] dd::before { width: .45em; height: .45em; }
 body[data-display="eink"] .segno-tile::before { display: none; }
 
-/* Barra a icone: pulsanti tondi, il nome compare al passaggio (o al focus da tastiera). */
+/* Icon bar: round buttons, the name shows on hover (or on keyboard focus). */
 .pulsante-icona { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 36px; height: 36px; padding: 0 10px;
   border-radius: 10px; border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); position: relative; }
 .pulsante-icona:not(.con-testo) { padding: 0; width: 36px; }
@@ -511,7 +511,7 @@ body.disponendo #modifica { background: var(--accento); color: #fff; border-colo
 .menu-a-comparsa .pericolo { color: var(--errore); }
 .menu-a-comparsa hr { border: 0; border-top: 1px solid var(--bordo); margin: 4px 0; }
 
-/* Impostazioni */
+/* Settings */
 .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .interruttore { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--bordo); border-radius: 10px; margin: 6px 0 12px; }
 .interruttore input { margin-top: 4px; }
@@ -535,7 +535,7 @@ body.disponendo #modifica { background: var(--accento); color: #fff; border-colo
 .nome-e-rinomina { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
 .nome-e-rinomina input { margin-top: 0 !important; }
 
-/* ---------------------------------------------------------------- 0.1.4: più carattere */
+/* ---------------------------------------------------------------- 0.1.4: more character */
 :root { --sfondo-alto: #e9eef8; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sfondo-alto: #141a26; } }
 :root[data-theme="dark"] { --sfondo-alto: #141a26; }
@@ -551,7 +551,7 @@ body { background: linear-gradient(180deg, var(--sfondo-alto) 0, var(--sfondo) 3
 .riga-titolo { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .versione { font-size: .66rem; font-weight: 600; color: var(--tenue); letter-spacing: .02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* Icona del titolo: quadratino pieno del colore della tile, simbolo bianco */
+/* Title icon: a solid square in the tile colour, white symbol */
 .segno-tile { width: 28px; height: 28px; border-radius: 9px; color: #fff; background: var(--c-grigio); box-shadow: 0 2px 6px rgb(0 0 0 / 12%); }
 .segno-tile::before { display: none; }
 .tile[data-colore] .segno-tile { color: #fff; background: linear-gradient(135deg, var(--colore-tile), color-mix(in srgb, var(--colore-tile) 70%, #000)); }
@@ -559,28 +559,28 @@ body { background: linear-gradient(180deg, var(--sfondo-alto) 0, var(--sfondo) 3
 .icona-tile { width: 15px; height: 15px; }
 .riga-argomento .segno-tile { background: var(--colore-tile); color: #fff; }
 
-/* Tile cliccabili: si sollevano un poco */
+/* Clickable tiles: they lift a little */
 .tile { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
 @media (hover: hover) { .tile.cliccabile:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgb(16 24 40 / 6%), 0 12px 28px rgb(16 24 40 / 10%); } }
 .disponendo .tile { transition: none; }
 
-/* Tile in allerta (colore dai dati o argomento con sfondo): sfumatura del suo colore */
+/* Tiles in alert (colour from the data or a label with background): a gradient of their colour */
 .tile.con-sfondo::after { opacity: 1; background: linear-gradient(160deg, color-mix(in srgb, var(--colore-tile) 16%, transparent), color-mix(in srgb, var(--colore-tile) 5%, transparent) 70%); }
 @supports not (background: color-mix(in srgb, red 50%, blue)) { .tile.con-sfondo::after { opacity: .1; background: var(--colore-tile); } }
 .tile.acceso-dai-dati .segno-tile { animation: pulsa 2.4s ease-in-out infinite; }
 @keyframes pulsa { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--colore-tile) 22%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .tile.acceso-dai-dati .segno-tile { animation: none; } }
 
-/* Valori: il primo è il protagonista */
+/* Values: the first one is the lead */
 .valori:not(.piccoli) .voce:first-child dd { font-size: 2.15rem; }
 .valori dt { text-transform: none; font-weight: 500; }
 .valori .voce:not(.testuale) dd { white-space: nowrap; overflow-wrap: normal; }
 @container (max-width: 380px) { .valori:not(.piccoli) .voce:first-child dd { font-size: 1.85rem; } }
 
-/* ================================================================ 0.2: sezioni e nuova veste
-   Riferimenti: vista "Sections" di Home Assistant (sezioni con intestazione, tile trascinabili da
-   una all'altra), app Casa di Apple (pillole di riepilogo in alto), Homarr/Glance (superfici
-   morbide, colore per gruppo). Tutto è variabile di tema: e-ink e touch panel restano sobri. */
+/* ================================================================ 0.2: sections and new look
+   References: Home Assistant's "Sections" view (sections with a heading, tiles dragged from one to
+   another), Apple's Home app (summary pills at the top), Homarr/Glance (soft surfaces, colour per
+   group). Everything is a theme variable: e-ink and touch panels stay plain. */
 :root {
   --raggio: 20px;
   --superficie: rgb(255 255 255 / 82%);
@@ -614,7 +614,7 @@ body {
 }
 .dlg, .menu-a-comparsa, .strumenti button, .riduci, .g-riquadro { background: var(--superficie-piena); }
 
-/* Colori per nome, per qualunque elemento con data-colore (sezioni, pillole, gettoni…) */
+/* Colours by name, for any element with data-colore (sections, pills, tokens…) */
 [data-colore="blu"] { --colore-tile: var(--c-blu); } [data-colore="azzurro"] { --colore-tile: var(--c-azzurro); }
 [data-colore="verde"] { --colore-tile: var(--c-verde); } [data-colore="giallo"] { --colore-tile: var(--c-giallo); }
 [data-colore="arancio"] { --colore-tile: var(--c-arancio); } [data-colore="rosso"] { --colore-tile: var(--c-rosso); }
@@ -622,14 +622,14 @@ body {
 :is(.sezione, .pillola, .gettone, .pillola-etichetta)[data-colore] .segno-tile { color: #fff; background: var(--colore-tile);
   background: linear-gradient(135deg, var(--colore-tile), color-mix(in srgb, var(--colore-tile) 70%, #000)); }
 
-/* Intestazione */
+/* Header */
 .barra { margin-bottom: 18px; }
 #titolo { font-size: 1.35rem; font-weight: 750; letter-spacing: -.02em; }
 .adesso { font-size: .8rem; }
 .pulsante-icona { background: var(--superficie); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; height: 38px; min-width: 38px; }
 .pulsante-icona:not(.con-testo) { width: 38px; }
 
-/* Riepilogo: una pillola per sezione */
+/* Summary: one pill per section */
 .riepilogo { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 0 22px; padding: 2px; }
 .riepilogo::-webkit-scrollbar { display: none; }
 .riepilogo[hidden] { display: none; }
@@ -643,7 +643,7 @@ body {
 .pillola.in-evidenza { border-color: var(--colore-tile); background: color-mix(in srgb, var(--colore-tile) 12%, var(--superficie)); }
 .pillola.in-evidenza .quante { background: var(--colore-tile); color: #fff; }
 
-/* Sezioni: la pagina è una griglia di sezioni, ogni sezione una griglia di tile */
+/* Sections: the page is a grid of sections, each section a grid of tiles */
 .griglia.con-sezioni { column-gap: clamp(20px, 2.4vw, 36px); }
 .sezione { grid-column: span var(--cs, 12); grid-row: span var(--r, 20); margin-bottom: 30px; min-width: 0; position: relative; --spazio: 14px; }
 .dentro-sezione { display: flex; flex-direction: column; }
@@ -666,7 +666,7 @@ body {
 .aggiungi-qui, .maniglia-sezione, .sezione-vuota { display: none; }
 @media (max-width: 700px) { .griglia > .sezione { grid-column: 1 / -1; } }
 
-/* Tile: superficie morbida, un alone del colore dell'etichetta nell'angolo */
+/* Tile: soft surface, a glow of the label colour in the corner */
 .tile { border-radius: var(--raggio); padding: 16px 18px; border-color: var(--bordo);
   backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
 .tile[data-colore] { background: radial-gradient(140% 90% at 0% 0%, color-mix(in srgb, var(--colore-tile) 11%, transparent), transparent 55%), var(--superficie); }
@@ -682,7 +682,7 @@ body {
 .piede { border-top-style: solid; }
 .immagine { border-radius: 12px; }
 
-/* Angolo per ridimensionare: al passaggio del mouse anche fuori da Modifica */
+/* Resize corner: on hover, outside Edit too */
 @media (hover: hover) {
   body.con-editor:not(.disponendo) .tile .maniglia { display: block; position: absolute; right: 4px; bottom: 4px; width: 18px; height: 18px; z-index: 4; cursor: nwse-resize; opacity: 0; transition: opacity .15s;
     background: linear-gradient(135deg, transparent 0 55%, var(--tenue) 55% 62%, transparent 62% 72%, var(--tenue) 72% 79%, transparent 79%); border-radius: 0 0 14px 0; }
@@ -694,7 +694,7 @@ body.in-gesto .tile.ridimensionata { outline: 2px solid var(--accento); outline-
 .misura-volante { position: fixed; z-index: 50; pointer-events: none; font-size: .78rem; font-weight: 600; color: #fff; background: #1b1f24; padding: 4px 9px; border-radius: 8px; font-variant-numeric: tabular-nums; }
 .misura-volante[hidden] { display: none; }
 
-/* Modifica: etichetta sulla tile, sezioni trascinabili e allargabili */
+/* Edit: label on the tile, sections draggable and resizable */
 .etichetta-tile { display: none; }
 .disponendo .tile .etichetta-tile { display: inline-flex; align-items: center; gap: 6px; pointer-events: auto; position: absolute; top: 10px; left: 12px; z-index: 3; max-width: calc(100% - 160px);
   padding: 3px 10px 3px 8px; font-size: .74rem; font-weight: 600; border-radius: 999px; background: var(--superficie-piena); border: 1px solid var(--bordo); color: var(--testo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -716,7 +716,7 @@ body.in-gesto .tile.ridimensionata { outline: 2px solid var(--accento); outline-
 .interruttore-piccolo { display: inline-flex; align-items: center; gap: 6px; font-size: .84rem; color: var(--testo); position: relative; white-space: nowrap; cursor: pointer; }
 .interruttore-piccolo[data-tip]::after { right: auto; left: 0; }
 
-/* Vassoio delle tile non visibili adesso (solo in Modifica) */
+/* Tray of the tiles not visible now (Edit only) */
 
 /* Editor: etichetta a pillole */
 .scelta-etichetta { border: 0; padding: 0; margin: 4px 0 12px; }
@@ -732,15 +732,15 @@ body.in-gesto .tile.ridimensionata { outline: 2px solid var(--accento); outline-
 .personalizza { margin: 0 0 12px; }
 .personalizza summary { cursor: pointer; font-size: .84rem; color: var(--tenue); margin-bottom: 8px; }
 
-/* E-ink e touch panel: niente vetro né aloni */
+/* E-ink and touch panels: no glass, no glows */
 body[data-display="eink"], body.pannello { background: var(--sfondo); }
 body[data-display="eink"] .tile, body[data-display="eink"] .pillola { backdrop-filter: none; background: #fff; }
 body[data-display="eink"] .riepilogo { display: none; }
-/* I numeri si adattano alla larghezza della tile (cqi = 1% della tile), senza sovrapporsi */
+/* Numbers adapt to the tile width (cqi = 1% of the tile), without overlapping */
 .valori:not(.piccoli) .voce:not(.testuale) dd { font-size: clamp(1.2rem, calc(19cqi / var(--n, 3)), 1.9rem); }
 .valori:not(.piccoli) .voce:not(.testuale):first-child dd { font-size: clamp(1.35rem, calc(23cqi / var(--n, 3)), 2.4rem); }
 .valori dd { overflow: hidden; text-overflow: ellipsis; }
-/* In Modifica la tile ha le stesse misure di sempre: comandi ed etichetta stanno sopra al contenuto */
+/* In Edit the tile keeps its usual size: tools and label sit above the content */
 .disponendo .tile { padding-top: 16px; }
 .disponendo .tile .etichetta-tile { top: auto; bottom: 8px; left: 10px; max-width: calc(100% - 50px); box-shadow: var(--ombra); }
 .disponendo .tile.spenta::before, .disponendo .tile.ospite::before, .disponendo .tile.nascosta-ora::after { content: none; }
@@ -756,11 +756,11 @@ body[data-display="eink"] .riepilogo { display: none; }
   .disponendo .tile .etichetta-tile { display: none; }
   .disponendo .tile:hover .etichetta-tile, .disponendo .tile:focus-within .etichetta-tile { display: inline-flex; }
 }
-/* Tile strette: l'etichetta scende sotto i comandi invece di schiacciarsi */
+/* Narrow tiles: the label moves below the tools instead of getting squeezed */
 @container (max-width: 330px) { .disponendo .tile .etichetta-tile { top: 52px; max-width: calc(100% - 24px); } }
 
-/* ---------------------------------------------------------------- 0.2: sezioni come riquadro
-   Ogni sezione è un riquadro sfumato del colore della sua etichetta, che contiene le sue tile. */
+/* ---------------------------------------------------------------- 0.2: sections as boxes
+   Each section is a box tinted with its label's colour, holding its tiles. */
 .dentro-sezione { padding: 14px 16px 2px; border-radius: 28px;
   background: color-mix(in srgb, var(--colore-tile) 6%, transparent);
   background: linear-gradient(165deg, color-mix(in srgb, var(--colore-tile) 9%, transparent), color-mix(in srgb, var(--colore-tile) 3%, transparent) 55%, color-mix(in srgb, var(--colore-tile) 1%, transparent));
@@ -778,7 +778,7 @@ body[data-display="eink"] .riepilogo { display: none; }
 @media (max-width: 700px) { .dentro-sezione { padding: 12px 10px 0; border-radius: 22px; } }
 body[data-display="eink"] .dentro-sezione { background: none; border-color: #000; }
 
-/* Presa per spostare: in alto al centro al passaggio del mouse, anche fuori da Modifica */
+/* Move handle: top centre on hover, outside Edit too */
 .presa { display: none; }
 @media (hover: hover) {
   body.con-editor:not(.disponendo) .tile .presa { display: block; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 4;
@@ -789,12 +789,12 @@ body[data-display="eink"] .dentro-sezione { background: none; border-color: #000
 }
 .tile.trascinata { opacity: .55; cursor: grabbing; }
 body.in-gesto .presa { cursor: grabbing; }
-/* Tile senza titolo ma con link: solo la freccia nell'angolo, nessuna riga sprecata */
+/* Tile without a title but with a link: only the arrow in the corner, no wasted row */
 .apri-solo { position: absolute; top: 12px; right: 14px; z-index: 2; }
 .testa:has(> .apri-solo) { display: contents; }
 .tile:has(.apri-solo) .corpo { padding-right: 18px; }
 
-/* 0.2.1: grafico all-in-one — voci in testa e fasce di stato (es. "scalda") dietro alle linee. */
+/* 0.2.1: all-in-one chart — items at the top and status bands (e.g. "heating") behind the lines. */
 .g-fascia, .g-legenda i.fascia, .g-in-fascia { --tono: var(--tono-caldo); }
 :is(.g-fascia, .g-legenda i.fascia, .g-in-fascia)[data-tono="ok"] { --tono: var(--tono-ok); }
 :is(.g-fascia, .g-legenda i.fascia, .g-in-fascia)[data-tono="attenzione"] { --tono: var(--tono-attenzione); }
@@ -807,7 +807,7 @@ body.in-gesto .presa { cursor: grabbing; }
 .g-in-fascia { color: var(--tono); font-weight: 600; }
 .g-in-fascia::before { content: '● '; }
 body[data-display="eink"] .g-fascia { fill: #000; opacity: .12; }
-/* Grafico all-in-one: voci e legenda su una riga sola, valori compatti; ad altezza fissa niente scorrimento. */
+/* All-in-one chart: items and legend on a single row, compact values; at a fixed height no scrolling. */
 .g-capo { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 18px; margin: 0 0 6px; }
 .g-capo .g-legenda { margin: 0; padding-bottom: 2px; }
 .g-capo .valori { display: flex; flex-wrap: wrap; gap: 4px 20px; }
@@ -818,7 +818,7 @@ body[data-display="eink"] .g-fascia { fill: #000; opacity: .12; }
 .tile.altezza-fissa .corpo:has(> .grafico) { overflow: hidden; }
 .g-capo .valori .voce { display: flex; align-items: baseline; gap: 5px; }
 .g-capo .valori dt { font-size: .78rem; }
-/* Legenda del grafico sulla riga del titolo; in una tile stretta va sul rigo sotto, tutta intera. */
+/* Chart legend on the title row; in a narrow tile it moves to the row below, whole. */
 .tile h2.con-legenda { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "segno titolo legenda apri"; column-gap: 10px; row-gap: 0; margin-bottom: 6px; }
 .tile h2.con-legenda .segno-tile { grid-area: segno; }
 .tile h2.con-legenda .titolo-tile { grid-area: titolo; }
@@ -833,7 +833,7 @@ body[data-display="eink"] .g-fascia { fill: #000; opacity: .12; }
   .tile h2.con-legenda:not(:has(.segno-tile)) { grid-template-areas: "titolo apri apri" "legenda legenda legenda"; }
 }
 
-/* Tile "cronologia": una riga sottile per elemento, bande dove era acceso, stato di adesso in fondo. */
+/* "Timeline" tile: a thin row per item, bands where it was on, current state at the end. */
 .cronologia { display: grid; grid-template-columns: max-content minmax(60px, 1fr) repeat(var(--cr-colonne, 1), max-content); column-gap: 10px; row-gap: 3px; align-items: center; font-size: .8rem; }
 .cr-riga { display: contents; --tono: var(--tono-caldo); }
 .cr-riga[data-tono="ok"] { --tono: var(--tono-ok); }
@@ -851,13 +851,13 @@ body[data-display="eink"] .g-fascia { fill: #000; opacity: .12; }
 .cr-riga.attiva .cr-stato { color: var(--testo); font-weight: 600; }
 .cr-asse .cr-tacche { position: relative; height: 14px; margin-top: 1px; }
 .cr-tacche span { position: absolute; transform: translateX(-50%); font-size: .68rem; color: var(--tenue); white-space: nowrap; font-variant-numeric: tabular-nums; }
-/* Tile stretta: via la colonna dello stato (in tutte le righe, asse compreso, o la griglia si sfalsa). */
+/* Narrow tile: drop the status column (in every row, axis included, or the grid shifts). */
 @container (max-width: 340px) { .cr-riga > :nth-child(n+4) { display: none; } .cronologia { grid-template-columns: max-content minmax(60px, 1fr) max-content; column-gap: 8px; } }
 body[data-display="eink"] .cr-fascia { background: #000; opacity: 1; }
 
-/* ---------------------------------------------------------------- 0.3: sezioni compatte
-   Il nome della sezione è un'etichetta piccola, non un titolo: lo spazio va alle tile.
-   Riquadro con margini stretti, tile più vicine fra loro e al bordo. */
+/* ---------------------------------------------------------------- 0.3: compact sections
+   The section name is a small label, not a title: the space goes to the tiles. A box with narrow
+   margins, tiles closer to each other and to the edge. */
 .griglia.con-sezioni { column-gap: 12px; }
 .sezione { margin-bottom: 12px; --spazio: 8px; }
 .dentro-sezione { padding: 6px 8px 0; border-radius: 18px; }
@@ -876,7 +876,7 @@ body[data-display="eink"] .cr-fascia { background: #000; opacity: 1; }
 .tile.lunga { padding-bottom: 28px; }
 @media (max-width: 700px) { .dentro-sezione { padding: 6px 6px 0; border-radius: 16px; } }
 
-/* Freschezza del dato: al passaggio del mouse, in basso a sinistra (ogni quanto si rilegge, quando l'ultima volta) */
+/* Data freshness: on hover, bottom left (how often it re-reads, when the last time was) */
 .freschezza { position: absolute; left: 8px; bottom: 5px; z-index: 4; display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 999px;
   font-size: .66rem; font-variant-numeric: tabular-nums; color: var(--tenue); background: var(--superficie-piena); border: 1px solid var(--bordo);
   opacity: 0; transition: opacity .15s; pointer-events: none; white-space: nowrap; }
@@ -885,7 +885,7 @@ body[data-display="eink"] .cr-fascia { background: #000; opacity: 1; }
 .disponendo .freschezza { display: none; }
 body[data-display="eink"] .freschezza, body.pannello .freschezza { display: none; }
 
-/* Aggiungi una tile: due colonne affiancate (dati / contenuto fisso), una riga uguale per tipo */
+/* Add a tile: two columns side by side (data / fixed content), one equal row per type */
 #dlg-tipo { width: min(820px, calc(100vw - 32px)); }
 #dlg-tipo .galleria { display: block; padding: 16px 18px 12px; }
 .famiglie { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
@@ -902,21 +902,21 @@ body[data-display="eink"] .freschezza, body.pannello .freschezza { display: none
 .testo-tipo span { font-size: .78rem; color: var(--tenue); line-height: 1.3; }
 .piede-galleria { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--bordo); font-size: .8rem; }
 
-/* Sorgenti: la finestra ha sempre la stessa misura, qualunque tipo si apra; scorre il pannello */
+/* Sources: the window always has the same size, whatever type is opened; the panel scrolls */
 #dlg-sorgente { width: min(1000px, calc(100vw - 32px)); height: min(720px, calc(100vh - 32px)); }
 #dlg-sorgente > form { display: flex; flex-direction: column; height: 100%; }
 #dlg-sorgente .sorgenti-corpo { flex: 1; min-height: 0; }
 #dlg-sorgente .pannello-sorgente, #dlg-sorgente .elenco-sorgenti { min-height: 0; overflow: auto; }
 
-/* Cronologia: scelta del periodo (6h · 12h · 24h), piccola, in alto a destra del corpo */
+/* Timeline: period choice (6h · 12h · 24h), small, top right of the body */
 .cr-finestre { display: inline-flex; gap: 2px; }
 .cr-finestre button { font-size: .7rem; padding: 1px 8px; border-radius: 999px; border: 1px solid transparent; background: none; color: var(--tenue); font-variant-numeric: tabular-nums; }
 .cr-finestre button:hover { border-color: var(--bordo); }
 .cr-finestre button[aria-pressed="true"] { background: color-mix(in srgb, var(--accento) 14%, transparent); color: var(--testo); font-weight: 600; }
 
-/* Tile accesa dai dati (colore_se) con sfondo: si deve riconoscere da lontano senza abbagliare.
-   Tinta leggera, anello sottile del colore e un battito lento (se il sistema lo consente). */
-/* Intensità scelta nella tile: vale lei, non la tinta del gruppo (0% = nessuna tinta). */
+/* Tile lit by the data (colore_se) with background: it must be recognisable from afar without
+   dazzling. Light tint, a thin ring of the colour and a slow pulse (if the system allows). */
+/* Intensity chosen in the tile: it wins, not the group tint (0% = no tint). */
 .tile.con-sfondo.intensita-propria::after { background: color-mix(in srgb, var(--colore-tile) var(--intensita), transparent); opacity: 1; }
 .tile.con-sfondo.acceso-dai-dati.intensita-propria::after { background: none; }
 .tile.con-sfondo.intensita-propria:not(.acceso-dai-dati) { border-color: color-mix(in srgb, var(--colore-tile) var(--intensita-anello), var(--bordo));
@@ -930,9 +930,9 @@ body[data-display="eink"] .freschezza, body.pannello .freschezza { display: none
 }
 body[data-display="eink"] .tile.acceso-dai-dati.con-sfondo { animation: none; background: #fff; box-shadow: 0 0 0 4px #000; }
 
-/* ---------------------------------------------------------------- 0.3b: testata su una riga
-   Logo e titolo, poi una pillola-icona per sezione, poi i comandi: tutto su una riga. Pillole e
-   comandi mostrano solo l'icona; il nome si apre al passaggio del mouse (o con il fuoco). */
+/* ---------------------------------------------------------------- 0.3b: header on one row
+   Logo and title, then an icon pill per section, then the tools: all on one row. Pills and tools
+   show only the icon; the name opens on hover (or with focus). */
 .barra { flex-wrap: nowrap; gap: 14px; margin: 0 0 14px; min-height: 40px; }
 .barra h1 { flex: none; }
 .barra h1 .logo { width: 30px; height: 30px; border-radius: 9px; }
@@ -955,9 +955,9 @@ body[data-display="eink"] .tile.acceso-dai-dati.con-sfondo { animation: none; ba
 @media (prefers-reduced-motion: reduce) { .pillola .nome-pillola, .controlli .con-testo > span { transition: none; } }
 @media (hover: none) { .barra { flex-wrap: wrap; } .barra .riepilogo { order: 3; flex-basis: 100%; } }
 
-/* ---------------------------------------------------------------- 0.3b: sezioni senza intestazione
-   Il nome della sezione è un'etichetta appoggiata sul bordo del riquadro (come la legenda di un
-   modulo): non occupa una riga, le tile partono subito. */
+/* ---------------------------------------------------------------- 0.3b: sections without a heading
+   The section name is a label resting on the box's border (like a form legend): it takes no row,
+   the tiles start right away. */
 .griglia.con-sezioni { padding-top: 8px; }
 .sezione { margin-bottom: 16px; }
 .dentro-sezione { position: relative; padding: 12px 6px 0; border-radius: 16px; }
@@ -976,9 +976,9 @@ body[data-display="eink"] .tile.acceso-dai-dati.con-sfondo { animation: none; ba
 .disponendo .aggiungi-qui { width: 20px; min-width: 20px; height: 20px; margin-left: auto; }
 @media (max-width: 700px) { .dentro-sezione { padding: 12px 5px 0; } }
 
-/* ---------------------------------------------------------------- 0.3b: trascinamento
-   La tile si solleva (ombra, leggera inclinazione) e segue il puntatore; al suo posto resta una
-   sagoma tratteggiata che mostra dove cadrà; le altre scivolano (FLIP in modifica.js). */
+/* ---------------------------------------------------------------- 0.3b: dragging
+   The tile lifts (shadow, slight tilt) and follows the pointer; a dashed silhouette stays in its
+   place showing where it will land; the others slide (FLIP in modifica.js). */
 .tile.trascinata { opacity: 1; }
 .tile.segnaposto { background: color-mix(in srgb, var(--accento) 7%, transparent) !important; box-shadow: none !important;
   border: 2px dashed color-mix(in srgb, var(--accento) 55%, transparent) !important; animation: none !important; }
@@ -990,8 +990,8 @@ body[data-display="eink"] .tile.acceso-dai-dati.con-sfondo { animation: none; ba
 body.trascinando, body.trascinando * { cursor: grabbing !important; }
 body.trascinando .tile:not(.segnaposto):not(.fantasma) { transition: none; }
 
-/* 0.3 Tile market: finestra di misura fissa (come le sorgenti), schede in testa, catalogo a
-   schede per categoria, "Le tue tile" con un interruttore per riga. */
+/* 0.3 Tile market: a fixed-size window (like the sources), tabs at the top, catalogue in tabs by
+   category, "Your tiles" with a switch per row. */
 #dlg-mercato { width: min(1000px, calc(100vw - 32px)); height: min(760px, calc(100vh - 32px)); }
 #dlg-mercato > form { display: flex; flex-direction: column; height: 100%; max-height: none; }
 #dlg-mercato .corpo-mercato { flex: 1; min-height: 0; }
@@ -1042,36 +1042,36 @@ body.trascinando .tile:not(.segnaposto):not(.fantasma) { transition: none; }
   .cerca-mercato { order: 3; width: 100%; }
 }
 
-/* 0.3.1: la misura volante va a capo invece di allungarsi oltre la finestra */
+/* 0.3.1: the floating size wraps instead of stretching past the window */
 .misura-volante { max-width: min(340px, calc(100vw - 16px)); white-space: normal; line-height: 1.3; }
 
-/* 0.3.1: dentro una sezione la tile ha una superficie piena, così la tinta della sezione non la
-   attraversa e una tile davvero in allarme (sfondo da colore_se) si distingue dalle altre. */
+/* 0.3.1: inside a section the tile has a solid surface, so the section tint does not show through
+   and a tile really in alarm (background from colore_se) stands out from the others. */
 .sezione .tile { --superficie: var(--superficie-piena); }
 .aiuto-campo { font-size: .76rem; color: var(--tenue); }
 
-/* 0.4 Disposizione esplicita: ogni tile nella sua colonna (--gx) e riga (--gy), calcolate da
-   public/disposizione.js. Niente più riempimento automatico "a mattoni". */
+/* 0.4 Explicit layout: each tile in its column (--gx) and row (--gy), computed by
+   public/disposizione.js. No more automatic "brick" filling. */
 .posizionata > .tile { grid-column: var(--gx, auto) / span var(--c, 1); grid-row: var(--gy, auto) / span var(--r, 10); }
 .sezione.destinazione .dentro-sezione { outline: 2px dashed var(--accento); outline-offset: 3px; }
 
-/* 0.4.1 Intestazione: a destra del titolo i periodi, il ritmo di lettura ("60s") e il link. */
+/* 0.4.1 Header: right of the title the periods, the read pace ("60s") and the link. */
 .tile h2 .testa-destra { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; flex: none; font-weight: 400; }
 .tile h2.senza-titolo { justify-content: flex-end; margin-bottom: 6px; }
 .ritmo { font-size: .7rem; color: var(--tenue); font-variant-numeric: tabular-nums; padding-left: 8px; border-left: 1px solid var(--bordo); line-height: 14px; cursor: help; }
 .ritmo.vecchio { color: var(--tono-attenzione); font-weight: 600; }
 body[data-display="eink"] .ritmo, body.pannello .ritmo { display: none; }
 
-/* Cronologia: intestazione delle colonne in fondo, colonne "tenui" (es. obiettivo) e, sotto il
-   grafico, una riga per ogni elemento acceso. */
+/* Timeline: column headings at the end, "faint" columns (e.g. target) and, below the chart, a row
+   for each item that is on. */
 .cr-testa .cr-stato { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); font-weight: 600; padding-bottom: 2px; }
 .cr-stato.tenue { color: var(--tenue); font-weight: 400 !important; }
 .cr-riga.attiva .cr-stato.tenue { color: var(--tono); font-weight: 600 !important; }
 .cr-attivi { list-style: none; margin: 10px 0 0; padding: 8px 0 0; border-top: 1px solid var(--bordo); display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .82rem; font-variant-numeric: tabular-nums; --tono: var(--tono-caldo); }
 .cr-attivi b { color: var(--tono); font-weight: 650; margin-right: 4px; }
 
-/* 0.5 Tile senza gruppo: nessun riquadro né intestazione, tutta la larghezza della pagina. In
-   Modifica si vede come area tratteggiata "Senza gruppo", dove trascinare una tile per sganciarla. */
+/* 0.5 Ungrouped tiles: no box or heading, the whole page width. In Edit they show as a dashed
+   "Ungrouped" area, where a tile is dragged to detach it. */
 .sezione[data-etichetta="_altro"] .dentro-sezione { background: none; border-color: transparent; box-shadow: none; padding: 0; }
 .sezione[data-etichetta="_altro"] .testa-sezione { display: none; }
 .disponendo .sezione[data-etichetta="_altro"] .testa-sezione { display: flex; }
@@ -1081,8 +1081,8 @@ body[data-display="eink"] .ritmo, body.pannello .ritmo { display: none; }
 .riga-cursore input { flex: 1; accent-color: var(--accento); }
 .riga-cursore output { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; color: var(--tenue); }
 
-/* 0.5.1 Testata fissa: viste, workspace e Modifica restano a portata mentre si scorre. La barra
-   di Modifica si aggancia subito sotto (--altezza-testata, misurata da app.js). */
+/* 0.5.1 Sticky header: views, workspace and Edit stay within reach while scrolling. The Edit bar
+   hooks right below (--altezza-testata, measured by app.js). */
 header.barra { position: sticky; top: 8px; z-index: 20; padding: 8px 12px; border-radius: var(--raggio);
   background: color-mix(in srgb, var(--sfondo) 82%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
   border-bottom: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
@@ -1091,13 +1091,13 @@ body.scorsa header.barra { border-bottom-color: var(--bordo); box-shadow: 0 6px 
 body[data-display="eink"] header.barra { position: static; background: none; backdrop-filter: none; }
 body[data-display="mobile"] header.barra { top: 4px; padding: 6px 8px; }
 
-/* 0.6 Grafico: soglie (linee orizzontali di riferimento) */
+/* 0.6 Chart: thresholds (horizontal reference lines) */
 .g-soglia { stroke: var(--tono, var(--tono-allarme)); stroke-width: 1.5; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; --tono: var(--tono-allarme); }
 .g-scritta-soglia { font-size: 11px; font-weight: 600; fill: var(--tono, var(--tono-allarme)); --tono: var(--tono-allarme); }
 .g-soglia[data-tono="attenzione"], .g-scritta-soglia[data-tono="attenzione"] { --tono: var(--tono-attenzione); }
 .g-soglia[data-tono="info"], .g-scritta-soglia[data-tono="info"] { --tono: var(--tono-info); }
 
-/* 0.6 Viste come icone a fisarmonica nella testata; in Modifica restano solo i livelli. */
+/* 0.6 Views as accordion icons in the header; in Edit only the levels stay. */
 .viste { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--testo) 5%, transparent); }
 .vista { display: inline-flex; align-items: center; border: 0; background: none; color: var(--tenue); border-radius: 999px; padding: 5px 7px; cursor: pointer; }
 .vista .nome-vista { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font-size: .8rem; transition: max-width .22s ease, opacity .18s ease, margin .22s ease; }
@@ -1109,7 +1109,7 @@ body[data-display="mobile"] header.barra { top: 4px; padding: 6px 8px; }
 .disponendo .vista.filtro { display: none; }
 .tile.appena-aggiunta { outline: 3px solid var(--accento) !important; outline-offset: 3px; transition: outline-color .4s; }
 
-/* 0.6 Editor: condizioni a righe e campioni di colore */
+/* 0.6 Editor: conditions in rows and colour swatches */
 .regola-colore { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 8px; padding: 10px 12px; border: 1px solid var(--bordo); border-radius: 12px; margin-bottom: 8px; background: color-mix(in srgb, var(--testo) 2%, transparent); }
 .regola-colore .titoletto { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); font-weight: 600; min-width: 4.5em; padding-top: 7px; }
 .quando-regola, .colora-regola { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
@@ -1136,8 +1136,8 @@ body[data-display="mobile"] header.barra { top: 4px; padding: 6px 8px; }
 .campione input:focus-visible + .pallino { outline: 2px solid var(--accento); outline-offset: 3px; }
 .campione.etichetta:has(input:checked) { border-color: var(--tinta); color: var(--testo); }
 
-/* 0.6 Editor della tile: più largo, anteprima allargabile col divisore, il codice si allunga solo
-   in verticale, e lo scorrimento resta dentro la finestra (non passa alla pagina sotto). */
+/* 0.6 Tile editor: wider, preview widened with the divider, the code grows only vertically, and
+   scrolling stays inside the window (it does not pass to the page below). */
 #dlg-tile { width: min(1400px, calc(100vw - 32px)); }
 #dlg-tile .dlg-corpo { grid-template-columns: minmax(360px, 1fr) 10px var(--larghezza-anteprima, 440px); }
 .divisore-anteprima { cursor: col-resize; position: relative; touch-action: none; }
@@ -1149,14 +1149,14 @@ body:has(dialog[open]) { overflow: hidden; }
 @media (max-width: 900px) { #dlg-tile .dlg-corpo { grid-template-columns: minmax(0, 1fr); } .divisore-anteprima { display: none; } }
 body.trascina-divisore, body.trascina-divisore * { cursor: col-resize !important; user-select: none; }
 
-/* 0.6.1 Comandi al passaggio del mouse, fuori da Modifica: rotella (modifica) e ✕ (elimina, con
-   Annulla nell'avviso). Il ritmo e la freccia del link si spostano accanto, invece di finirci sotto. */
+/* 0.6.1 Tools on hover, outside Edit: gear (edit) and ✕ (delete, with Undo in the notice). The pace
+   and the link arrow move next to them, instead of ending up under them. */
 @media (hover: hover) {
   body.con-editor:not(.disponendo) .tile .testa-destra { transition: margin-right .15s ease; }
 }
 
-/* 0.6.1 Editor della tile: uno schema fisso. Ogni parte è una scheda con il suo titolo; dentro,
-   etichetta a sinistra e campo a destra, tutti allineati. */
+/* 0.6.1 Tile editor: a fixed layout. Each part is a card with its title; inside, label on the left
+   and field on the right, all aligned. */
 #dlg-tile .dlg-moduli { padding: 18px 20px 28px; background: color-mix(in srgb, var(--testo) 3%, var(--superficie-piena)); }
 #dlg-tile .impostazioni { display: grid; gap: 14px; }
 #dlg-tile .impostazioni > section, #dlg-tile .impostazioni > fieldset, #dlg-tile .impostazioni > details, #dlg-tile .impostazioni > label {
@@ -1169,7 +1169,7 @@ body.trascina-divisore, body.trascina-divisore * { cursor: col-resize !important
 #dlg-tile .impostazioni label:last-child { margin-bottom: 0; }
 #dlg-tile .impostazioni .aiuto { font-size: .8rem; margin: 6px 0 0; }
 #dlg-tile .impostazioni .spunta { display: flex; gap: 8px; align-items: center; font-size: .88rem; }
-/* Regola di colore: due righe "Quando" e "Colora" con la loro etichetta, ✕ in alto a destra. */
+/* Colour rule: two rows "When" and "Colour" with their label, ✕ at the top right. */
 .regola-colore { display: grid !important; grid-template-columns: 70px minmax(0, 1fr) auto !important; gap: 10px 12px !important; align-items: start; position: relative; }
 .regola-colore > .titoletto { padding-top: 8px; }
 .regola-colore > .condizione-gui { grid-column: 2; }
@@ -1180,10 +1180,10 @@ body.trascina-divisore, body.trascina-divisore * { cursor: col-resize !important
 .condizione-gui .pezzo select { text-align: center; font-weight: 600; }
 @media (max-width: 700px) { #dlg-tile .impostazioni label:not(.spunta):not(.campione):not(.levetta) { grid-template-columns: minmax(0, 1fr); } }
 
-/* 0.7 Tabelle: un valore con più righe ("\n") va a capo nella sua cella. */
+/* 0.7 Tables: a value with several lines ("\n") wraps in its cell. */
 .tabella td { white-space: pre-line; }
 
-/* 0.7 Editor a tutta finestra: niente anteprima, codice e query alti quanto lo schermo. */
+/* 0.7 Full-window editor: no preview, code and query as tall as the screen. */
 .tutta-finestra { border: 1px solid var(--bordo); background: var(--superficie); border-radius: 8px; width: 32px; height: 30px; font-size: 1rem; cursor: pointer; color: var(--tenue); }
 .tutta-finestra[aria-pressed="true"], .tutta-finestra:hover { color: var(--accento); border-color: var(--accento); }
 #dlg-tile.a-tutta-finestra { width: calc(100vw - 24px); height: calc(100vh - 24px); max-height: none; }
@@ -1212,14 +1212,14 @@ body.trascina-divisore, body.trascina-divisore * { cursor: col-resize !important
 }
 body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile :is(.maniglia, .presa) { display: none !important; }
 
-/* 0.7.1 Tile chiusa (solo il titolo), freccia per aprirla e chiuderla; ⧉ duplica al passaggio. */
+/* 0.7.1 Closed tile (title only), arrow to open and close it; ⧉ duplicate on hover. */
 .chiudi-tile:hover { color: var(--accento); background: color-mix(in srgb, var(--testo) 6%, transparent); }
 .tile.chiusa-tile .corpo, .tile.chiusa-tile .piede-box, .tile.chiusa-tile .riduci { display: none !important; }
 .tile.chiusa-tile h2 { margin-bottom: 0; }
 @media (hover: hover) {
 }
 
-/* 1.0 Generi: in "Aggiungi tile" per primi; nell'editor la scheda del genere in evidenza. */
+/* 1.0 Kinds: first in "Add tile"; in the editor the kind's card stands out. */
 .famiglia-generi { margin-bottom: 14px; }
 .elenco-generi { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 .riga-genere .icona-tipo svg { width: 18px; height: 18px; }
@@ -1227,21 +1227,21 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 .titolo-libere { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 18px 0 8px; }
 #dlg-tile .impostazioni > .sezione-genere { border-color: color-mix(in srgb, var(--accento) 45%, var(--bordo)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accento) 20%, transparent); }
 
-/* 1.0 Comandi della tile: ⚙ 👁 ⧉ ✕, gli stessi in Modifica e al passaggio del mouse, allineati. */
+/* 1.0 Tile tools: ⚙ 👁 ⧉ ✕, the same in Edit and on hover, aligned. */
 .strumenti { align-items: center; }
 .strumenti button svg { display: block; width: 16px; height: 16px; }
 @media (hover: hover) {
   body.con-editor:not(.disponendo) .tile:hover .testa-destra { margin-right: 140px; }
 }
-/* Freccia per chiudere la tile (solo il titolo): un bersaglio vero, non un carattere. */
+/* Arrow to close the tile (title only): a real target, not a character. */
 .chiudi-tile { border: 1px solid transparent; background: none; color: var(--tenue); cursor: pointer; width: 28px; height: 28px; padding: 0; border-radius: 8px; display: inline-grid; place-items: center; flex: none; }
 .chiudi-tile svg { transition: transform .15s; }
 .chiudi-tile[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .chiudi-tile:hover { border-color: var(--bordo); }
-/* Riduci (zip) delle tile lunghe: più grande e leggibile. */
+/* Shrink (zip) of long tiles: larger and readable. */
 .riduci { padding: 5px 14px !important; font-size: .8rem !important; gap: 8px !important; }
 
-/* 1.0 Barra di Modifica: stato a sinistra, azioni sulle tile, strumenti della dashboard, Fatto. */
+/* 1.0 Edit bar: status on the left, tile actions, dashboard tools, Done. */
 .barra-modifica { display: flex; align-items: center; gap: 10px 16px; padding: 8px 10px 8px 14px; }
 .gruppo-modifica { display: flex; align-items: center; gap: 6px; }
 .stato-modifica { flex: 1 1 260px; min-width: 0; gap: 12px; }
@@ -1254,17 +1254,17 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 .conta-nascoste:not(:empty) { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 2px; border-radius: 999px; font-size: .72rem; font-weight: 700; background: color-mix(in srgb, var(--testo) 10%, transparent); }
 @media (max-width: 900px) { .stato-modifica .misura { display: none; } .strumenti-dashboard { border-left: 0; padding-left: 0; } }
 
-/* 1.0 Dove compare (👁): viste ed esclusione */
+/* 1.0 Where it shows (👁): views and exclusion */
 .scelta-viste { width: 280px; }
 .riga-scelta.esclusa { border-top: 1px solid var(--bordo); margin-top: 4px; padding-top: 9px; }
 .riga-scelta:has(input:disabled) { opacity: .5; }
 .togli-ospite { display: block; margin: 6px 0 8px; font-size: .82rem; text-align: left; }
 .scelta-viste .azioni-scelta { margin-top: 10px; }
 
-/* 1.0 Più icone: griglia più larga, scorre se serve. */
+/* 1.0 More icons: wider grid, scrolls if needed. */
 .griglia-icone { grid-template-columns: repeat(8, 34px); max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
 
-/* 1.0 Aggiungi tile: i generi come capitoli, con "Da zero" e le tile pronte. */
+/* 1.0 Add tile: kinds as chapters, with "From scratch" and the ready-made tiles. */
 .filtro-generi { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
 .chip-genere { border: 1px solid var(--bordo); background: var(--superficie); border-radius: 999px; padding: 4px 12px; font-size: .82rem; cursor: pointer; color: var(--testo); }
 .chip-genere[aria-pressed="true"] { border-color: var(--accento); color: var(--accento); background: color-mix(in srgb, var(--accento) 10%, transparent); }
@@ -1275,7 +1275,7 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 .testa-genere p { margin: 2px 0 0; font-size: .84rem; color: var(--tenue); }
 .da-zero { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 
-/* 1.0 Editor di una tile di genere: cosa mostra, titolo ed etichetta, il resto chiuso. */
+/* 1.0 Editor of a tile of a kind: what it shows, title and label, the rest closed. */
 #dlg-tile .sezione-genere h3 { display: flex; align-items: center; gap: 8px; }
 #dlg-tile .campo-dati { margin: 0 0 12px; padding: 0 0 12px; border-bottom: 1px dashed var(--bordo); }
 #dlg-tile .campo-dati .campi-sorgente { margin-top: 10px; }
@@ -1291,12 +1291,12 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 @media (max-width: 700px) { #dlg-tile .impostazioni .campo-modulo { grid-template-columns: minmax(0, 1fr); } #dlg-tile .impostazioni .campo-modulo > :not(label) { grid-column: 1; } }
 .tile.lunga { padding-bottom: 42px; }
 
-/* 1.0 beta: le sezioni hanno un posto nella pagina (x, y), come le tile nella sezione. */
+/* 1.0 beta: sections have a place on the page (x, y), like the tiles in a section. */
 .griglia.sezioni-posizionate > .sezione { grid-column: var(--gx, auto) / span var(--cs, 12); grid-row: var(--gy, auto) / span var(--r, 20); }
 .disponendo .testa-sezione { cursor: grab; }
 .disponendo .sezione.trascinata { z-index: 4; }
 
-/* 1.0 beta: più colori per le etichette (anche per tile, sezioni, pillole). */
+/* 1.0 beta: more colours for labels (also for tiles, sections, pills). */
 [data-colore="rosa"], .tile[data-colore="rosa"], .riga-argomento[data-colore="rosa"] { --colore-tile: var(--c-rosa); }
 [data-colore="ciano"], .tile[data-colore="ciano"], .riga-argomento[data-colore="ciano"] { --colore-tile: var(--c-ciano); }
 [data-colore="indaco"], .tile[data-colore="indaco"], .riga-argomento[data-colore="indaco"] { --colore-tile: var(--c-indaco); }
@@ -1307,8 +1307,8 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 .colori-scelta button { width: 24px; height: 24px; border-radius: 999px; border: 2px solid transparent; background: var(--tinta); cursor: pointer; padding: 0; box-shadow: inset 0 0 0 2px var(--superficie-piena); }
 .colori-scelta button[aria-pressed="true"] { border-color: var(--testo); }
 
-/* Segnale di allerta in testata (public/segnale.js): rosso che lampeggia per le allerte gravi,
-   giallo fermo per gli avvisi. */
+/* Alert signal in the header (public/segnale.js): blinking red for critical alerts, steady yellow
+   for warnings. */
 .segnale { display: inline-flex; align-items: center; gap: 8px; max-width: min(360px, 60vw); padding: 5px 12px 5px 10px; border-radius: 999px;
   font-size: .85rem; font-weight: 650; border: 1px solid transparent; cursor: pointer; }
 .segnale[hidden] { display: none; }
@@ -1322,7 +1322,7 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 @media (prefers-reduced-motion: reduce) { .segnale[data-livello="grave"] { animation: none; } }
 .tile.evidenziata { outline: 3px solid var(--c-rosso); outline-offset: 3px; transition: outline-color .4s; }
 
-/* Giro dei workspace: il pulsante acceso e una linea che si riempie fino al prossimo cambio. */
+/* Workspace tour: the button when on, and a line filling up until the next switch. */
 #giro[aria-pressed="true"] { color: #fff; background: linear-gradient(135deg, var(--accento), var(--c-viola)); border-color: transparent;
   box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--accento) 60%, transparent); }
 #giro[aria-pressed="true"] .icona-barra { animation: gira 4s linear infinite; }
@@ -1336,11 +1336,11 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 @keyframes riempi { to { transform: scaleX(1); } }
 
 /* ---------------------------------------------------------------------------------------------
-   Browser senza color-mix() (Chrome prima della 111, es. il browser dei pannelli touch).
-   Attenzione: una regola con color-mix(…var(…)…) NON viene scartata da questi browser: diventa
-   "non valida al momento del calcolo" e la proprietà torna al valore iniziale (sfondo
-   trasparente, niente bordo). Per questo le icone bianche del riepilogo sparivano su fondo
-   chiaro. Qui i colori pieni o le trasparenze che quei browser capiscono.
+   Browsers without color-mix() (Chrome before 111, e.g. the browser of touch panels).
+   Careful: a rule with color-mix(…var(…)…) is NOT dropped by these browsers: it becomes
+   "invalid at computed-value time" and the property goes back to its initial value (transparent
+   background, no border). That is why the white icons of the summary disappeared on a light
+   background. Here are solid colours or transparencies those browsers understand.
    --------------------------------------------------------------------------------------------- */
 @supports not (color: color-mix(in srgb, red 50%, blue)) {
   .segno-tile, .tile[data-colore] .segno-tile, .sezione[data-colore] .segno-tile, .pillola[data-colore] .segno-tile,
@@ -1364,10 +1364,10 @@ body:is([data-vista="allarmi"], [data-vista="completa"]):not(.disponendo) .tile 
 @keyframes lampeggia-semplice { 50% { opacity: .55; } }
 
 /* ---------------------------------------------------------------------------------------------
-   Modalità pannello (display con `pannello: true`, es. il touch a muro): la pagina si guarda e
-   si scorre col dito, non si modifica. Niente maniglie, niente effetti pesanti (sfocature,
-   animazioni continue, ombre che cambiano), niente link che aprono schede. La telecamera passa
-   a un fotogramma ogni 2 secondi (app.js).
+   Panel mode (displays with `pannello: true`, e.g. a wall touch screen): the page is looked at and
+   scrolled with a finger, not edited. No handles, no heavy effects (blur, continuous animations,
+   changing shadows), no links opening tabs. The camera switches to a frame every 2 seconds
+   (app.js).
    --------------------------------------------------------------------------------------------- */
 body.pannello { touch-action: pan-y; -webkit-user-select: none; user-select: none; overscroll-behavior: contain; }
 body.pannello .barra { display: flex !important; position: static !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: var(--sfondo) !important; }

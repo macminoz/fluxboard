@@ -1,7 +1,7 @@
-// Lettore XML minimale, senza dipendenze, per le API che rispondono in XML (PAN-OS…).
-// Restituisce oggetti semplici: un elemento con solo testo diventa una stringa, i figli con lo
-// stesso nome diventano un array, gli attributi stanno in "@nome". Niente namespace né DTD:
-// basta per risposte di API, non è un parser XML completo.
+// Minimal XML reader, without dependencies, for APIs answering in XML (PAN-OS…). Returns plain
+// objects: an element with only text becomes a string, children with the same name become an array,
+// attributes are in "@name". No namespaces or DTD: enough for API answers, it is not a full XML
+// parser.
 
 const ENTITA = { lt: '<', gt: '>', amp: '&', quot: '"', apos: "'" };
 const decodifica = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (m, e) => {
@@ -15,7 +15,7 @@ function aggiungi(genitore, nome, valore) {
   else genitore[nome] = [genitore[nome], valore];
 }
 
-// Un elemento senza figli né attributi è il suo testo; altrimenti un oggetto (testo in "#testo").
+// An element without children or attributes is its text; otherwise an object (text in "#testo").
 function chiudi(nodo) {
   const chiavi = Object.keys(nodo.figli);
   const testo = nodo.testo.trim();

@@ -1,5 +1,5 @@
-# Per un container (cloud o altro). config/ e cache/ vanno montati come volumi,
-# i segreti passati come variabili d'ambiente.
+# For a container (cloud or elsewhere). config/ and cache/ must be mounted as volumes, secrets
+# passed as environment variables.
 FROM node:22-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./

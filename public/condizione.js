@@ -1,6 +1,6 @@
-// Condizioni semplici e sicure (niente eval), usate sia dal server (passaggio "filtra" di
-// elabora) sia dalla pagina (colori delle voci di una tile "valori"). Per questo vivono in
-// public/: il browser le carica così come sono, il server le importa da qui.
+// Simple and safe conditions (no eval), used both by the server (the "filtra" step of elabora) and
+// by the page (colours of the items of a "values" tile). That is why they live in public/: the
+// browser loads them as they are, the server imports them from here.
 
 const OPERATORI = {
   '==': (a, b) => a == b, // eslint-disable-line eqeqeq
@@ -23,10 +23,13 @@ function letterale(testo) {
   return Number.isFinite(n) ? n : t;
 }
 
-// Condizione semplice e sicura (niente eval): "campo op valore", "campo % 2 == 1", "campo",
-// "!campo", "fascia1 == {set}" (confronto fra due campi), "quando entro 5m" / "dal oltre 1h" (date). Più condizioni si uniscono con " e " (tutte vere) oppure " o " (almeno una).
+// Simple and safe condition (no eval): "field op value", "field % 2 == 1", "field", "!field",
+// "band1 == {set}" (comparing two fields), "when within 5m" / "since over 1h" (dates). Several
+// conditions are joined with " e " / " and " (all true) or " o " / " or " (at least one).
 export function compilaCondizione(espressione) {
-  const testo = String(espressione).trim();
+  // English works too: "and", "or", "within", "over" (= e, o, entro, oltre).
+  const testo = String(espressione).trim().replace(/\s+and\s+/g, ' e ').replace(/\s+or\s+/g, ' o ')
+    .replace(/^([\w.]+)\s+within\s+/, '$1 entro ').replace(/^([\w.]+)\s+(?:over|older than)\s+/, '$1 oltre ');
   if (/\s+o\s+/.test(testo)) {
     const parti = testo.split(/\s+o\s+/).map(compilaCondizione);
     return (r) => parti.some((p) => p(r));
@@ -35,7 +38,8 @@ export function compilaCondizione(espressione) {
     const parti = testo.split(/\s+e\s+/).map(compilaCondizione);
     return (r) => parti.every((p) => p(r));
   }
-  // Tempo: "quando entro 2m" = la data in "quando" è degli ultimi 2 minuti; "dal oltre 1h" = più vecchia.
+  // Time: "quando entro 2m" = the date in "quando" is from the last 2 minutes; "dal oltre 1h" =
+  // older.
   const t = testo.match(/^([\w.]+)\s+(entro|oltre)\s+(\d+(?:\.\d+)?)\s*(s|m|h|d)$/);
   if (t) {
     const [, campo, verso, n, u] = t;
@@ -51,7 +55,7 @@ export function compilaCondizione(espressione) {
   const m = testo.match(/^([\w.]+)(?:\s*%\s*(\d+))?\s*(==|!=|!~|>=|<=|>|<|~)\s*(.+)$/);
   if (m) {
     const [, campo, modulo, op, valore] = m;
-    // A destra un valore fisso ("acceso", 21) oppure un altro campo fra graffe ("{set}").
+    // On the right a fixed value ("on", 21) or another field in braces ("{set}").
     const altroCampo = valore.trim().match(/^\{([\w.]+)\}$/)?.[1];
     const fisso = letterale(valore);
     const numerico = modulo || ['>', '>=', '<', '<='].includes(op);
@@ -59,7 +63,7 @@ export function compilaCondizione(espressione) {
       const atteso = altroCampo ? r[altroCampo] : fisso;
       if (altroCampo && (atteso === undefined || atteso === null || atteso === '')) return false;
       let v = r[campo];
-      // Un valore assente non è zero: "codice >= 0" non deve includere chi il codice non ce l'ha.
+      // A missing value is not zero: "codice >= 0" must not include rows without a code.
       if (numerico && (v === undefined || v === null || v === '')) return false;
       if (modulo) v = Number(v) % Number(modulo);
       return OPERATORI[op](v, atteso);

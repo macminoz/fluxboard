@@ -1,6 +1,6 @@
-// Pulsanti delle azioni (accendi una VM, aggiungi un record DNS…). Il browser sa solo come
-// mostrarli: al click chiede conferma (ed eventuali campi), poi il server decide ed esegue con i
-// dati della riga che ha letto lui. Le azioni chiedono la password dell'editor.
+// Action buttons (start a VM, add a DNS record…). The browser only knows how to show them: on click
+// it asks for confirmation (and any fields), then the server decides and runs with the data of the
+// row it read itself. Actions ask for the editor password.
 
 import { proteggi, riempi } from './formato.js';
 import { compilaCondizione } from './condizione.js';
@@ -16,14 +16,14 @@ const vale = (a, riga, ctx) => {
 const pulsante = (t, a, chiave = '') => `<button type="button" class="azione"${a.tono ? ` data-tono="${proteggi(a.tono)}"` : ''}
   data-azione-tile="${proteggi(t.id)}" data-azione-id="${proteggi(a.id)}" data-riga="${proteggi(chiave)}">${proteggi(a.etichetta || a.id)}</button>`;
 
-// Le azioni di una riga (es. "Spegni" accanto a una VM accesa).
+// The actions of a row (e.g. "Shut down" next to a running VM).
 export function pulsantiRiga(t, riga, ctx) {
   const valide = (t.azioni || []).filter((a) => !a.globale && vale(a, riga, ctx));
   return valide.length ? `<span class="azioni-riga">${valide.map((a) => pulsante(t, a, riga[a.chiave || 'id'])).join('')}</span>` : '';
 }
 
-// Le azioni della tile intera (es. "+ Aggiungi record DNS"), più lo storico di quello che è stato
-// nascosto con Ack o Ignora (s.ignorati), da cui si riammette una riga alla volta.
+// The actions of the whole tile (e.g. "+ Add DNS record"), plus the history of what was hidden with
+// Ack or Ignore (s.ignorati), from which a row is readmitted one at a time.
 export function pulsantiTile(t, ctx, s) {
   const valide = (t.azioni || []).filter((a) => a.globale && vale(a, {}, ctx));
   const storico = ctx.controlli !== false && s?.ignorati?.length
@@ -34,7 +34,7 @@ export function pulsantiTile(t, ctx, s) {
 const breve = (ms) => { const m = Math.round(Math.abs(ms) / 60_000); return m < 60 ? `${Math.max(1, m)}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}g`; };
 
 async function chiedi(a, riga, fuso) {
-  // `subito: true`: niente finestra di conferma (azioni innocue, es. segnare un avviso come visto).
+  // `subito: true`: no confirmation window (harmless actions, e.g. marking an alert as seen).
   if (a.subito && !(a.campi || []).length) return {};
   const dlg = document.getElementById('dlg-azione');
   dlg.querySelector('h2').textContent = a.etichetta || a.id;
@@ -47,7 +47,8 @@ async function chiedi(a, riga, fuso) {
   conferma.dataset.tono = a.tono || '';
   const form = dlg.querySelector('form');
   return new Promise((risolvi) => {
-    // La domanda cita i campi: si aggiorna mentre si scrive ("Creare prova.casa.lan → 192.168.1.9?").
+    // The question quotes the fields: it updates while typing ("Create test.home.lan →
+    // 192.168.1.9?").
     form.oninput = () => {
       const valori = Object.fromEntries(new FormData(form));
       if (a.conferma) dlg.querySelector('.domanda').innerHTML = riempi(a.conferma, { ...riga, ...valori }, fuso);
@@ -60,9 +61,9 @@ async function chiedi(a, riga, fuso) {
   });
 }
 
-// pagina(): la pagina corrente (tile e stato); avvisa(testo): mostra un messaggio breve.
+// pagina(): the current page (tiles and state); avvisa(testo): shows a short message.
 export function attivaAzioni(griglia, { pagina, avvisa, fuso }) {
-  // In cattura: l'azione parte prima di qualunque altro click sulla tile (es. il suo link).
+  // In capture: the action starts before any other click on the tile (e.g. its link).
   griglia.addEventListener('click', async (e) => {
     const s = e.target.closest('[data-ignorati]');
     if (s) {
@@ -81,7 +82,7 @@ export function attivaAzioni(griglia, { pagina, avvisa, fuso }) {
     }
     const b = e.target.closest('[data-azione-tile]');
     if (!b) return;
-    e.stopPropagation();                         // non aprire il link della tile
+    e.stopPropagation();                         // do not open the tile's link
     e.preventDefault();
     const p = pagina();
     const t = p.tile.find((x) => x.id === b.dataset.azioneTile);

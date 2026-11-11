@@ -1,6 +1,6 @@
-// Fluxboard: server HTTP. Serve la pagina, l'editor delle configurazioni, le API e il flusso
-// di aggiornamenti in tempo reale (Server-Sent Events). Nessuna dipendenza dall'host su cui gira:
-// tutto lo stato sta in FLUXBOARD_CONFIG e FLUXBOARD_CACHE, i segreti in variabili d'ambiente.
+// Fluxboard: HTTP server. Serves the page, the configuration editor, the APIs and the stream of
+// real-time updates (Server-Sent Events). No dependency on the host it runs on: all the state is in
+// FLUXBOARD_CONFIG and FLUXBOARD_CACHE, secrets in environment variables.
 
 import http from 'node:http';
 import fs from 'node:fs/promises';
@@ -25,6 +25,7 @@ import fsSync from 'node:fs';
 import { COLORI } from './schema.js';
 import { compilaCondizione } from '../public/condizione.js';
 import YAML from 'yaml';
+import { impostaLingua, t } from '../public/lingua.js';
 
 const RADICE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 try { process.loadEnvFile(path.join(RADICE, '.env')); } catch { /* nessun .env: si usano le variabili già presenti */ }
@@ -34,7 +35,7 @@ const INDIRIZZO = process.env.FLUXBOARD_HOST || '0.0.0.0';
 const CARTELLA_CONFIG = path.resolve(RADICE, process.env.FLUXBOARD_CONFIG || 'config');
 const CARTELLA_CACHE = path.resolve(RADICE, process.env.FLUXBOARD_CACHE || 'cache');
 const CARTELLA_PUBBLICA = path.join(RADICE, 'public');
-// Letta ogni volta: si può impostare o cambiare da Impostazioni avanzate → Segreti.
+// Read every time: it can be set or changed from Advanced settings → Secrets.
 const passwordEditor = () => process.env.FLUXBOARD_ADMIN_PASSWORD || '';
 
 const TIPI_MIME = {
@@ -53,7 +54,7 @@ const motore = new Motore(config, connettori, CARTELLA_CACHE);
 const allerta = new Allerta(config, motore);
 await avvisi.carica(path.join(CARTELLA_CACHE, 'avvisi.json'));
 await nascoste.carica(path.join(CARTELLA_CACHE, 'nascoste.json'));
-// Un avviso nuovo o confermato: le tile che mostrano gli avvisi si rileggono subito.
+// A new or acknowledged alert: the tiles showing alerts are re-read right away.
 let rilettura = null;
 avvisi.quandoCambia(() => {
   clearTimeout(rilettura);
@@ -63,17 +64,19 @@ const VERSIONE = JSON.parse(fsSync.readFileSync(path.join(RADICE, 'package.json'
 const snapshot = new Snapshot(config, segreti, VERSIONE);
 const immagini = new Immagini(config);
 await motore.ripristinaCache();
-allerta.valuta();   // la situazione di partenza: dopo un riavvio niente notifiche per le allerte già in corso
+allerta.valuta();   // the starting situation: after a restart no notifications for alerts already in progress
 await config.carica();
 motore.programma();
-// Tile che producono avvisi: se una sparisce (eliminata, spenta), i suoi avvisi diventano "risolti".
+// Tiles producing alerts: if one goes away (deleted, switched off), its alerts become "resolved".
 const origini = () => new Set(Object.entries(config.tile).filter(([, t]) => t.avvisi && t.attiva !== false)
   .flatMap(([id, t]) => ([].concat(t.avvisi).length > 1 ? [].concat(t.avvisi).map((_, i) => `${id}#${i}`) : [id])));
-config.on('ricaricata', () => { motore.programma(); avvisi.dimentica(origini()); trasmetti('config', {}); });
+// Server messages (push notifications, logs) in the language of global.yaml.
+impostaLingua(config.globale.lingua || 'en');
+config.on('ricaricata', () => { impostaLingua(config.globale.lingua || 'en'); motore.programma(); avvisi.dimentica(origini()); trasmetti('config', {}); });
 avvisi.dimentica(origini());
 config.osserva();
 
-// ---------------------------------------------------------------- flusso di aggiornamenti
+// ---------------------------------------------------------------- update stream
 
 const clienti = new Set();
 function trasmetti(evento, dati) {
@@ -81,22 +84,22 @@ function trasmetti(evento, dati) {
   for (const c of clienti) c.write(messaggio);
 }
 motore.on('stato', (id, stato) => { trasmetti('stato', { id, stato }); programmaAllerta(); });
-// Il segnale in testata: si ricalcola poco dopo ogni lettura (le letture arrivano a gruppi).
+// The header signal: recomputed shortly after each read (reads come in groups).
 let attesaAllerta = null;
 function programmaAllerta() { clearTimeout(attesaAllerta); attesaAllerta = setTimeout(() => allerta.valuta(), 400); }
 allerta.on('cambiata', (lista) => trasmetti('allerta', lista));
 config.on('ricaricata', programmaAllerta);
 setInterval(() => { for (const c of clienti) c.write(': battito\n\n'); }, 25_000);
 
-// ---------------------------------------------------------------- la pagina
+// ---------------------------------------------------------------- the page
 
-// ---------------------------------------------------------------- chi si collega
-// Ogni schermo che apre la pagina viene ricordato (indirizzo, browser, profilo usato): serve a
-// riconoscere i pannelli a muro e a decidere che profilo dargli. Regole in global.yaml:
-//   schermi:
-//     - { indirizzo: 192.168.1.60, display: pannello }  # IP esatto, o inizio ("192.168.1.")
-//     - { browser: "Android", display: pannello }      # un pezzo del nome del browser (User-Agent)
-// Una regola vale quando l'indirizzo della pagina non sceglie già un display (?display=...).
+// ---------------------------------------------------------------- who connects
+// Every screen opening the page is remembered (address, browser, profile used): it helps to
+// recognise wall panels and to decide which profile to give them. Rules in global.yaml:
+//   schermi:   # or screens:
+//     - { indirizzo: 192.168.1.60, display: pannello }  # exact IP, or its start ("192.168.1.")
+//     - { browser: "Android", display: pannello }      # part of the browser name (User-Agent)
+// A rule applies when the page address does not already pick a display (?display=...).
 const schermiVisti = new Map();
 const FILE_SCHERMI = path.join(CARTELLA_CACHE, 'schermi.json');
 try { for (const s of JSON.parse(fsSync.readFileSync(FILE_SCHERMI, 'utf8'))) schermiVisti.set(`${s.indirizzo}|${s.browser}`, s); } catch { /* prima volta */ }
@@ -135,16 +138,16 @@ function profiloDisplay(nome) {
   return { nome: scelto, ...(profili[scelto] || { colonne: 4 }), disponibili: Object.keys(profili) };
 }
 
-// ---------------------------------------------------------------- azioni
-// Il browser manda solo: quale tile, quale azione, quale riga (per chiave) e i campi compilati.
-// Cosa eseguire e con quali parametri sta nel file della tile; la riga è quella letta dal server.
+// ---------------------------------------------------------------- actions
+// The browser sends only: which tile, which action, which row (by key) and the fields filled in.
+// What to run and with which parameters is in the tile's file; the row is the one read by the server.
 const compila = (modello, contesto) => String(modello).replace(/\{([\w.]+)\}/g, (_, c) => String(leggiPercorso(contesto, c) ?? ''));
 
 async function eseguiAzione({ tile: id, azione, riga: chiave, campi = {} }) {
   const t = config.tile[id];
   const a = t?.azioni?.find((x) => x.id === azione);
   if (!a) return { ok: false, messaggio: 'azione sconosciuta' };
-  // Ack e Ignora delle righe (server/nascoste.js): valgono per ogni tile, senza password.
+  // Ack and Ignore for rows (server/nascoste.js): valid for every tile, no password.
   if (OPERAZIONI_RIGHE.includes(a.operazione)) {
     const campo = a.chiave || 'id';
     if (!a.globale && !(motore.stato.get(id)?.righe || []).some((r) => String(r[campo]) === String(chiave))) return { ok: false, messaggio: 'la riga non c\'è più: ricarica la pagina' };
@@ -153,12 +156,12 @@ async function eseguiAzione({ tile: id, azione, riga: chiave, campi = {} }) {
     motore.aggiorna(id);
     return { ok: true, messaggio };
   }
-  // Tile senza sorgente (es. il centro avvisi): le operazioni sono del suo tipo di dati.
+  // Tiles without a source (e.g. the alert centre): the operations belong to their data type.
   const nomeSorgente = a.sorgente || t.dati?.sorgente;
   const c = nomeSorgente ? connettori.get(config.sorgenti[nomeSorgente]?.tipo) : connettori.get(t.dati?.tipo);
   const operazione = c?.azioni?.[a.operazione];
   if (!operazione) return { ok: false, messaggio: `la sorgente "${nomeSorgente || t.dati?.tipo}" non sa fare "${a.operazione}"` };
-  // Alcune operazioni non toccano niente fuori da Fluxboard (segnare un avviso come visto): niente password.
+  // Some operations touch nothing outside Fluxboard (marking an alert as seen): no password.
   const libera = (c.azioniLibere || []).includes(a.operazione);
   if (!libera && !passwordEditor()) return { ok: false, messaggio: 'Le azioni sono disattivate finché non c\'è una password: impostala in Impostazioni avanzate → Segreti (FLUXBOARD_ADMIN_PASSWORD).' };
   if (!libera && config.globale.azioni === false) return { ok: false, messaggio: 'Azioni disattivate in global.yaml' };
@@ -195,8 +198,8 @@ function tileDellaSorgente(nome) {
   return Object.entries(config.tile).filter(([, t]) => t.dati?.sorgente === nome).map(([id]) => id);
 }
 
-// Nome della variabile per un segreto scritto nel modulo: quello già usato, se c'è, altrimenti
-// SORGENTE_CAMPO (es. dns-technitium + autenticazione.segreto → DNS_TECHNITIUM_SEGRETO).
+// Variable name for a secret written in the form: the one already used, if any, otherwise
+// SOURCE_FIELD (e.g. dns-technitium + autenticazione.segreto → DNS_TECHNITIUM_SEGRETO).
 function nomeSegreto(sorgente, campo, attuale) {
   const m = typeof attuale === 'string' && attuale.match(/^\$\{([A-Z0-9_]+)\}$/);
   if (m) return m[1];
@@ -210,21 +213,22 @@ function impostaPercorso(oggetto, percorso, valore) {
   o[chiavi.at(-1)] = valore;
 }
 
-// L'etichetta (temperatura, allarmi…) dice a quale sezione appartiene la tile e ne dà colore,
-// icona e sfondo; "colore" resta per un colore diretto. Per compatibilità "colore: <etichetta>"
-// vale come etichetta.
+// The label (temperature, alarms…) says which section the tile belongs to and gives it colour, icon
+// and background; "colore" stays for a direct colour. For compatibility "colore: <label>" counts as
+// a label.
 function coloreTile(t) {
   const etichette = config.globale.argomenti || {};
   const etichetta = t.etichetta ?? (t.colore in etichette ? t.colore : undefined);
   const coloreDi = (n) => (typeof etichette[n] === 'string' ? etichette[n] : etichette[n]?.colore);
   const a = etichette[etichetta];
   const colore = t.colore && !(t.colore in etichette) ? t.colore : coloreDi(etichetta);
-  // sfondoEtichetta: lo sfondo pieno chiesto dall'etichetta vale solo senza sezioni (con le sezioni il
-  // colore lo dà già il riquadro, e lo sfondo pieno resta per gli allarmi veri, cioè colore_se).
+  // sfondoEtichetta: the full background asked by the label applies only without sections (with
+  // sections the box already gives the colour, and the full background is kept for real alarms,
+  // i.e. colore_se).
   return { colore, argomento: etichetta, icona: t.icona, sfondo: t.sfondo ?? null, sfondoEtichetta: typeof a === 'object' ? Boolean(a?.sfondo) : false };
 }
 
-// Quello che il browser riceve di una tile: niente query, niente sorgenti, niente segreti.
+// What the browser receives of a tile: no queries, no sources, no secrets.
 function tilePerClient(id, t) {
   const tipo = TIPI_TILE[t.tipo];
   const predefinito = durata(config.globale.aggiornamento, 60_000);
@@ -237,16 +241,16 @@ function tilePerClient(id, t) {
     titolo: t.titolo ?? id,
     priorita: t.priorita ?? 50,
     larghezza: t.larghezza || 'stretta',
-    // nascondi_vuote: false in global.yaml = le tile con dati restano anche quando sono vuote.
+    // nascondi_vuote: false in global.yaml = tiles with data stay even when empty.
     mostra_se: t.mostra_se || (tipo?.mostraSe === 'dati' && config.globale.nascondi_vuote === false ? 'sempre' : tipo?.mostraSe) || 'sempre',
     livello_minimo: t.livello_minimo || 'base',
     conDati: Boolean(t.dati),
     scadenza: durata(t.scadenza, ogni * 3),
-    ogni: t.dati ? Math.max(5_000, ogni) : undefined,   // come il motore: mai meno di 5 s
+    ogni: t.dati ? Math.max(5_000, ogni) : undefined,   // like the engine: never less than 5 s
     finestre: t.finestre,
     riga: t.riga, testo: t.testo, vuoto: t.vuoto, voci: t.voci, ...coloreTile(t),
     serie: t.serie, fasce: t.fasce, soglie: t.soglie, tacche: t.tacche, gruppo: t.gruppo, se: t.se, ordine: t.ordine, finestra: t.finestra, tono: t.tono, etichetta_se: t.etichetta_se, stato: t.stato, stato_se: t.stato_se, in_fondo: t.in_fondo, intensita: t.intensita, viste: t.viste, asse: t.asse, unita: t.unita, decimali: t.decimali, tabella: t.tabella, colore_se: t.colore_se,
-    // Delle azioni il browser riceve solo come mostrarle: cosa fanno resta sul server.
+    // Of the actions the browser only receives how to show them: what they do stays on the server.
     azioni: (t.azioni || []).map((a) => ({ id: a.id, etichetta: a.etichetta, quando: a.quando, conferma: a.conferma, tono: a.tono,
       globale: Boolean(a.globale), chiave: a.chiave || 'id', livello: a.livello || 'intermedia', campi: a.campi, subito: a.subito === true })),
     url: t.url, diretto: t.diretto === true, altezza: t.altezza, aggiorna_ogni: durata(t.aggiorna_ogni, 0),
@@ -254,17 +258,17 @@ function tilePerClient(id, t) {
   };
 }
 
-// Ordine e dimensioni: prima le tile elencate nella disposizione del display, nell'ordine
-// scelto; poi tutte le altre (per esempio una tile appena creata) per priorità.
+// Order and size: first the tiles listed in the display's layout, in the chosen order; then all the
+// others (e.g. a tile just created) by priority.
 function pagina(nomeDisplay, nomeWorkspace) {
   const display = profiloDisplay(nomeDisplay);
   const ws = config.workspace.includes(nomeWorkspace) ? nomeWorkspace : WORKSPACE_PREDEFINITO;
   const disposizione = config.layout[ws]?.[display.nome] || [];
-  // Nella disposizione le tile si citano per id; la chiave della tile ha anche il workspace.
+  // In the layout tiles are quoted by id; the tile key also has the workspace.
   const posizione = new Map(disposizione.map((v, i) => [v.id, i]));
   const pos = (chiave) => posizione.get(idNelWorkspace(chiave));
-  // Una tile sta nel suo workspace e in quelli elencati in "anche_in". Le tile spente arrivano
-  // lo stesso, segnate: si vedono solo in modalità Modifica, per riaccenderle con un click.
+  // A tile belongs to its workspace and to those listed in "anche_in". Switched-off tiles are sent
+  // too, marked: they show only in Edit mode, to switch them back on with a click.
   const tile = Object.entries(config.tile)
     .filter(([id, t]) => (workspaceDi(id) === ws || (t.anche_in || []).includes(ws))
       && (!display.includi || display.includi.includes(idNelWorkspace(id)))
@@ -279,11 +283,11 @@ function pagina(nomeDisplay, nomeWorkspace) {
   const stato = Object.fromEntries(tile.filter((t) => motore.stato.has(t.id)).map((t) => [t.id, motore.stato.get(t.id)]));
   const { titolo, tema, fuso, livello, lingua } = config.globale;
   return {
-    globale: { titolo, tema, fuso, argomenti: config.globale.argomenti || {}, sezioni: config.globale.sezioni !== false, lingua: lingua || 'it', livello: display.livello || livello, livelli: LIVELLI, editor: config.globale.editor !== false && display.pannello !== true },
+    globale: { titolo, tema, fuso, argomenti: config.globale.argomenti || {}, sezioni: config.globale.sezioni !== false, lingua: lingua || 'en', livello: display.livello || livello, livelli: LIVELLI, editor: config.globale.editor !== false && display.pannello !== true },
     display, tile, stato, ora: Date.now(),
     sezioni: config.sezioni[ws]?.[display.nome] || {},
-    // Allarmi e Completa: una disposizione propria, se è stata fatta in Modifica (altrimenti si
-    // dispongono da sole). Per id della tile come li conosce la pagina.
+    // Alarms and Full: a layout of their own, if one was made in Edit (otherwise they arrange
+    // themselves). By tile id as the page knows them.
     versione: VERSIONE,
     allerte: allerta.lista,
     disposizioniViste: Object.fromEntries(['allarmi', 'completa'].map((v) => {
@@ -296,10 +300,10 @@ function pagina(nomeDisplay, nomeWorkspace) {
   };
 }
 
-// Una voce del file di disposizione come la usa la pagina (altezza → altezza_px).
+// A layout file item as the page uses it (altezza → altezza_px).
 const vocePerClient = (v) => ({ colonne: v?.colonne, altezza_px: v?.altezza, ridotta: v?.ridotta, chiusa: v?.chiusa, x: v?.x, y: v?.y, larghezze: v?.colonne_tabella });
 
-// Larghezze delle colonne di una tabella: { "Host": 160 } (pixel), solo valori sensati.
+// Column widths of a table: { "Host": 160 } (pixels), only sensible values.
 function pulisciLarghezze(o) {
   if (!o || typeof o !== 'object' || Array.isArray(o)) return undefined;
   const r = Object.fromEntries(Object.entries(o).filter(([k, v]) => k && k.length <= 60 && Number.isInteger(v) && v >= 30 && v <= 1500).slice(0, 20));
@@ -320,7 +324,7 @@ function testoLayout(display, voci, sezioni = {}) {
     + YAML.stringify({ tile: voci, ...(Object.keys(pulite).length ? { sezioni: pulite } : {}) }, { flowLevel: 2 });
 }
 
-// ---------------------------------------------------------------- utilità HTTP
+// ---------------------------------------------------------------- HTTP utilities
 
 function json(res, codice, corpo) {
   res.writeHead(codice, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -358,7 +362,7 @@ async function serviFile(res, file) {
   } catch { json(res, 404, { errore: 'non trovato' }); }
 }
 
-// ---------------------------------------------------------------- API dell'editor
+// ---------------------------------------------------------------- editor API
 
 async function apiConfig(req, res, url) {
   const percorso = url.searchParams.get('percorso');
@@ -385,7 +389,7 @@ async function apiConfig(req, res, url) {
       argomenti: config.globale.argomenti || {},
     });
   }
-  // Snapshot ed export: tutta la configurazione in un file, senza segreti.
+  // Snapshots and export: the whole configuration in one file, without secrets.
   if (rotta === '/schermi' && metodo === 'GET') {
     return json(res, 200, { schermi: [...schermiVisti.values()].sort((a, b) => b.visto - a.visto), regole: config.globale.schermi || [] });
   }
@@ -412,11 +416,11 @@ async function apiConfig(req, res, url) {
     const p = await leggiCorpo(req, 10_000_000);
     return json(res, 200, await snapshot.applica(p, `import${p.nome ? ` di "${p.nome}"` : ''}`));
   }
-  // Impostazioni della dashboard dal modulo: solo le chiavi di global.yaml che il modulo conosce.
+  // Dashboard settings from the form: only the global.yaml keys the form knows.
   if (rotta === '/globale' && metodo === 'GET') return json(res, 200, { globale: config.globale });
   if (rotta === '/globale' && metodo === 'PUT') {
     const { campi = {} } = await leggiCorpo(req);
-    const ammesse = ['titolo', 'livello', 'tema', 'aggiornamento', 'nascondi_vuote', 'sezioni', 'argomenti', 'schermi'];
+    const ammesse = ['titolo', 'livello', 'lingua', 'tema', 'aggiornamento', 'nascondi_vuote', 'sezioni', 'argomenti', 'schermi'];
     const filtrati = Object.fromEntries(Object.entries(campi).filter(([k]) => ammesse.includes(k)));
     return json(res, 200, await config.aggiornaCampi('global.yaml', filtrati, { sostituisci: [['argomenti'], ['schermi']] }));
   }
@@ -429,7 +433,7 @@ async function apiConfig(req, res, url) {
     await config.eliminaWorkspace(url.searchParams.get('nome'));
     return json(res, 200, { ok: true, workspace: config.workspace });
   }
-  // Riammette una riga nascosta con Ack o Ignora (dallo storico della tile).
+  // Readmits a row hidden with Ack or Ignore (from the tile's history).
   if (rotta === '/riammetti' && metodo === 'POST') {
     const { tile: id, chiave } = await leggiCorpo(req);
     const t = config.tile[id];
@@ -446,7 +450,7 @@ async function apiConfig(req, res, url) {
   if (rotta === '/segreti' && metodo === 'PUT') {
     const { nome, valore } = await leggiCorpo(req);
     await segreti.imposta(nome, valore);
-    // Rilegge subito le tile che usano una sorgente con quel segreto.
+    // Re-reads right away the tiles using a source with that secret.
     const sorgentiToccate = Object.entries(config.sorgenti).filter(([, s]) => JSON.stringify(s).includes(`\${${nome}}`)).map(([n]) => n);
     for (const [id, t] of Object.entries(config.tile)) if (sorgentiToccate.includes(t.dati?.sorgente)) motore.aggiorna(id);
     return json(res, 200, { ok: true, segreti: segreti.elenco(config.sorgenti) });
@@ -466,8 +470,8 @@ async function apiConfig(req, res, url) {
     await config.eliminaFile(percorso);
     return json(res, 200, { ok: true });
   }
-  // Larghezze delle colonne di una tabella: solo quelle di una tile, nella disposizione del display
-  // (valgono in tutte le viste), senza toccare posizioni e misure.
+  // Column widths of a table: only those of one tile, in the display's layout (valid in every
+  // view), without touching positions and sizes.
   if (rotta === '/layout/colonne' && metodo === 'PUT') {
     const { display, id, larghezze, workspace = WORKSPACE_PREDEFINITO } = await leggiCorpo(req);
     if (!nomeValido(display) || typeof id !== 'string' || !config.workspace.includes(workspace)) return json(res, 400, { errore: 'servono "display", "id" e un workspace esistente' });
@@ -485,18 +489,19 @@ async function apiConfig(req, res, url) {
     const intero = (n, max) => (Number.isInteger(n) && n >= 0 && n <= max ? n : undefined);
     const voci = tile.map((v) => Object.fromEntries(Object.entries({ id: idNelWorkspace(v.id), colonne: v.colonne, altezza: v.altezza, ridotta: v.ridotta === true ? true : undefined, chiusa: v.chiusa === true ? true : undefined, x: intero(v.x, 11), y: intero(v.y, 100_000), colonne_tabella: pulisciLarghezze(v.colonne_tabella) })
       .filter(([, x]) => x !== undefined && x !== null)));
-    // Le sezioni non citate restano come sono.
+    // Sections not mentioned stay as they are.
     const tutte = { ...(config.sezioni[workspace]?.[display] || {}), ...(sezioni && typeof sezioni === 'object' ? sezioni : {}) };
     return json(res, 200, await config.scriviFile(percorsoLayout(workspace, display), testoLayout(display, voci, tutte)));
   }
-  // ---- editor visuale delle tile, usato direttamente dalla dashboard
+  // ---- visual tile editor, used straight from the dashboard
   if (rotta === '/tile' && metodo === 'GET') {
     const id = url.searchParams.get('id') || '';
     if (!classifica(percorsoTile(id))) return json(res, 400, { errore: 'id non valido' });
     try {
       const testo = await config.leggiFile(percorsoTile(id));
       const oggetto = YAML.parse(testo) ?? {};
-      // Tile di un genere: anche il genere (i campi da chiedere) e la tile espansa (per l'anteprima).
+      // Tile of a kind: also the kind (the fields to ask for) and the expanded tile (for the
+      // preview).
       const g = oggetto.genere ? generi.get(oggetto.genere) : null;
       return json(res, 200, { id, testo, oggetto, genere: g ? { id: g.id, nome: g.nome, descrizione: g.descrizione, icona: g.icona, campi: g.campi } : null,
         espansa: g ? generi.espandi(oggetto).tile : null });
@@ -510,14 +515,14 @@ async function apiConfig(req, res, url) {
       if (nuovo && config.tile[id]) return json(res, 200, { ok: false, errori: [`la tile "${id}" esiste già`], avvisi: [] });
       return json(res, 200, await config.scriviFile(rel, testo));
     }
-    // Tile di genere: gli elenchi scritti nel modulo come testo YAML tornano elenchi nel file.
+    // Tile of a kind: lists written in the form as YAML text become lists in the file.
     const genereScritto = campi?.genere || (!nuovo && config.tile[id]?.genere);
     if (genereScritto && campi?.campi && typeof campi.campi === 'object') {
       const g = generi.get(genereScritto);
       for (const c of g?.campi || []) {
         const v = campi.campi[c.nome];
         if (typeof v === 'string' && ['query', 'elenco'].includes(c.tipo) && /^\s*-\s|^\s*[[{]/.test(v)) { try { campi.campi[c.nome] = YAML.parse(v); } catch { /* resta testo */ } }
-        // Il campo "dati": gli elenchi della sorgente (software, servizi…) scritti come testo YAML.
+        // The "dati" field: the source's lists (software, services…) written as YAML text.
         if (c.tipo === 'dati' && v && typeof v === 'object') {
           for (const [k, x] of Object.entries(v)) if (typeof x === 'string' && /^\s*-\s/.test(x)) { try { v[k] = YAML.parse(x); } catch { /* resta testo */ } }
         }
@@ -526,7 +531,7 @@ async function apiConfig(req, res, url) {
     return json(res, 200, await config.aggiornaCampi(rel, campi || {}, { nuovo: Boolean(nuovo), sostituisci: sostituisci || [] }));
   }
 
-  // Sorgenti dal modulo (come le "data source" di Grafana): tipo, campi, segreti, prova.
+  // Sources from the form (like Grafana's "data sources"): type, fields, secrets, test.
   if (rotta === '/sorgente' && metodo === 'GET') {
     const nome = url.searchParams.get('nome');
     const rel = `sorgenti/${nome}.yaml`;
@@ -539,7 +544,7 @@ async function apiConfig(req, res, url) {
     const rel = `sorgenti/${nome}.yaml`;
     if (!classifica(rel)) return json(res, 400, { errore: 'nome non valido: minuscole, cifre e trattini' });
     const attuale = config.sorgenti[nome] || {};
-    // Un segreto scritto nel modulo va in segreti.env; nel file resta solo ${NOME}.
+    // A secret written in the form goes to segreti.env; only ${NAME} stays in the file.
     for (const [campo, valore] of Object.entries(nuovi)) {
       if (!valore) continue;
       const variabile = nomeSegreto(nome, campo, leggiPercorso(attuale, campo));
@@ -550,8 +555,8 @@ async function apiConfig(req, res, url) {
     if (esito.ok) for (const id of tileDellaSorgente(nome)) motore.aggiorna(id);
     return json(res, 200, esito);
   }
-  // Rinominare una sorgente: file nuovo, tutte le tile (di ogni workspace) puntate sul nome nuovo,
-  // vecchio file nel cestino. I segreti restano come sono (${NOME} nel file non cambia).
+  // Renaming a source: new file, every tile (of every workspace) pointed at the new name, old file
+  // to the trash. Secrets stay as they are (${NAME} in the file does not change).
   if (rotta === '/sorgente/rinomina' && metodo === 'POST') {
     const { da, a } = await leggiCorpo(req);
     if (!config.sorgenti[da]) return json(res, 404, { errore: `la sorgente "${da}" non esiste` });
@@ -581,7 +586,7 @@ async function apiConfig(req, res, url) {
     const mancanti = new Set();
     const risolta = sostituisciEnv(prova, mancanti);
     for (const [campo, valore] of Object.entries(nuovi)) if (valore) impostaPercorso(risolta, campo, valore);
-    // Un segreto non ritoccato nel modulo vale quello già salvato.
+    // A secret not touched in the form keeps the one already saved.
     for (const campo of Object.keys(nuovi)) if (!nuovi[campo] && nome && config.sorgenti[nome]) {
       try { impostaPercorso(risolta, campo, leggiPercorso(config.sorgenteRisolta(nome), campo)); } catch { /* resta vuoto */ }
     }
@@ -604,7 +609,7 @@ async function apiConfig(req, res, url) {
     const titolo = doc.get('titolo');
     if (typeof titolo === 'string' && titolo) doc.set('titolo', `${titolo} (copia)`);
     const esito = await config.scriviFile(percorsoTile(nuovoId), doc.toString({ lineWidth: 0 }));
-    // Nella disposizione del display la copia va subito dopo l'originale, non in fondo.
+    // In the display's layout the copy goes right after the original, not at the end.
     const ws = workspaceDi(id);
     const disposizione = config.layout[ws]?.[display];
     if (esito.ok && disposizione) {
@@ -644,7 +649,7 @@ async function apiConfig(req, res, url) {
     }
   }
   const stessoSito = (a, b) => { try { return new URL(a).host === new URL(b).host; } catch { return false; } };
-  // Generi di tile (modelli): l'elenco con i campi, e "Salva come genere" da una tile.
+  // Kinds of tile (models): the list with the fields, and "Save as kind" from a tile.
   if (rotta === '/generi' && metodo === 'GET') return json(res, 200, { generi: generi.elenco() });
   if (rotta === '/generi/espandi' && metodo === 'POST') {
     const { oggetto } = await leggiCorpo(req);
@@ -662,7 +667,7 @@ async function apiConfig(req, res, url) {
     const esito = await config.scriviFile(`generi/${slug}.yaml`, testo);
     return json(res, 200, { ...esito, id: slug });
   }
-  // Tile market: il catalogo dei modelli pronti e le tile del workspace, con il loro interruttore.
+  // Tile market: the catalogue of ready-made models and the workspace's tiles, with their switch.
   if (rotta === '/mercato' && metodo === 'GET') {
     const ws = url.searchParams.get('workspace') || WORKSPACE_PREDEFINITO;
     const delWs = Object.entries(config.tile).filter(([k]) => workspaceDi(k) === ws);
@@ -670,8 +675,8 @@ async function apiConfig(req, res, url) {
     const voci = (await catalogo.elenco()).map((v) => ({
       ...v,
       nomeSorgente: v.sorgente ? (connettori.get(v.sorgente)?.nome || v.sorgente) : null,
-      // Un modello per un'API esterna (es. Open-Meteo) propone solo le sorgenti con quell'indirizzo:
-      // mai una sorgente con le credenziali di un altro servizio.
+      // A model for an external API (e.g. Open-Meteo) offers only the sources with that address:
+      // never a source with another service's credentials.
       sorgenti: v.sorgente ? Object.entries(config.sorgenti).filter(([, x]) => x.tipo === v.sorgente
         && (!v.indirizzo || stessoSito(x.url, v.indirizzo))).map(([n]) => n) : [],
       aggiunte: delWs.filter(([, t]) => t.da_catalogo === v.id).map(([k]) => k),
@@ -689,9 +694,9 @@ async function apiConfig(req, res, url) {
       if (!voce) return json(res, 404, { errore: `il modello "${id}" non è nel catalogo` });
       if (voce.sorgente && config.sorgenti[sorgente]?.tipo !== voce.sorgente) return json(res, 200, { ok: false, errori: [`serve una sorgente di tipo "${voce.sorgente}"`] });
       if (voce.indirizzo && !stessoSito(config.sorgenti[sorgente]?.url, voce.indirizzo)) return json(res, 200, { ok: false, errori: [`serve una sorgente che punti a ${voce.indirizzo}`] });
-      costruita = await catalogo.costruisci(id, { sorgente, parametri });
+      costruita = await catalogo.costruisci(id, { sorgente, parametri, lingua: config.globale.lingua || 'en' });
     } catch (e) { return json(res, 200, { ok: false, errori: [e.message] }); }
-    // Nome del file: quello del modello, con un numero se c'è già (si può aggiungere più volte).
+    // File name: the model's, with a number if it already exists (it can be added more than once).
     const prefisso = workspace === WORKSPACE_PREDEFINITO ? '' : `${workspace}/`;
     let chiave = `${prefisso}${id}`;
     for (let n = 2; config.tile[chiave]; n++) chiave = `${prefisso}${id}-${n}`;
@@ -723,13 +728,13 @@ async function apiConfig(req, res, url) {
 // ---------------------------------------------------------------- router
 
 const server = http.createServer(async (req, res) => {
-  // Un indirizzo malformato (es. "//") è un errore della richiesta, non deve fermare il server.
+  // A malformed address (e.g. "//") is an error of the request, it must not stop the server.
   let url;
   try { url = new URL(req.url.replace(/^\/{2,}/, '/'), 'http://localhost'); } catch { return json(res, 400, { errore: 'indirizzo non valido' }); }
   try {
     if (url.pathname === '/api/pagina') {
-      // Il display scritto nell'indirizzo vince; se il browser lo ha solo indovinato (auto=1,
-      // dalla larghezza dello schermo) vale prima una regola di `schermi:` per chi si collega.
+      // The display written in the address wins; if the browser only guessed it (auto=1, from the
+      // screen width) a `schermi:` rule for whoever connects comes first.
       const chi = chiSiCollega(req);
       const chiesto = url.searchParams.get('display');
       const regola = (!chiesto || url.searchParams.has('auto')) ? displayPerSchermo(chi) : null;
@@ -766,7 +771,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORTA, INDIRIZZO, () => {
-  console.log(`Fluxboard in ascolto su http://${INDIRIZZO}:${PORTA}  (config: ${CARTELLA_CONFIG})`);
-  console.log(`Connettori: ${[...connettori.keys()].join(', ')}`);
-  if (!passwordEditor()) console.log('Editor /config senza password (imposta FLUXBOARD_ADMIN_PASSWORD per proteggerlo)');
+  console.log(t('Fluxboard in ascolto su http://{}:{} (config: {})', INDIRIZZO, PORTA, CARTELLA_CONFIG));
+  console.log(t('Connettori: {}', [...connettori.keys()].join(', ')));
+  if (!passwordEditor()) console.log(t('Editor /config senza password (imposta FLUXBOARD_ADMIN_PASSWORD per proteggerlo)'));
 });

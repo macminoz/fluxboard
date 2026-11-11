@@ -1,4 +1,4 @@
-// Messaggi brevi in basso ("Tile salvata", esito di un'azione), con un "Annulla" facoltativo.
+// Short messages at the bottom ("Tile saved", the result of an action), with an optional "Undo".
 
 export function avvisa(testo, annulla) {
   const el = document.createElement('div');

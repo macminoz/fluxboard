@@ -1,25 +1,25 @@
-// Centro avvisi: i messaggi critici restano finché qualcuno non li conferma ("Visto").
+// Alert centre: critical messages stay until someone acknowledges them ("Seen").
 //
-// Li produce qualunque tile con un blocco `avvisi:` (ogni riga che rispetta `quando` diventa un
-// avviso); li mostra una tile con `dati: { tipo: avvisi }`. Lo stesso avviso (stessa `chiave`) non
-// si ripete: si conta (`volte`) e si aggiorna l'ultima volta. Un avviso confermato sparisce; se il
-// problema si ripresenta dopo la conferma, torna. Gli avvisi stanno in cache/avvisi.json, così
-// sopravvivono a un riavvio.
+// They are produced by any tile with an `avvisi:` block (each row matching `quando` becomes an
+// alert); they are shown by a tile with `dati: { tipo: avvisi }`. The same alert (same `chiave`) is
+// not repeated: it is counted (`volte`) and its last time updated. An acknowledged alert
+// disappears; if the problem comes back after the acknowledgement, so does the alert. Alerts live
+// in cache/avvisi.json, so they survive a restart.
 //
-// Una voce: { chiave, messaggio, host, gravita: critico|attenzione, origine (id della tile),
-//             primo, ultimo, volte, attivo (il problema c'è ancora), confermato (data o null),
-//             ignorato (data o null: "Ignora" lo toglie per sempre, finché non si ripristina) }
+// An item: { chiave, messaggio, host, gravita: critico|attenzione, origine (tile id),
+//           primo, ultimo, volte, attivo (the problem is still there), confermato (date or null),
+//           ignorato (date or null: "Ignore" removes it for good, until it is restored) }
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { compilaCondizione } from '../public/condizione.js';
 import { riempi, comeData } from '../public/formato.js';
 
-const TENUTA_CONFERMATI = 7 * 24 * 3600_000;   // un avviso confermato e risolto si dimentica dopo 7 giorni
+const TENUTA_CONFERMATI = 7 * 24 * 3600_000;   // an acknowledged and resolved alert is forgotten after 7 days
 const SOSPENSIONE = 24 * 3600_000;              // un Ack sospende l'avviso per 24 ore
 const MASSIMO = 500;
 
-// riempi() produce HTML protetto: qui serve il testo.
+// riempi() produces escaped HTML: here we need the text.
 const testo = (modello, riga) => riempi(modello, riga).replace(/&(amp|lt|gt|quot|#39);/g, (_, e) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[e]))
   .replace(/^—$/, '');
 
@@ -47,7 +47,7 @@ export class Avvisi {
 
   quandoCambia(f) { this.ascoltatori.add(f); }
 
-  // Le righe appena lette da una tile, filtrate e trasformate secondo il suo blocco `avvisi`.
+  // The rows just read by a tile, filtered and transformed according to its `avvisi` block.
   registra(origine, regola, righe) {
     const quando = regola.quando ? compilaCondizione(regola.quando) : () => true;
     const gravitaDi = (r) => {
@@ -72,9 +72,9 @@ export class Avvisi {
         this.voci.set(chiave, { chiave, origine, messaggio, host, gravita: gravitaDi(r), primo: istante, ultimo: istante, volte: volteLette || 1, attivo: true, confermato: null });
         continue;
       }
-      // Di nuovo dopo l'ultima volta registrata: un'altra occorrenza. Un avviso confermato torna
-      // solo se il problema era finito e si è ripresentato: un messaggio che si ripete di continuo
-      // (es. ogni 3 minuti) resta zitto dopo la conferma finché non smette e ricomincia.
+      // Again after the last recorded time: another occurrence. An acknowledged alert comes back
+      // only if the problem had ended and came back: a message repeating all the time (e.g. every 3
+      // minutes) stays quiet after the acknowledgement until it stops and starts again.
       const nuovo = istante > v.ultimo;
       const eraFinito = !v.attivo;
       Object.assign(v, { messaggio, host, gravita: gravitaDi(r), attivo: true });
@@ -84,8 +84,8 @@ export class Avvisi {
         if (v.confermato && eraFinito && istante > v.confermato) { v.confermato = null; v.primo = istante; v.volte = volteLette || 1; }
       } else if (volteLette && volteLette > v.volte) v.volte = volteLette;
     }
-    // Quelli di questa tile che adesso non ci sono più: il problema è finito, ma l'avviso resta
-    // (senza conferma non sparisce) segnato come risolto.
+    // The ones of this tile that are gone now: the problem is over, but the alert stays (without an
+    // acknowledgement it does not disappear) marked as resolved.
     for (const v of this.voci.values()) if (v.origine === origine && !viste.has(v.chiave)) v.attivo = false;
     this.#pulisci(adesso);
     this.#salva();
@@ -93,14 +93,15 @@ export class Avvisi {
 
   #pulisci(adesso) {
     for (const [k, v] of this.voci) if (!v.ignorato && v.confermato && !v.attivo && adesso - v.confermato > TENUTA_CONFERMATI) this.voci.delete(k);
-    // Oltre il massimo si dimenticano i più vecchi, ma gli ignorati per ultimi (altrimenti tornerebbero).
+    // Past the maximum the oldest are forgotten, the ignored ones last (otherwise they would come
+    // back).
     if (this.voci.size > MASSIMO) {
       const vecchi = [...this.voci.values()].sort((a, b) => (Boolean(a.ignorato) - Boolean(b.ignorato)) || (a.ultimo - b.ultimo)).slice(0, this.voci.size - MASSIMO);
       for (const v of vecchi) this.voci.delete(v.chiave);
     }
   }
 
-  // Le origini che non esistono più (tile eliminate) non devono lasciare avvisi orfani attivi.
+  // Origins that no longer exist (deleted tiles) must not leave active orphan alerts.
   dimentica(origini) {
     let cambiato = false;
     for (const v of this.voci.values()) if (!origini.has(v.origine) && v.attivo) { v.attivo = false; cambiato = true; }
@@ -115,8 +116,8 @@ export class Avvisi {
     return `Ack: «${v.messaggio.slice(0, 60)}» sospeso per 24 ore`;
   }
 
-  // Ignora: un messaggio innocuo che non si sa come risolvere. Sparisce per sempre (anche quando
-  // si ripete), finché non si ripristinano gli ignorati.
+  // Ignore: a harmless message nobody knows how to fix. It disappears for good (even when it
+  // repeats), until the ignored ones are restored.
   ignora(chiave) {
     const v = this.voci.get(chiave);
     if (!v) throw new Error('avviso non trovato: ricarica la pagina');
@@ -125,7 +126,7 @@ export class Avvisi {
     return `Ignorato: «${v.messaggio.slice(0, 60)}» non comparirà più`;
   }
 
-  // Storico degli ignorati, per la tile che mostra gli avvisi: si riammettono uno per uno.
+  // History of the ignored alerts, for the tile showing the alerts: they are readmitted one by one.
   ignorati() {
     return [...this.voci.values()].filter((v) => v.ignorato)
       .map((v) => ({ chiave: v.chiave, testo: `${v.host ? `${v.host} · ` : ''}${v.messaggio}`, dal: v.ignorato, fino: null }))
@@ -154,8 +155,8 @@ export class Avvisi {
     return `Ack: ${n} avvis${n === 1 ? 'o sospeso' : 'i sospesi'} per 24 ore`;
   }
 
-  // Prima i da vedere, poi i più gravi, poi i più recenti. Un Ack sospende l'avviso per 24 ore:
-  // passate quelle, se il problema c'è ancora (attivo) l'avviso torna fra quelli da vedere.
+  // Unseen first, then the most severe, then the most recent. An Ack snoozes the alert for 24
+  // hours: after that, if the problem is still there (attivo) the alert is back among the unseen.
   elenco() {
     const peso = { critico: 0, attenzione: 1 };
     const adesso = Date.now();

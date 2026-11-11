@@ -1,5 +1,5 @@
-// Modelli di partenza per i file nuovi creati dall'editor. Sono generici di proposito: i nomi
-// di host, query e campi vanno sostituiti con quelli veri.
+// Starting models for the new files created by the editor. They are generic on purpose: host names,
+// queries and fields must be replaced with the real ones.
 
 export const MODELLI_TILE = {
   elenco: `# Una riga per ogni elemento restituito dalla sorgente.

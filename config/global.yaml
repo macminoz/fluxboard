@@ -1,78 +1,59 @@
-# Impostazioni della cornice: valgono per tutta la pagina.
-titolo: Fluxboard
-lingua: it
-fuso: Europe/Rome
-livello: intermedia # base | intermedia | avanzata (predefinito, ogni display può cambiarlo)
-tema: auto # auto | chiaro | scuro
-aggiornamento: 1m # ogni quanto rileggere le sorgenti, se la tile non dice altro
-editor: true # false = disattiva l'editor web /config
+# Settings for the whole page.
+title: Fluxboard
+language: en          # en | it — interface language (keys in these files work in both)
+timezone: Europe/Rome
+level: intermediate   # basic | intermediate | advanced (each display can change it)
+theme: auto           # auto | light | dark
+refresh: 1m           # how often to re-read the sources, unless a tile says otherwise
+editor: true          # false = turns off the /config web editor
 
-# Etichette: ogni tile ne ha una ("etichetta: temperatura") e da lei prende colore, icona e
-# sfondo. Con "sezioni: true" le tile si raggruppano in una sezione per etichetta; l'ordine qui
-# sotto è l'ordine delle sezioni e la priorità di "Riordina le tile". Colori disponibili:
-# blu azzurro verde giallo arancio rosso viola grigio. "sfondo: true" tinge anche il fondo.
-# "icona": termometro fiamma sole nuvola fulmine casa server rete allarme grafico telecamera dns orologio nota
-# (La chiave si chiama ancora "argomenti" per compatibilità con le versioni 0.1.)
-sezioni: true
-argomenti:
-  sicurezza:
-    colore: blu
-    icona: telecamera
-  allarmi:
-    colore: rosso
-    sfondo: true
-    icona: allarme
-  temperatura:
-    colore: arancio
-    icona: termometro
-  energia:
-    colore: giallo
-    icona: fulmine
-  infrastruttura:
-    colore: grigio
-    icona: server
-  meteo:
-    colore: azzurro
-    icona: nuvola
-  stato:
-    colore: verde
-    icona: casa
-  statistiche:
-    colore: viola
-    icona: dns
-  stream:
-    colore: grigio
-    icona: telecamera
+# Labels: every tile has one ("label: weather") and takes its colour, icon and background from
+# it. With "sections: true" tiles are grouped in one section per label; the order below is the
+# order of the sections. Colours: blue azure green yellow orange red purple pink cyan indigo
+# lime amber brown grey. "background: true" tints the background too.
+sections: true
+labels:
+  alarms:
+    colour: red
+    background: true
+    icon: alarm
+  weather:
+    colour: azure
+    icon: cloud
+  infrastructure:
+    colour: grey
+    icon: server
+  home:
+    colour: green
+    icon: home
 
-
-# Profili dei display. Si scelgono con ?display=<nome>; senza parametro il browser sceglie
-# "mobile" sotto i 700 px di larghezza, altrimenti il primo dell'elenco (o quello di una regola
-# in "schermi", qui sotto).
+# Display profiles. Pick one with ?display=<name>; without it the browser picks "mobile" below
+# 700 px of width, otherwise the first in the list (or the one of a rule in "screens" below).
 display:
   browser:
-    colonne: 12 # griglia fine: la larghezza delle tile si regola a passi di 1/12
+    columns: 12        # fine grid: tile widths change in 1/12 steps
   mobile:
-    colonne: 1
-  pannello:
-    # touch a muro o tablet da parete: sola lettura e leggero, si scorre col dito
-    colonne: 6
-    livello: base
-    controlli: false # niente selettore di vista né editor
-    pannello: true
+    columns: 1
+  panel:
+    # wall touch panel or tablet: read only and lightweight, scrolled with a finger
+    columns: 6
+    level: basic
+    controls: false    # no view selector, no editor
+    panel: true
   eink:
-    colonne: 4
-    livello: base
-    controlli: false
+    columns: 4
+    level: basic
+    controls: false
 
-# Chi si collega: un profilo di display per schermo, scelto da Fluxboard senza toccare
-# l'indirizzo della pagina. Gli schermi che hanno aperto la pagina, con indirizzo e browser, si
-# vedono in Impostazioni → Schermi (e lì si sceglie il profilo con un menu).
-# schermi:
-#   - { indirizzo: 192.168.1.60, display: pannello }   # IP esatto, o l'inizio ("192.168.1.")
-#   - { browser: "Android", display: pannello }        # un pezzo del nome del browser
+# Who connects: a display profile per screen, chosen by Fluxboard without touching the page
+# address. The screens that opened the page, with address and browser, are listed in
+# Settings → Screens (where a profile is picked from a menu).
+# screens:
+#   - { address: 192.168.1.60, display: panel }   # exact IP, or its start ("192.168.1.")
+#   - { browser: "Android", display: panel }      # part of the browser name
 
-# Notifiche push quando una tile va in allerta grave (facoltative). Vedi la guida, sezione 5d.
-# notifiche:
-#   - url: http://192.168.1.40:1880/fluxboard/allerta   # webhook (es. un nodo "http in" di Node-RED)
-#   - url: https://ntfy.sh/il-mio-argomento
-#     formato: ntfy
+# Push notifications when a tile goes into critical alert (optional). See the guide, "Alerts".
+# notifications:
+#   - url: http://192.168.1.40:1880/fluxboard/alert   # a webhook (e.g. a Node-RED "http in" node)
+#   - url: https://ntfy.sh/my-topic
+#     format: ntfy

@@ -1,26 +1,27 @@
-// Allerta: le tile che in questo momento segnalano qualcosa di grave, di tutti i workspace.
-// Alimenta il segnale lampeggiante in testata (con il suono, se acceso nel browser) e le notifiche
-// push verso l'esterno (Node-RED, ntfy, un webhook qualsiasi).
+// Alert: the tiles signalling something serious right now, across every workspace. It feeds
+// the blinking signal in the header (with sound, if turned on in the browser) and the push
+// notifications to the outside (Node-RED, ntfy, any webhook).
 //
-// Quando una tile è in allerta:
-//   - di suo: quando `colore_se` la accende di `rosso` (o con l'etichetta `allarmi`) → grave;
-//   - con `allerta:` nella tile si decide a mano:
-//       allerta: grave     ogni volta che colore_se la accende, di qualunque colore
-//       allerta: avviso    idem, ma solo segnale giallo in testata (niente suono, niente push)
-//       allerta: no        mai (anche se diventa rossa)
-// Le righe nascoste con Ack o Ignora non contano: un Ack spegne anche il segnale.
+// When a tile is in alert:
+//   - by itself: when `colore_se` lights it up `rosso` (or with the `allarmi` label) → critical;
+//   - with `allerta:` in the tile it is decided by hand:
+//       allerta: grave     every time colore_se lights it up, whatever the colour
+//       allerta: avviso    the same, but only a yellow signal in the header (no sound, no push)
+//       allerta: no        never (even if it turns red)
+// Rows hidden with Ack or Ignore do not count: an Ack turns the signal off too.
 //
-// Notifiche, in global.yaml (facoltative):
+// Notifications, in global.yaml (optional; English keys work too):
 //   notifiche:
-//     - url: http://192.168.1.40:1880/fluxboard/allerta   # webhook: riceve un JSON
-//       formato: json            # json (predefinito) · ntfy (url = server ntfy + /argomento) · testo
-//       livello: grave           # grave (predefinito) o avviso
-//       anche_risolte: false     # true = avvisa anche quando l'allerta finisce
-//       ripeti_dopo: 15m         # un'allerta che va e viene non manda più di una notifica ogni 15m
+//     - url: http://192.168.1.40:1880/fluxboard/allerta   # webhook: receives a JSON
+//       formato: json            # json (default) · ntfy (url = ntfy server + /topic) · testo
+//       livello: grave           # grave (default) or avviso
+//       anche_risolte: false     # true = notifies also when the alert ends
+//       ripeti_dopo: 15m         # an alert that comes and goes sends at most one notification every 15m
 //       intestazioni: { Authorization: "Bearer ${NTFY_TOKEN}" }
 
 import { EventEmitter } from 'node:events';
 import { compilaCondizione } from '../public/condizione.js';
+import { t } from '../public/lingua.js';
 
 import { workspaceDi, idNelWorkspace } from './config.js';
 import { durata, sostituisciEnv } from './util.js';
@@ -37,8 +38,8 @@ export class Allerta extends EventEmitter {
     this.config = config;
     this.motore = motore;
     this.lista = [];
-    this.inviate = new Map();   // id tile → ultima notifica mandata (ms)
-    this.pronta = false;        // la prima valutazione (dopo un riavvio) non manda notifiche
+    this.inviate = new Map();   // tile id → last notification sent (ms)
+    this.pronta = false;        // the first evaluation (after a restart) sends no notifications
   }
 
   #colore(nome) {
@@ -46,7 +47,7 @@ export class Allerta extends EventEmitter {
     return typeof a === 'string' ? a : a?.colore || nome;
   }
 
-  // La tile adesso: null o { livello, dettaglio, colore }.
+  // The tile right now: null or { livello, dettaglio, colore }.
   #valutaTile(t, s) {
     if (!t.colore_se || !s?.righe?.length || t.allerta === 'no' || t.allerta === false) return null;
     const righe = t.tipo === 'grafico' ? [s.righe.at(-1)] : s.righe;
@@ -55,8 +56,8 @@ export class Allerta extends EventEmitter {
       try { f = compilaCondizione(condizione); } catch { continue; }
       const riga = righe.find((r) => { try { return f(r); } catch { return false; } });
       if (!riga) continue;
-      // Di suo è grave solo il rosso scritto come colore, o l'etichetta "allarmi": un'etichetta che
-      // per caso è rossa (es. "riscaldamento" quando una valvola scalda) non è un allarme.
+      // By itself only red written as a colour is critical, or the "allarmi" label: a label that
+      // happens to be red (e.g. "riscaldamento" while a valve is heating) is not an alarm.
       const nome = typeof scelta === 'string' ? scelta : scelta?.colore;
       const colore = this.#colore(nome);
       const livello = t.allerta === 'grave' || t.allerta === 'avviso' ? t.allerta : nome === 'rosso' || nome === 'allarmi' ? 'grave' : null;
@@ -86,7 +87,7 @@ export class Allerta extends EventEmitter {
   }
 
   #notifica(prima, dopo) {
-    // ${NOME} nelle notifiche (es. un token) viene dai Segreti, come nelle sorgenti.
+    // ${NAME} in the notifications (e.g. a token) comes from the Secrets, as in the sources.
     const regole = [].concat(this.config.globale.notifiche || []).filter((n) => n?.url).map((n) => sostituisciEnv(n, new Set()));
     if (!regole.length) return;
     const adesso = Date.now();
@@ -107,8 +108,8 @@ export class Allerta extends EventEmitter {
   }
 
   async #manda(n, x, risolta) {
-    const titolo = `${risolta ? '✓ Risolto' : x.livello === 'grave' ? '🚨' : '⚠️'} ${x.titolo}`;
-    const messaggio = x.dettaglio ? `${x.dettaglio}${x.quante > 1 ? ` (e altre ${x.quante - 1})` : ''}` : (risolta ? 'tornato normale' : 'in allerta');
+    const titolo = `${risolta ? t('✓ Risolto') : x.livello === 'grave' ? '🚨' : '⚠️'} ${x.titolo}`;
+    const messaggio = x.dettaglio ? (x.quante > 1 ? t('{} (e altre {})', x.dettaglio, x.quante - 1) : x.dettaglio) : t(risolta ? 'tornato normale' : 'in allerta');
     const pagina = this.config.globale.indirizzo ? `${String(this.config.globale.indirizzo).replace(/\/$/, '')}/${x.workspace === 'default' ? '' : `?workspace=${encodeURIComponent(x.workspace)}`}` : undefined;
     let corpo, tipo = 'application/json';
     if (n.formato === 'testo') { corpo = `${titolo}: ${messaggio}`; tipo = 'text/plain; charset=utf-8'; }

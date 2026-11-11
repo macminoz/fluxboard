@@ -1,7 +1,7 @@
-// Segreti (token, password) usati dalle sorgenti come ${NOME}. Stanno in config/segreti.env,
-// fuori da git, e si cambiano dall'editor web in sola scrittura: il valore entra ma non torna
-// mai indietro, se ne mostrano solo le ultime 4 cifre per riconoscerlo (come fanno GitHub o Stripe
-// con chiavi e carte). Così un token scaduto si sostituisce senza aprire un terminale.
+// Secrets (tokens, passwords) used by the sources as ${NAME}. They live in config/segreti.env,
+// outside git, and are changed from the web editor in write-only mode: the value goes in but never
+// comes back, only its last 4 characters are shown to recognise it (as GitHub or Stripe do with
+// keys and cards). An expired token is replaced without opening a terminal.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -32,19 +32,20 @@ export class Segreti {
     this.valori = new Map();
   }
 
-  // Da chiamare all'avvio: i valori del file vincono su quelli già nell'ambiente (.env).
+  // To call at start-up: the file's values win over those already in the environment (.env).
   async carica() {
     try { this.valori = analizza(await fs.readFile(this.file, 'utf8')); } catch { this.valori = new Map(); }
     for (const [k, v] of this.valori) process.env[k] = v;
   }
 
-  // Tutti i nomi citati dalle sorgenti più quelli salvati, con chi li usa e se sono impostati.
+  // Every name quoted by the sources plus the saved ones, with who uses them and whether they are
+  // set.
   elenco(sorgenti) {
     const usi = new Map();
     for (const [nome, s] of Object.entries(sorgenti)) {
       for (const [, v] of JSON.stringify(s).matchAll(RIFERIMENTO)) usi.set(v, [...(usi.get(v) || []), nome]);
     }
-    // La password di editor e azioni c'è sempre nell'elenco, anche se nessuna sorgente la cita.
+    // The editor and actions password is always in the list, even if no source quotes it.
     usi.set('FLUXBOARD_ADMIN_PASSWORD', ['editor e azioni']);
     const nomi = [...new Set([...usi.keys(), ...this.valori.keys()])].sort();
     return nomi.map((nome) => {
@@ -52,7 +53,7 @@ export class Segreti {
       return {
         nome,
         impostato: Boolean(valore),
-        // Di una password non si mostra nemmeno la fine.
+        // Of a password not even the end is shown.
         finale: valore.length >= 12 && !/PASSWORD/.test(nome) ? valore.slice(-4) : '',
         origine: this.valori.has(nome) ? 'editor' : valore ? 'ambiente' : null,
         usatoDa: usi.get(nome) || [],
@@ -60,7 +61,7 @@ export class Segreti {
     });
   }
 
-  // valore vuoto = rimuove il segreto dal file.
+  // empty value = removes the secret from the file.
   async imposta(nome, valore) {
     if (!NOME.test(nome)) throw Object.assign(new Error('nome non valido: maiuscole, cifre e _ (es. INFLUX_TOKEN)'), { codice: 400 });
     const v = String(valore ?? '').trim();

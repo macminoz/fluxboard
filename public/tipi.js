@@ -1,7 +1,8 @@
-// Come si disegna il corpo di ogni tipo di tile. Per aggiungere un tipo nuovo basta una voce
-// qui (e una in server/schema.js). Ogni funzione riceve la tile, lo stato e il contesto, e
-// restituisce l'HTML del corpo.
+// How the body of each tile type is drawn. Adding a new type takes an entry here (and one in
+// server/schema.js). Each function gets the tile, the state and the context, and returns the body's
+// HTML.
 
+import { locale } from './lingua.js';
 import { proteggi, riempi, perLivello, comeData } from './formato.js';
 import { compilaCondizione } from './condizione.js';
 import { disegnaGrafico } from './grafico.js';
@@ -12,23 +13,23 @@ function testoTile(t, ctx, chiave) {
   return perLivello(t[chiave], ctx.livello, ctx.livelli);
 }
 
-// mostra_se di una voce: assente = sempre; altrimenti una condizione sulla riga ("valvola == acceso").
+// mostra_se of an item: absent = always; otherwise a condition on the row ("valve == on").
 function condizioneVera(condizione, riga) {
   if (!condizione) return true;
   try { return compilaCondizione(condizione)(riga); } catch { return true; }
 }
 
-// Un valore come "21,5°" o "840 W": il numero grande, l'unità più piccola e chiara, così l'occhio
-// legge prima il numero. Un valore che non comincia con un numero ("pioggia debole") è testo:
-// più piccolo, per non pesare quanto una misura.
+// A value like "21.5°" or "840 W": the number large, the unit smaller and lighter, so the eye reads
+// the number first. A value not starting with a number ("light rain") is text: smaller, so it does
+// not weigh as much as a measurement.
 function valoreLeggibile(html) {
   const m = html.match(/^([−+-]?\d[\d.,]*)(\s*)([^\d<]{1,8})$/);
-  // Il simbolo dei gradi resta attaccato e grande: "21,5°" si legge come una parola sola.
+  // The degree sign stays attached and large: "21.5°" reads as a single word.
   if (m && !m[3].startsWith('°')) return { html: `<span class="n">${m[1]}</span><span class="u">${m[2] ? '&nbsp;' : ''}${m[3]}</span>`, testo: false };
   return { html, testo: !/^[−+-]?\d/.test(html) };
 }
 
-// Livello, condizione: le voci (o le colonne) che valgono adesso.
+// Level, condition: the items (or columns) that apply now.
 function vociValide(voci, riga, ctx) {
   const livello = ctx.livelli.indexOf(ctx.livello);
   return (voci || []).filter((v) => (!v.livello || ctx.livelli.indexOf(v.livello) <= livello) && condizioneVera(v.mostra_se, riga));
@@ -43,7 +44,7 @@ function tonoDi(tono, riga) {
   return null;
 }
 
-// La riga che descrive "adesso": la prima per le tile normali, la più recente per un grafico.
+// The row describing "now": the first for normal tiles, the most recent for a chart.
 export function rigaAttuale(t, s) {
   const righe = s?.righe || [];
   if (t.tipo !== 'grafico' || righe.length < 2) return righe[0] || {};
@@ -53,7 +54,7 @@ export function rigaAttuale(t, s) {
   return migliore;
 }
 
-// Le voci affiancate (al massimo 4 per riga) e, sotto, quelle raccolte in un "gruppo".
+// The items side by side (at most 4 per row) and, below, those gathered in a "group".
 function vociHtml(t, riga, ctx) {
   const voci = vociValide(t.voci, riga, ctx);
   const griglia = (elenco, classe = '') => {
@@ -78,20 +79,20 @@ export const TIPI = {
   elenco(t, s, ctx) {
     const righe = s?.righe || [];
     if (!righe.length) return `<p class="vuoto">${proteggi(t.vuoto || 'Niente da mostrare')}</p>${pulsantiTile(t, ctx, s)}`;
-    // Con "tabella" l'elenco diventa una tabella: colonne allineate, numeri a destra.
+    // With "tabella" the list becomes a table: aligned columns, numbers on the right.
     if (Array.isArray(t.tabella) && t.tabella.length) {
       const colonne = vociValide(t.tabella, {}, ctx);
       const conAzioni = (t.azioni || []).some((a) => !a.globale);
-      // L'allineamento si decide per colonna, non per cella: a destra solo se tutti i valori sono
-      // numeri (o se lo chiede `allinea`). Così "13.1.0" e "v2.9.1" stanno nella stessa colonna.
+      // Alignment is decided per column, not per cell: right only if every value is a number (or if
+      // `allinea` asks for it). So "13.1.0" and "v2.9.1" sit in the same column.
       const valori = colonne.map((c) => righe.map((r) => valoreLeggibile(riempi(perLivello(c.valore, ctx.livello, ctx.livelli) ?? '', r, ctx.fuso))));
       const aDestra = colonne.map((c, i) => c.allinea === 'destra'
         || (c.allinea !== 'sinistra' && valori[i].some((v) => v.html !== '') && valori[i].every((v) => v.html === '' || !v.testo)));
-      // Colonne allargabili: si trascina il bordo destro dell'intestazione (doppio click = automatica).
-      // Le larghezze stanno nella disposizione del display, per intestazione (t.larghezze).
+      // Resizable columns: drag the right edge of the heading (double click = automatic). Widths
+      // live in the display's layout, by heading (t.larghezze).
       const nomi = colonne.map((c) => String(perLivello(c.etichetta, ctx.livello, ctx.livelli) ?? ''));
       const larghezze = t.larghezze || {};
-      // Una colonna con larghezza ha il contenuto in un riquadro di quella misura: le altre restano automatiche.
+      // A column with a width has its content in a box of that size: the others stay automatic.
       const dentro = (html, n) => (larghezze[n] ? `<div class="cella-fissa" data-larghezza-di="${proteggi(n)}" style="width:${Number(larghezze[n])}px">${html}</div>` : html);
       const cella = (c, r, i, j) => {
         const v = valori[i][j];
@@ -114,14 +115,14 @@ export const TIPI = {
     return `<p class="valore">${riempi(modello, riga, ctx.fuso)}</p>${pulsantiTile(t, ctx, s)}`;
   },
 
-  // Più valori affiancati: etichetta piccola sopra, valore grande sotto (come le card di HA).
+  // Several values side by side: small label above, big value below (like HA cards).
   valori(t, s, ctx) {
     const riga = s?.righe?.[0] || {};
     return `${vociHtml(t, riga, ctx)}${pulsantiRiga(t, riga, ctx)}${pulsantiTile(t, ctx, s)}`;
   },
 
-  // Un grafico può avere in testa le stesse "voci" di una tile "valori", lette dal punto più
-  // recente (l'ultima riga nel tempo): così una tile sola dice com'è adesso e com'è andata.
+  // A chart can have at the top the same "items" as a "values" tile, read from the most recent
+  // point (the last row in time): one tile says how it is now and how it went.
   grafico(t, s, ctx) {
     const riga = rigaAttuale(t, s);
     const testa = Array.isArray(t.voci) && t.voci.length ? vociHtml(t, riga, ctx) : '';
@@ -138,13 +139,13 @@ export const TIPI = {
 
   orologio(_t, _s, ctx) {
     const ora = new Date();
-    const hh = ora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: ctx.fuso });
-    const giorno = ora.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', timeZone: ctx.fuso });
+    const hh = ora.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', timeZone: ctx.fuso });
+    const giorno = ora.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short', timeZone: ctx.fuso });
     return `<p class="orologio"><span class="ora">${hh}</span> <span class="giorno">${giorno}</span></p>`;
   },
 
-  // Di norma l'immagine passa da Fluxboard (/api/immagine): si vede anche da reti che non
-  // raggiungono la telecamera. Con "diretto: true" il browser la chiede direttamente.
+  // Normally the image goes through Fluxboard (/api/immagine): it is visible from networks that
+  // cannot reach the camera. With "diretto: true" the browser asks for it directly.
   immagine(t) {
     const origine = t.diretto ? t.url : `/api/immagine?id=${encodeURIComponent(t.id)}`;
     return `<div class="cornice-immagine"><img class="immagine" alt="${proteggi(t.titolo)}" data-src="${proteggi(origine)}" data-ogni="${t.aggiorna_ogni || 0}">
@@ -160,5 +161,5 @@ export const TIPI = {
   },
 };
 
-// I tipi il cui corpo non va ridisegnato a ogni aggiornamento (stream, pagine incorporate).
+// Types whose body is not redrawn at every update (streams, embedded pages).
 export const STABILI = new Set(['immagine', 'iframe']);

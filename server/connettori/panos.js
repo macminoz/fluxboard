@@ -1,20 +1,20 @@
-// Palo Alto Networks (PAN-OS): lo stato del firewall dalla sua API XML, in sola lettura.
+// Palo Alto Networks (PAN-OS): the firewall status from its XML API, read only.
 //
-// sorgente: { tipo: panos, url: https://192.168.1.254, chiave: ${PANOS_CHIAVE},
-//             certificato_ca: certificati/…pem, nome_certificato: firewall.casa.lan }
-// dati:     { sorgente: <nome>, risorsa: sistema | sessioni | interfacce | globalprotect | ha }
+// source: { tipo: panos, url: https://192.168.1.254, chiave: ${PANOS_CHIAVE},
+//           certificato_ca: certificati/…pem, nome_certificato: firewall.home.lan }
+// dati:   { sorgente: <name>, risorsa: sistema | sessioni | interfacce | globalprotect | ha }
 //
-// Righe:
-//   sistema:       una riga: nome, modello, seriale, versione, uptime, app, minacce, antivirus, wildfire, url_filtering, ip
-//   sessioni:      una riga: attive, massime, occupazione (%), cps, kbps, pps
-//   interfacce:    una riga per porta fisica: nome, stato (up/down), velocita, duplex, mac
-//   globalprotect: una riga per utente collegato: utente, ip_virtuale, ip_pubblico, dal, client
-//   ha:            una riga: abilitata, stato, peer
+// Rows:
+//   sistema:       one row: nome, modello, seriale, versione, uptime, app, minacce, antivirus, wildfire, url_filtering, ip
+//   sessioni:      one row: attive, massime, occupazione (%), cps, kbps, pps
+//   interfacce:    one row per physical port: nome, stato (up/down), velocita, duplex, mac
+//   globalprotect: one row per connected user: utente, ip_virtuale, ip_pubblico, dal, client
+//   ha:            one row: abilitata, stato, peer
 //
-// SICUREZZA: solo i comandi "show" elencati qui sotto, scritti nel codice. Il connettore non
-// accetta comandi dalla tile, quindi nemmeno una tile scritta male può riavviare, configurare o
-// fare commit. Per la chiave basta un amministratore con un ruolo "sola lettura" (XML API: solo
-// "Operational Requests"), così il firewall stesso rifiuterebbe qualunque altra cosa.
+// SECURITY: only the "show" commands listed below, written in the code. The connector does not
+// accept commands from the tile, so not even a badly written tile can reboot, configure or
+// commit. For the key an administrator with a "read only" role is enough (XML API: only
+// "Operational Requests"), so the firewall itself would refuse anything else.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -41,7 +41,7 @@ export const moduloDati = [
 export const campiSorgente = ['url', 'chiave'];
 export const campiDati = [];
 
-// I soli comandi che il connettore sa mandare.
+// The only commands the connector can send.
 const COMANDI = {
   sistema: '<show><system><info></info></system></show>',
   sessioni: '<show><session><info></info></session></show>',

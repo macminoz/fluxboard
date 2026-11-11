@@ -1,7 +1,5 @@
-// InfluxDB 2.x: esegue una query Flux e restituisce le righe della tabella risultante.
-//
-// sorgente: { tipo: influx, url, org, token }
-// dati:     { sorgente: <nome>, query: <Flux> }
+// InfluxDB 2.x: runs a Flux query and returns the rows of the resulting table. source: { tipo:
+// influx, url, org, token } · dati: { sorgente: <name>, query: <Flux> }
 
 import { analizzaCsv, numeroSePossibile } from '../util.js';
 
@@ -21,7 +19,8 @@ export const moduloDati = [
 export const campiSorgente = ['url', 'org', 'token'];
 export const campiDati = ['query'];
 
-// Prova di connessione: /health dice se il server c'è, una query minima se il token vale.
+// Connection test: /health says whether the server is there, a minimal query whether the token is
+// valid.
 export async function prova(sorgente, { signal }) {
   const salute = await fetch(new URL('/health', sorgente.url), { signal });
   if (!salute.ok) throw new Error(`InfluxDB risponde ${salute.status}`);
@@ -32,8 +31,8 @@ export async function prova(sorgente, { signal }) {
 
 const COLONNE_INTERNE = new Set(['', 'result', 'table']);
 
-// La risposta CSV di Influx contiene una o più tabelle separate da una riga vuota, ognuna con la
-// propria intestazione. Le uniamo in un solo elenco di righe.
+// Influx's CSV answer holds one or more tables separated by an empty line, each with its own
+// header. We merge them into a single list of rows.
 export function csvInfluxInRighe(testo) {
   const righe = [];
   for (const blocco of testo.split(/\r?\n\r?\n/)) {

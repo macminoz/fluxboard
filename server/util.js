@@ -1,10 +1,11 @@
-// Funzioni di servizio senza dipendenze: durate, variabili d'ambiente, percorsi nei JSON, CSV.
+// Dependency-free helpers: durations, environment variables, JSON paths, CSV.
 
 import { checkServerIdentity } from 'node:tls';
 
 const UNITA = { ms: 1, s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 };
 
-// "30s", "5m", "2h", 1500 → millisecondi. Restituisce `predefinita` se il valore manca o non è valido.
+// "30s", "5m", "2h", 1500 → milliseconds. Returns `predefinita` when the value is missing or
+// invalid.
 export function durata(valore, predefinita = null) {
   if (valore === undefined || valore === null || valore === '') return predefinita;
   if (typeof valore === 'number') return valore;
@@ -12,8 +13,8 @@ export function durata(valore, predefinita = null) {
   return m ? Math.round(parseFloat(m[1]) * UNITA[m[2]]) : predefinita;
 }
 
-// Sostituisce ${NOME} con process.env.NOME in ogni stringa dell'oggetto. Le variabili mancanti
-// vengono annotate in `mancanti`, così l'editor può segnalarle invece di fallire in silenzio.
+// Replaces ${NAME} with process.env.NAME in every string of the object. Missing variables are noted
+// in `mancanti`, so the editor can report them instead of failing silently.
 export function sostituisciEnv(valore, mancanti = new Set()) {
   if (typeof valore === 'string') {
     return valore.replace(/\$\{([A-Z0-9_]+)\}/g, (_, nome) => {
@@ -28,20 +29,20 @@ export function sostituisciEnv(valore, mancanti = new Set()) {
   return valore;
 }
 
-// Legge un valore da un oggetto con un percorso puntato: "current.temperature_2m", "list.0.name".
+// Reads a value from an object with a dotted path: "current.temperature_2m", "list.0.name".
 export function leggiPercorso(oggetto, percorso) {
   if (!percorso) return oggetto;
   return String(percorso).split('.').reduce((o, k) => (o == null ? undefined : o[k]), oggetto);
 }
 
-// Converte in numero le stringhe che sono numeri, lascia il resto com'è.
+// Turns strings that are numbers into numbers, leaves the rest as it is.
 export function numeroSePossibile(v) {
   if (typeof v !== 'string' || v.trim() === '') return v;
   const n = Number(v);
   return Number.isFinite(n) ? n : v;
 }
 
-// Parser CSV minimale (virgolette, virgole e a capo dentro i campi). Restituisce righe di celle.
+// Minimal CSV parser (quotes, commas and line breaks inside fields). Returns rows of cells.
 export function analizzaCsv(testo) {
   const righe = [];
   let riga = [], cella = '', virgolette = false;
@@ -62,9 +63,9 @@ export function analizzaCsv(testo) {
   return righe;
 }
 
-// Richiesta HTTPS con un certificato CA proprio (es. la CA di casa) e un nome da verificare
-// diverso dall'indirizzo: si chiama per IP (DNS giù) ma si controlla il certificato del nome.
-// fetch() non lo permette senza dipendenze, quindi si usa node:https.
+// HTTPS request with a CA certificate of your own (e.g. your home CA) and a name to check other
+// than the address: call by IP (DNS down) but check the name's certificate. fetch() does not allow
+// this without dependencies, so node:https is used.
 export async function richiestaJson(indirizzo, { metodo = 'GET', intestazioni = {}, corpo, ca, nomeServer, verifica = true, signal } = {}) {
   const { request } = await import(indirizzo.protocol === 'https:' ? 'node:https' : 'node:http');
   return new Promise((risolvi, rifiuta) => {

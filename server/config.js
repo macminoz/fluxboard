@@ -1,15 +1,15 @@
-// Caricamento, validazione, scrittura e osservazione della cartella di configurazione.
+// Loading, validating, writing and watching the configuration folder.
 //
-//   config/global.yaml          impostazioni della cornice (titolo, tema, display, livelli)
-//   config/sorgenti/<nome>.yaml una connessione riusabile (database, API, ...)
-//   config/tile/<nome>.yaml     una tile: cosa legge, quando compare, come si legge
-//   config/layout/<display>.yaml ordine e dimensioni delle tile su un display (modalità Modifica)
-//   config/generi/<nome>.yaml   generi di tile propri (modelli), oltre a quelli di base in generi/
-//   config/workspace/<nome>/tile/, …/layout/  gli altri workspace: tile e disposizioni proprie,
-//                               sorgenti e cornice in comune. Le tile e le disposizioni in radice
-//                               sono il workspace "default".
-//   config/.storico/            copie automatiche delle versioni precedenti
-//   config/.cestino/            file eliminati dall'editor
+//   config/global.yaml          frame settings (title, theme, displays, levels)
+//   config/sorgenti/<name>.yaml a reusable connection (database, API, ...)
+//   config/tile/<name>.yaml     a tile: what it reads, when it shows, how it reads
+//   config/layout/<display>.yaml order and size of the tiles on a display (Edit mode)
+//   config/generi/<name>.yaml   your own kinds of tile (models), besides the basic ones in generi/
+//   config/workspace/<name>/tile/, …/layout/  the other workspaces: their own tiles and layouts,
+//                               sources and frame shared. Tiles and layouts at the root
+//                               are the "default" workspace.
+//   config/.storico/            automatic copies of previous versions
+//   config/.cestino/            files deleted from the editor
 
 import fs from 'node:fs/promises';
 import fss from 'node:fs';
@@ -19,6 +19,8 @@ import YAML from 'yaml';
 import { sostituisciEnv } from './util.js';
 import { validaGlobale, validaSorgente, validaTile, validaLayout } from './schema.js';
 import { generi, validaGenere } from './generi.js';
+import { normalizza, inInglese, chiaveNelFile, CHIAVI } from './alias.js';
+import { impostaLingua } from '../public/lingua.js';
 
 const NOME = /^[a-z0-9][a-z0-9-]{0,62}$/;
 const COPIE_PER_FILE = 20;
@@ -36,8 +38,8 @@ export const WORKSPACE_PREDEFINITO = 'default';
 export const nomeValido = (n) => NOME.test(n || '');
 let scritture = 0;
 
-// Una tile si identifica con la sua "chiave": l'id per il workspace default ("meteo"),
-// "workspace/id" per gli altri ("prove/meteo"). Da qui il file e viceversa.
+// A tile is identified by its "key": the id for the default workspace ("meteo"), "workspace/id" for
+// the others ("tests/meteo"). From here to the file and back.
 export function percorsoTile(chiave) {
   const [ws, id] = String(chiave).includes('/') ? String(chiave).split('/') : [WORKSPACE_PREDEFINITO, chiave];
   return ws === WORKSPACE_PREDEFINITO ? `tile/${id}.yaml` : `workspace/${ws}/tile/${id}.yaml`;
@@ -48,7 +50,7 @@ export function percorsoLayout(ws, display) {
 export const workspaceDi = (chiave) => (String(chiave).includes('/') ? String(chiave).split('/')[0] : WORKSPACE_PREDEFINITO);
 export const idNelWorkspace = (chiave) => String(chiave).split('/').at(-1);
 
-// Da un percorso relativo ("tile/riscaldamento.yaml") al genere di file, al nome e al workspace.
+// From a relative path ("tile/heating.yaml") to the kind of file, the name and the workspace.
 export function classifica(rel) {
   const r = rel.replace(/\\/g, '/');
   if (r === 'global.yaml') return { genere: 'globale', nome: 'global' };
@@ -67,14 +69,14 @@ export class Configurazione extends EventEmitter {
     super();
     this.cartella = path.resolve(cartella);
     this.connettori = connettori;
-    this.cartellaGeneriBase = null;   // generi/ accanto al codice (la imposta index.js)
+    this.cartellaGeneriBase = null;   // generi/ next to the code (set by index.js)
     this.globale = { ...PREDEFINITO_GLOBALE };
     this.sorgenti = {};   // nome → oggetto così com'è scritto (con ${VAR})
-    this.tile = {};       // nome → oggetto, oppure { errore } se il file non è valido
+    this.tile = {};       // name → object, or { errore } if the file is invalid
     this.layout = {};     // workspace → display → [{ id, colonne, altezza }]
-    this.sezioni = {};    // workspace → display → { etichetta: { colonne } }
+    this.sezioni = {};    // workspace → display → { label: { colonne } }
     this.workspace = [WORKSPACE_PREDEFINITO];
-    this.problemi = {};   // percorso → { errori, avvisi }
+    this.problemi = {};   // path → { errori, avvisi }
   }
 
   percorso(rel) {
@@ -91,10 +93,11 @@ export class Configurazione extends EventEmitter {
   static analizza(testo) {
     const doc = YAML.parseDocument(testo, { prettyErrors: true });
     if (doc.errors.length) return { errore: doc.errors.map((e) => e.message.split('\n')[0]).join('; ') };
-    return { oggetto: doc.toJS() ?? {} };
+    // English keys and values become the internal ones (server/alias.js).
+    return { oggetto: normalizza(doc.toJS() ?? {}) };
   }
 
-  // Valida un testo come se fosse il file `rel`, senza scriverlo.
+  // Validates a text as if it were the file `rel`, without writing it.
   valida(rel, testo) {
     const c = classifica(rel);
     if (!c) return { errori: [`percorso non ammesso: ${rel}`], avvisi: [] };
@@ -104,7 +107,7 @@ export class Configurazione extends EventEmitter {
     if (c.genere === 'sorgente') return { ...validaSorgente(oggetto, this.connettori), oggetto };
     if (c.genere === 'layout') return { ...validaLayout(oggetto, this.tileDelWorkspace(c.workspace)), oggetto };
     if (c.genere === 'modello') return { ...validaGenere(oggetto), oggetto };
-    // Tile di un genere: si espande il modello con i suoi campi, poi si valida come le altre.
+    // Tile of a kind: the model is expanded with its fields, then validated like the others.
     if (oggetto?.genere) {
       const { tile, errori } = generi.espandi(oggetto);
       const v = validaTile(tile, this.sorgenti, this.connettori, this.globale?.argomenti);
@@ -113,7 +116,7 @@ export class Configurazione extends EventEmitter {
     return { ...validaTile(oggetto, this.sorgenti, this.connettori, this.globale?.argomenti), oggetto };
   }
 
-  // Le tile di un workspace, per id senza prefisso (come le citano le disposizioni).
+  // The tiles of a workspace, by id without prefix (as the layouts quote them).
   tileDelWorkspace(ws) {
     return Object.fromEntries(Object.entries(this.tile).filter(([k]) => workspaceDi(k) === ws).map(([k, t]) => [idNelWorkspace(k), t]));
   }
@@ -125,7 +128,7 @@ export class Configurazione extends EventEmitter {
     } catch { return []; }
   }
 
-  // Cartelle (relative) delle tile e delle disposizioni di ogni workspace.
+  // (Relative) folders of the tiles and layouts of each workspace.
   #cartelle(ws, tipo) { return ws === WORKSPACE_PREDEFINITO ? tipo : `workspace/${ws}/${tipo}`; }
 
   async creaWorkspace(nome) {
@@ -150,16 +153,18 @@ export class Configurazione extends EventEmitter {
       return testo;
     };
 
-    // 1. globale: se non è valido si tiene la versione precedente, mai una pagina vuota
+    // 1. global: if invalid the previous version is kept, never an empty page
     try {
       const v = this.valida('global.yaml', await leggi('global.yaml'));
       problemi['global.yaml'] = { errori: v.errori, avvisi: v.avvisi };
       if (!v.errori.length) this.globale = { ...PREDEFINITO_GLOBALE, ...v.oggetto };
+      // The language first: kinds expanded below write their headings in it.
+      impostaLingua(this.globale.lingua || 'en');
     } catch (e) {
       if (e.code !== 'ENOENT') problemi['global.yaml'] = { errori: [e.message], avvisi: [] };
     }
 
-    // 2. sorgenti (prima delle tile, che le richiamano per nome)
+    // 2. sources (before the tiles, which refer to them by name)
     const sorgenti = {};
     for (const f of await this.#leggiCartella('sorgenti')) {
       const rel = `sorgenti/${f}`;
@@ -171,11 +176,11 @@ export class Configurazione extends EventEmitter {
     }
     this.sorgenti = sorgenti;
 
-    // 3a. generi: quelli di base (con il codice) e i propri (config/generi), che vincono
+    // 3a. kinds: the basic ones (with the code) and your own (config/generi), which win
     await generi.carica([{ dir: this.cartellaGeneriBase, origine: 'base' }, { dir: path.join(this.cartella, 'generi'), origine: 'propri' }]);
     for (const [f, p] of Object.entries(generi.problemi)) problemi[f.startsWith('propri/') ? `generi/${f.slice(7)}` : f] = p;
 
-    // 3. tile di ogni workspace: una tile non valida resta in elenco con il suo errore
+    // 3. tiles of each workspace: an invalid tile stays in the list with its error
     const elencoWs = [WORKSPACE_PREDEFINITO, ...await this.#elencoWorkspace()];
     const tile = {};
     for (const ws of elencoWs) {
@@ -191,8 +196,8 @@ export class Configurazione extends EventEmitter {
     this.tile = tile;
     this.workspace = elencoWs;
 
-    // 4. disposizioni dei display (dopo le tile, per segnalare quelle che non esistono più)
-    const layout = {}, sezioni = {};   // sezioni: workspace → display → { etichetta: { colonne } }
+    // 4. display layouts (after the tiles, to report those that no longer exist)
+    const layout = {}, sezioni = {};   // sections: workspace → display → { label: { colonne } }
     for (const ws of elencoWs) {
       layout[ws] = {}; sezioni[ws] = {};
       for (const f of await this.#leggiCartella(this.#cartelle(ws, 'layout'))) {
@@ -210,12 +215,12 @@ export class Configurazione extends EventEmitter {
     this.emit('ricaricata');
   }
 
-  // La sorgente con le variabili d'ambiente risolte: si usa solo lato server, mai inviata ai client.
+  // The source with environment variables resolved: used only on the server, never sent to clients.
   sorgenteRisolta(nome) {
     const mancanti = new Set();
     const risolta = sostituisciEnv(this.sorgenti[nome], mancanti);
     if (mancanti.size) throw new Error(`variabili d'ambiente mancanti: ${[...mancanti].join(', ')}`);
-    // Per i connettori che leggono file accanto alla config (es. un certificato CA).
+    // For connectors that read files next to the config (e.g. a CA certificate).
     return { ...risolta, _cartella: this.cartella };
   }
 
@@ -266,7 +271,7 @@ export class Configurazione extends EventEmitter {
     const destinazione = this.percorso(rel);
     await fs.mkdir(path.dirname(destinazione), { recursive: true });
     await this.#copiaInStorico(rel);
-    // Un nome per ogni scrittura: due salvataggi quasi insieme dello stesso file non si pestano.
+    // A name for each write: two saves of the same file at almost the same time do not clash.
     const temporaneo = `${destinazione}.tmp-${process.pid}-${(scritture += 1)}`;
     await fs.writeFile(temporaneo, testo.endsWith('\n') ? testo : `${testo}\n`, 'utf8');
     await fs.rename(temporaneo, destinazione);
@@ -284,21 +289,39 @@ export class Configurazione extends EventEmitter {
     await this.carica();
   }
 
-  // Modifica dei campi di un file dall'editor visuale della dashboard, conservando commenti e
-  // formattazione di tutto ciò che non viene toccato. `campi`: { chiave: valore }; un oggetto
-  // semplice viene applicato chiave per chiave (es. dati.query), null toglie la chiave.
-  // sostituisci: percorsi (es. [['dati', 'campi']]) da rimpiazzare interi invece che fondere,
-  // per le mappe chiave → valore dei moduli, dove una chiave tolta deve sparire dal file.
+  // Changes the fields of a file from the dashboard's visual editor, keeping comments and
+  // formatting of everything that is not touched. `campi`: { key: value }; a plain object is
+  // applied key by key (e.g. dati.query), null removes the key. sostituisci: paths (e.g. [['dati',
+  // 'campi']]) to replace whole instead of merging, for the key → value maps of the forms, where a
+  // removed key must disappear from the file.
   async aggiornaCampi(rel, campi, { nuovo = false, sostituisci = [] } = {}) {
     const esiste = fss.existsSync(this.percorso(rel));
     if (nuovo && esiste) return { ok: false, errori: [`${rel} esiste già`], avvisi: [] };
     if (!nuovo && !esiste) return { ok: false, errori: [`${rel} non esiste`], avvisi: [] };
-    // Un file nuovo parte da una mappa a blocchi (non "{}", che lascerebbe tutto su una riga) e
-    // con "genere" per primo, se c'è.
+    // A new file starts as a block map (not "{}", which would keep everything on one line) and with
+    // "genere" first, if present.
     const doc = esiste ? YAML.parseDocument(await fs.readFile(this.percorso(rel), 'utf8')) : new YAML.Document(campi.genere ? { genere: campi.genere } : {});
     if (doc.errors.length) return { ok: false, errori: ['il file attuale non è YAML valido: correggilo dal codice'], avvisi: [] };
     if (!YAML.isMap(doc.contents)) doc.contents = doc.createNode({});
-    const applica = (percorso, valore) => {
+    // The editor speaks the internal (Italian) keys. A file written in English stays in English:
+    // keys and known values are converted, and each key goes where the file already has it.
+    const chiaviDoc = YAML.isMap(doc.contents) ? doc.contents.items.map((p) => String(p.key?.value ?? p.key)) : [];
+    const inglese = esiste ? chiaviDoc.some((k) => k in CHIAVI) : (this.globale?.lingua || 'en') === 'en';
+    if (inglese) {
+      campi = inInglese(campi);
+      sostituisci = sostituisci.map((p) => p.map((k) => Object.keys(inInglese({ [k]: 1 }))[0]));
+    }
+    const nelFile = (percorso) => {
+      const fuori = [];
+      for (const k of percorso) {
+        const nodo = doc.getIn(fuori, true);
+        const chiavi = YAML.isMap(nodo) ? nodo.items.map((p) => String(p.key?.value ?? p.key)) : [];
+        fuori.push(chiavi.includes(k) ? k : chiaveNelFile(chiavi, Object.entries(CHIAVI).find(([en]) => en === k)?.[1] || k));
+      }
+      return fuori;
+    };
+    const applica = (percorso0, valore) => {
+      const percorso = nelFile(percorso0);
       const semplice = valore && typeof valore === 'object' && !Array.isArray(valore)
         && !sostituisci.some((p) => p.join('.') === percorso.join('.'));
       if (valore === null || valore === undefined) doc.deleteIn(percorso);
@@ -321,7 +344,7 @@ export class Configurazione extends EventEmitter {
     await this.carica();
   }
 
-  // Ricarica quando i file cambiano anche fuori dall'editor (vim, git pull, copia da backup).
+  // Reloads when the files change outside the editor too (vim, git pull, copy from a backup).
   osserva() {
     let attesa = null;
     try {
@@ -330,8 +353,8 @@ export class Configurazione extends EventEmitter {
         clearTimeout(attesa);
         attesa = setTimeout(() => this.carica().catch((e) => console.error('[config]', e.message)), 300);
       });
-      // Un file appena copiato e non ancora leggibile (es. durante un'installazione) non deve
-      // fermare il servizio: si avvisa e si continua (il 7/11/2026 era un errore non gestito).
+      // A file just copied and not yet readable (e.g. during an installation) must not stop the
+      // service: warn and carry on (on 7/11/2026 this was an unhandled error).
       osservatore.on('error', (e) => console.warn(`[config] osservazione dei file: ${e.message}`));
     } catch (e) {
       console.warn(`[config] osservazione dei file non disponibile (${e.message}): le modifiche fatte a mano richiedono un riavvio`);

@@ -1,6 +1,6 @@
-// Finestra "Impostazioni della dashboard": le chiavi principali di global.yaml senza aprire il
-// file. Gli argomenti (temperatura, allarmi…) hanno colore, icona e sfondo; il loro ordine è la
-// priorità usata da "Riordina le tile".
+// "Dashboard settings" window: the main keys of global.yaml without opening the file. Labels
+// (temperature, alarms…) have colour, icon and background; their order is the priority used by
+// "Tidy up the tiles".
 
 import { proteggi } from './formato.js';
 import { COLORI } from './etichette.js';
@@ -33,7 +33,7 @@ function rigaArgomento(nome = '', a = {}, esistente = false) {
     <button type="button" class="togli-voce" data-togli aria-label="Togli">✕</button></div>`;
 }
 
-// Il browser in breve, dal suo User-Agent: "Chrome 95 · Android", "Safari · iPhone"…
+// The browser in short, from its User-Agent: "Chrome 95 · Android", "Safari · iPhone"…
 function nomeBrowser(ua = '') {
   const v = (re) => (ua.match(re) || [])[1];
   const sistema = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : '';
@@ -50,7 +50,7 @@ function schermiHtml(elenco, regole, profili) {
       <td><select data-schermo="${proteggi(s.indirizzo)}"><option value="">automatico (${proteggi(s.display)})</option>${profili.map((p) => `<option value="${proteggi(p)}"${regolaDi(s) === p ? ' selected' : ''}>${proteggi(p)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
 }
 
-// Le regole per indirizzo scelte qui; quelle scritte a mano (per browser, per inizio di indirizzo) restano.
+// The rules by address chosen here; the hand-written ones (by browser, by start of address) stay.
 function regoleSchermi(corpo, regole) {
   const scelte = [...corpo.querySelectorAll('[data-schermo]')];
   const toccati = new Set(scelte.map((s) => s.dataset.schermo));
@@ -72,6 +72,7 @@ export async function apriImpostazioni({ ricarica }) {
       <label>Vista predefinita (il livello di dettaglio)<select name="livello">${LIVELLI.map((l) => `<option value="${l}"${l === (g.livello || 'intermedia') ? ' selected' : ''}>${{ base: 'Base', intermedia: 'Media', avanzata: 'Avanzata' }[l]}</option>`).join('')}</select></label>
       <label>Tema${scelta('tema', ['auto', 'chiaro', 'scuro'], g.tema || 'auto').replace('data-campo="tema"', 'name="tema"')}</label>
     </div>
+    <label>Lingua<select name="lingua">${[['en', 'English'], ['it', 'Italiano']].map(([v, n]) => `<option value="${v}"${v === (g.lingua || 'en') ? ' selected' : ''} data-non-tradurre>${n}</option>`).join('')}</select></label>
     <label>Rileggi le sorgenti ogni (se la tile non dice altro)${scelta('aggiornamento', ['30s', '1m', '2m', '5m', '15m'], g.aggiornamento || '1m').replace('data-campo="aggiornamento"', 'name="aggiornamento"')}</label>
     <label class="spunta interruttore"><input type="checkbox" name="nascondi_vuote"${g.nascondi_vuote === false ? '' : ' checked'}>
       <span><b>Le tile senza niente da mostrare spariscono</b><br><span class="aiuto">Predefinito per tutte le tile con dati; ogni tile può cambiarlo nel suo editor.</span></span></label>
@@ -122,7 +123,7 @@ export async function apriImpostazioni({ ricarica }) {
       }
       try {
         const r = await api('/globale', { method: 'PUT', body: { campi: {
-          titolo: f.titolo.value.trim() || 'Fluxboard', livello: f.livello.value, tema: f.tema.value, aggiornamento: f.aggiornamento.value,
+          titolo: f.titolo.value.trim() || 'Fluxboard', livello: f.livello.value, lingua: f.lingua.value, tema: f.tema.value, aggiornamento: f.aggiornamento.value,
           nascondi_vuote: f.nascondi_vuote.checked ? null : false, sezioni: f.sezioni.checked ? null : false, argomenti, schermi: regoleSchermi(corpo, regole),
         } } });
         if (!r.ok) { esito.innerHTML = r.errori.map((x) => `<p class="errore">✕ ${proteggi(x)}</p>`).join(''); return; }

@@ -1,12 +1,12 @@
-# Ultime versioni pubblicate su GitHub, da confrontare con quelle installate.
-# Senza token: 60 letture l'ora. "installata" può essere scritta a mano o letta da un indirizzo
-# (vedi server/connettori/versioni.js).
-tipo: versioni
+# Latest releases on GitHub, compared with the installed versions.
+# Without a token: 60 reads an hour. "installed" can be written by hand or read from an address
+# (see server/connettori/versioni.js).
+type: versions
 timeout: 15s
 software:
-  - nome: Grafana
+  - name: Grafana
     repo: grafana/grafana
-    installata: "10.0.0"
-  - nome: Node-RED
+    installed: "10.0.0"
+  - name: Node-RED
     repo: node-red/node-red
-    installata: "3.0.0"
+    installed: "3.0.0"

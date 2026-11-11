@@ -1,6 +1,6 @@
-// Gestione delle sorgenti dalla dashboard, come le "data source" di Grafana: si sceglie prima
-// il tipo (API HTTP, InfluxDB, VictoriaLogs…), poi si compila il modulo di quel tipo e si prova
-// la connessione prima di salvare. I segreti scritti qui finiscono fra i segreti (sola scrittura).
+// Managing the sources from the dashboard, like Grafana's "data sources": first pick the type (HTTP
+// API, InfluxDB, VictoriaLogs…), then fill in that type's form and test the connection before
+// saving. Secrets written here go to the secrets (write only).
 
 import { proteggi } from './formato.js';
 import { disegnaModulo, aggiornaVisibilita, leggiModulo, gestisciClickModulo, mancanti } from './moduli.js';
@@ -19,8 +19,8 @@ async function api(percorso, opzioni = {}) {
 const slug = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
 
-// Apre la gestione delle sorgenti. Con { nuova: true } parte dalla scelta del tipo.
-// Restituisce il nome dell'ultima sorgente salvata (o null).
+// Opens the source management. With { nuova: true } it starts from choosing the type. Returns the
+// name of the last saved source (or null).
 export async function gestisciSorgenti({ nuova = false, nome = null } = {}) {
   const dlg = document.getElementById('dlg-sorgente');
   const form = dlg.querySelector('form');
@@ -50,8 +50,8 @@ export async function gestisciSorgenti({ nuova = false, nome = null } = {}) {
   function galleria() {
     aperta = { nuovo: true };
     esito.innerHTML = '';
-    // Per categoria (cosa si legge), e dentro la categoria il prodotto che lo fornisce:
-    // "Syslog e log" → VictoriaLogs, "Firewall e rete" → Palo Alto…
+    // By category (what is read), and inside the category the product providing it: "Syslog and
+    // logs" → VictoriaLogs, "Firewall and network" → Palo Alto…
     const ORDINE = ['Syslog e log', 'Metriche e sensori', 'Monitoraggio', 'Automazioni', 'Firewall e rete', 'Virtualizzazione', 'Software e aggiornamenti', 'Web e API'];
     const gruppi = {};
     const posto = (g) => (ORDINE.indexOf(g) + 1 || 99);
@@ -93,7 +93,7 @@ export async function gestisciSorgenti({ nuova = false, nome = null } = {}) {
 
   async function provaConnessione() {
     const { valori, segreti } = raccogli();
-    // Per la prova i campi vuoti si tolgono e i segreti non toccati valgono quelli salvati.
+    // For the test empty fields are removed and untouched secrets keep the saved ones.
     const pulito = JSON.parse(JSON.stringify(valori, (_k, v) => (v === null ? undefined : v)));
     const oggetto = aperta.nuovo ? pulito : { ...structuredClone(aperta.oggetto), ...pulito };
     esito.innerHTML = '<p class="aiuto">Prova in corso…</p>';

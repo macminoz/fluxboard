@@ -1,5 +1,5 @@
-// Un piccolo menu a comparsa sotto un pulsante (workspace, livello di lettura…).
-// voci: [{ valore, testo, scelto?, pericolo?, separatore? }] → Promise del valore scelto (o null).
+// A small pop-up menu under a button (workspace, reading level…). voci: [{ valore, testo, scelto?,
+// pericolo?, separatore? }] → Promise of the chosen value (or null).
 
 import { proteggi } from './formato.js';
 

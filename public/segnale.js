@@ -1,7 +1,7 @@
-// Il segnale in testata: si accende (e lampeggia) quando una tile, in qualunque workspace, è in
-// allerta grave; giallo e fermo per gli avvisi. Un click elenca le allerte e porta alla tile.
-// Il suono (leggero, due note) è per browser: si accende dal menu del segnale, perché i browser
-// suonano solo dopo un gesto di chi guarda. Le allerte le calcola il server (server/allerta.js).
+// The header signal: it lights up (and blinks) when a tile, on any workspace, is in critical alert;
+// yellow and steady for warnings. A click lists the alerts and goes to the tile. The sound (gentle,
+// two notes) is per browser: it is turned on from the signal's menu, because browsers play sound
+// only after a gesture of the viewer. The alerts are computed by the server (server/allerta.js).
 
 import { apriMenu } from './menu.js';
 
@@ -13,7 +13,7 @@ function memoria(chiave, valore) {
   return valore;
 }
 
-let precedenti = null;   // id delle allerte gravi già viste: il suono solo per quelle nuove
+let precedenti = null;   // ids of the critical alerts already seen: sound only for new ones
 let audio = null;
 
 const suonoAcceso = () => memoria('fluxboard.suono') === '1';
@@ -54,7 +54,7 @@ export function aggiornaSegnale(lista = []) {
   precedenti = ids;
 }
 
-// pagina(): la pagina corrente; vai(workspace, idTile): porta alla tile.
+// pagina(): the current page; vai(workspace, idTile): goes to the tile.
 export function attivaSegnale({ pagina, vai }) {
   const b = document.getElementById('segnale');
   b.addEventListener('click', async () => {

@@ -57,12 +57,50 @@
       <div id="risultato" class="risultato"></div>
     </section>
 
-    <aside class="guida" aria-label="Guida rapida">
+    <aside class="guida" lang="en" aria-label="Quick guide" data-non-tradurre>
+      <h2>Quick guide</h2>
+      <details open>
+        <summary>A tile</summary>
+        <ul>
+          <li><code>type</code>: <span data-tipi-tile></span></li>
+          <li><code>priority</code>: higher = further up</li>
+          <li><code>width</code>: narrow · medium · wide</li>
+          <li><code>show_if</code>: <b>data</b> (disappears when empty) · <b>always</b></li>
+          <li><code>views</code>: basic · medium · advanced · alarms · full</li>
+          <li><code>every</code>: 30s, 5m, 1h · <code>stale_after</code>: past it, the data is “stale”</li>
+          <li><code>active: false</code> switches it off without deleting it</li>
+        </ul>
+        <p>Keys work in English or Italian (<code>title</code> = <code>titolo</code>), even mixed.</p>
+      </details>
+      <details open>
+        <summary>Text and levels</summary>
+        <p><code>row</code> (list) and <code>text</code> (value) take a string or <code>basic</code> / <code>intermediate</code> / <code>advanced</code>.</p>
+        <p><code>{field}</code> · <code>{field:1}</code> decimals · <code>{field:rel}</code> “5m ago” · <code>{field:duration}</code> · <code>{field:time}</code> · <code>{field:date}</code> · <code>{field:%}</code></p>
+      </details>
+      <details>
+        <summary>Processing the data</summary>
+        <p>After reading, in order, under <code>process:</code></p>
+        <ul>
+          <li><code>rename: {old: new}</code></li>
+          <li><code>scale: {field: 0.1}</code></li>
+          <li><code>map: {field: {from: to}}</code></li>
+          <li><code>filter: "n &gt;= 3"</code> · <code>"code % 2 == 1"</code> · <code>"host ~ firewall"</code> · conditions joined with <code>and</code> / <code>or</code></li>
+          <li><code>sort: field</code> · <code>sort: -field</code></li>
+          <li><code>limit: 5</code> · <code>select: [a, b]</code></li>
+        </ul>
+      </details>
+      <details>
+        <summary>Sources</summary>
+        <p>Available types: <span data-tipi-sorgente></span>.</p>
+        <p>Secrets are written <code>${NAME}</code> in the source; the value is set here on the left under <b>Secrets</b> (write only).</p>
+      </details>
+    </aside>
+    <aside class="guida" lang="it" aria-label="Guida rapida" data-non-tradurre hidden>
       <h2>Guida rapida</h2>
       <details open>
         <summary>Una tile</summary>
         <ul>
-          <li><code>tipo</code>: <span id="tipi-tile"></span></li>
+          <li><code>tipo</code>: <span data-tipi-tile></span></li>
           <li><code>priorita</code>: più alta = più in alto</li>
           <li><code>larghezza</code>: stretta · media · larga</li>
           <li><code>mostra_se</code>: <b>dati</b> (sparisce se vuota) · <b>sempre</b></li>
@@ -90,7 +128,7 @@
       </details>
       <details>
         <summary>Sorgenti</summary>
-        <p>Tipi disponibili: <span id="tipi-sorgente"></span>.</p>
+        <p>Tipi disponibili: <span data-tipi-sorgente></span>.</p>
         <p>I segreti si scrivono <code>${NOME}</code> nella sorgente; il valore si imposta qui a sinistra in <b>Segreti</b> (sola scrittura).</p>
       </details>
     </aside>

@@ -1,17 +1,17 @@
-// Node-RED: flussi e stato dei nodi (il pallino colorato sotto il nodo nell'editor), in sola lettura.
+// Node-RED: flows and node status (the coloured dot under the node in the editor), read only.
 //
-// sorgente: { tipo: node-red, url: http://192.168.1.40:1880, utente, password: ${NODERED_PASSWORD} }
-//           utente/password solo se Node-RED ha adminAuth; senza, si legge senza credenziali.
-// dati:     { sorgente: <nome>, risorsa: stati | nodi | flussi }
+// source: { tipo: node-red, url: http://192.168.1.40:1880, utente, password: ${NODERED_PASSWORD} }
+//         utente/password only if Node-RED has adminAuth; without it, it reads without credentials.
+// dati:   { sorgente: <name>, risorsa: stati | nodi | flussi }
 //
-// Righe "stati" (i nodi che mostrano uno stato) e "nodi" (tutti):
+// "stati" rows (the nodes showing a status) and "nodi" rows (all):
 //   { id, nome, tipo, flusso, disattivato, stato, colore (green|yellow|red|blue|grey|—), forma, codice }
-//   codice: 1 ok (verde) · 2 attenzione (giallo) · 0 problema (rosso) · 3 informativo (blu/grigio) · null senza stato
-// Righe "flussi": { id, nome, attivo, nodi, con_stato, problemi }
+//   codice: 1 ok (green) · 2 warning (yellow) · 0 problem (red) · 3 informative (blue/grey) · null no status
+// "flussi" rows: { id, nome, attivo, nodi, con_stato, problemi }
 //
-// Per una tile su un nodo solo: `elabora: [ { filtra: "nome == MQTT broker" } ]`.
-// Lo stato si legge come fa l'editor: dal canale /comms (WebSocket), dove Node-RED ripete
-// l'ultimo stato di ogni nodo a chi si iscrive.
+// For a tile on a single node: `elabora: [ { filtra: "nome == MQTT broker" } ]`.
+// The status is read as the editor does: from the /comms channel (WebSocket), where Node-RED repeats
+// the last status of every node to whoever subscribes.
 
 import { apriWebSocket } from '../server/websocket.js';
 
@@ -38,7 +38,7 @@ const TESTI = {
   error: 'errore', waiting: 'in attesa', running: 'in esecuzione', ok: 'ok',
 };
 const CODICI = { green: 1, yellow: 2, red: 0, blue: 3, grey: 3 };
-// "node-red:common.status.connected" → "connesso"; i testi liberi restano come sono.
+// "node-red:common.status.connected" → "connected"; free texts stay as they are.
 const testo = (t) => (typeof t === 'string' && /^[\w-]+:[\w.-]+$/.test(t) ? TESTI[t.split('.').pop()] || t.split('.').pop() : t ?? '');
 
 async function token(sorgente, signal) {
@@ -60,7 +60,8 @@ async function flussi(sorgente, chiave, signal) {
   return r.json();
 }
 
-// Iscrizione a status/#: Node-RED rimanda subito l'ultimo stato di ogni nodo, poi si chiude.
+// Subscribing to status/#: Node-RED sends back the last status of every node right away, then
+// closes.
 async function stati(sorgente, chiave, signal, attesa = 1500) {
   const raccolti = new Map();
   const indirizzo = new URL('comms', sorgente.url.replace(/\/?$/, '/')).href.replace(/^http/, 'ws');

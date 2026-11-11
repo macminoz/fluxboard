@@ -1,7 +1,5 @@
-// VictoriaLogs: esegue una query LogsQL. Ogni riga JSON della risposta diventa una riga.
-//
-// sorgente: { tipo: logsql, url }
-// dati:     { sorgente: <nome>, query: <LogsQL>, limite: 100 }
+// VictoriaLogs: runs a LogsQL query. Each JSON line of the answer becomes a row. source: { tipo:
+// logsql, url } · dati: { sorgente: <name>, query: <LogsQL>, limite: 100 }
 
 import { numeroSePossibile } from '../util.js';
 
@@ -26,8 +24,8 @@ export async function prova(sorgente, { signal }) {
   return 'VictoriaLogs raggiungibile';
 }
 
-// Funzioni come row_max(...) restituiscono un oggetto JSON dentro una stringa: se contiene un
-// solo campo lo si "srotola", così nel template basta scrivere {ultimo_msg}.
+// Functions like row_max(...) return a JSON object inside a string: if it holds a single field it
+// is "unrolled", so in the template {ultimo_msg} is enough.
 function normalizza(valore) {
   if (typeof valore === 'string' && valore.startsWith('{')) {
     try {

@@ -1,5 +1,7 @@
 # Catalogo delle tile (tile market)
 
+[English](README.md) · **Italiano**
+
 Tile pronte da aggiungere alla dashboard dalla finestra **Tile market**. Ogni file ha due parti:
 
 ```yaml

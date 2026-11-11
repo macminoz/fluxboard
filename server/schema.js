@@ -1,5 +1,5 @@
-// Regole di validazione dei tre tipi di file di configurazione. Restituiscono errori (il file
-// viene rifiutato) e avvisi (il file viene accettato, ma qualcosa merita attenzione).
+// Validation rules for the three kinds of configuration file. They return errors (the file is
+// refused) and warnings (the file is accepted, but something deserves attention).
 
 import { OPERAZIONI as OPERAZIONI_RIGHE } from './nascoste.js';
 import { durata } from './util.js';
@@ -7,13 +7,13 @@ import { compilaCondizione, NOMI_PASSAGGI } from './elabora.js';
 import { NOMI_ICONE as ICONE } from '../public/icone.js';
 
 export const LIVELLI = ['base', 'intermedia', 'avanzata'];
-// Le viste della pagina: i tre livelli ("media" = intermedia) e due filtri, Allarmi e Completa.
+// The page views: the three levels ("media" = intermediate) and two filters, Alarms and Full.
 export const VISTE = ['base', 'media', 'avanzata', 'allarmi', 'completa'];
 export const LARGHEZZE = ['stretta', 'media', 'larga'];
 export const COLORI = ['blu', 'azzurro', 'verde', 'giallo', 'arancio', 'rosso', 'viola', 'rosa', 'ciano', 'indaco', 'lime', 'ambra', 'marrone', 'grigio'];
 
-// Tipi di tile che la pagina sa disegnare. `conDati` = di solito legge una sorgente;
-// `mostraSe` = comportamento predefinito se il file non lo specifica.
+// Tile types the page can draw. `conDati` = usually reads a source; `mostraSe` = default behaviour
+// when the file does not say.
 export const TIPI_TILE = {
   elenco:   { conDati: true,  mostraSe: 'dati',   descrizione: 'Un elenco di righe, una per elemento' },
   valore:   { conDati: true,  mostraSe: 'dati',   descrizione: 'Un valore singolo con testo intorno' },
@@ -58,6 +58,7 @@ export function validaGlobale(o) {
       if (typeof a === 'object' && a.icona && !ICONE.includes(a.icona)) errori.push(`argomento "${nome}": icona "${a.icona}" sconosciuta (ammesse: ${ICONE.join(', ')})`);
     }
   }
+  if (o.lingua !== undefined && !['en', 'it'].includes(o.lingua)) errori.push('"lingua" deve essere en o it');
   if (o.display !== undefined) {
     if (typeof o.display !== 'object') errori.push('"display" deve contenere i profili (browser, mobile, ...)');
     else for (const [nome, p] of Object.entries(o.display)) {
@@ -71,7 +72,7 @@ export function validaGlobale(o) {
       if (p.giro !== undefined && !(p.giro === false || /^\d+\s*(s|m)$/.test(String(p.giro)))) errori.push(`display "${nome}": "giro" è una durata (es. 30s) o false`);
     }
   }
-  // schermi: [{ indirizzo | browser, display }] (server/index.js, "chi si collega")
+  // schermi: [{ indirizzo | browser, display }] (server/index.js, "who connects")
   if (o.schermi !== undefined) {
     [].concat(o.schermi).forEach((s, i) => {
       if (!s || typeof s !== 'object' || !s.display) errori.push(`schermi[${i}]: serve "display" (il profilo da usare)`);
@@ -93,8 +94,8 @@ export function validaGlobale(o) {
   return { errori, avvisi };
 }
 
-// La disposizione di un display, scritta dalla modalità "Disponi" della pagina (ma leggibile e
-// modificabile anche a mano). Le tile non elencate seguono, in coda, l'ordine di priorità.
+// A display's layout, written by the page's Edit mode (but readable and editable by hand too).
+// Tiles not listed follow, at the end, in priority order.
 export function validaLayout(o, tile) {
   const errori = [], avvisi = [];
   if (!o || typeof o !== 'object' || !Array.isArray(o.tile)) return { errori: ['serve un elenco "tile" di { id, colonne, altezza }'], avvisi };
@@ -148,8 +149,8 @@ export function validaSorgente(o, connettori) {
   }
   return { errori, avvisi };
 }
-// voci: [{ etichetta, valore, livello?, tono? }]; tono è un nome fisso oppure
-// { "<condizione>": <nome> } valutato sulla riga dei dati, la prima vera vince.
+// voci: [{ etichetta, valore, livello?, tono? }]; tono is a fixed name or { "<condition>": <name> }
+// evaluated on the data row, the first true wins.
 export const TONI = ['ok', 'attenzione', 'allarme', 'caldo', 'freddo', 'info', 'spento'];
 function validaVoci(voci, errori, chiave = 'voci') {
   if (!Array.isArray(voci) || !voci.length) { errori.push(`"${chiave}" deve essere un elenco di { etichetta, valore }`); return; }
@@ -178,9 +179,9 @@ function validaAzioni(o, sorgenti, connettori, errori) {
     if (visti.has(a.id)) errori.push(`${dove}: "${a.id}" ripetuto`);
     visti.add(a.id);
     const s = sorgenti[a.sorgente || o.dati?.sorgente];
-    // Tile senza sorgente (es. il centro avvisi): le operazioni sono del suo tipo di dati.
+    // Tiles without a source (e.g. the alert centre): the operations belong to their data type.
     const c = s ? connettori.get(s.tipo) : (!a.sorgente && !o.dati?.sorgente && o.dati?.tipo ? connettori.get(o.dati.tipo) : null);
-    // Ack e Ignora delle righe (server/nascoste.js): valgono per qualunque tile.
+    // Ack and Ignore for rows (server/nascoste.js): valid for any tile.
     if (OPERAZIONI_RIGHE.includes(a.operazione)) { if (!a.globale && !a.chiave) errori.push(`${dove}: serve "chiave" (il campo che riconosce la riga, es. host)`); }
     else if (!c) errori.push(`${dove}: nessuna sorgente su cui eseguirla`);
     else if (!c.azioni?.[a.operazione]) errori.push(`${dove}: "operazione" deve essere una di ${Object.keys(c.azioni || {}).join(', ') || '(questa sorgente non ha azioni)'}`);
@@ -221,7 +222,7 @@ export function validaTile(o, sorgenti, connettori, argomenti = {}) {
   if (o.priorita !== undefined && typeof o.priorita !== 'number') errori.push('"priorita" deve essere un numero');
   if (o.ogni && durata(o.ogni) === null) errori.push('"ogni" non è una durata valida (es. 30s, 1m, 1h)');
   if (o.scadenza && durata(o.scadenza) === null) errori.push('"scadenza" non è una durata valida');
-  // avvisi: { quando, messaggio, chiave, host, gravita, ora, volte } (o un elenco di blocchi)
+  // avvisi: { quando, messaggio, chiave, host, gravita, ora, volte } (or a list of blocks)
   if (o.avvisi !== undefined) {
     const regole = [].concat(o.avvisi);
     if (!o.dati) errori.push('"avvisi" serve solo a una tile che legge dati');

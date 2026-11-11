@@ -1,17 +1,17 @@
-# Software da aggiornare: compare solo quando c'è una versione nuova.
-genere: correlazione
-titolo: Aggiornamenti disponibili
-campi:
-  dati: { sorgente: versioni }
-  colonne:
-    - { etichetta: Software, valore: "{nome}" }
-    - { etichetta: Installata, valore: "{installata}" }
-    - { etichetta: Online, valore: "{ultima}" }
-  filtro: da_aggiornare == true
-  evidenzia: da_aggiornare == true
-  ordina: nome
-etichetta: infrastruttura
-icona: pacchetto
-mostra_se: dati
-vuoto: Tutto aggiornato
-priorita: 70
+# Software to update: it shows only when a newer version exists.
+kind: correlation
+title: Updates available
+fields:
+  data: { source: versioni }
+  columns:
+    - { label: Software, value: "{nome}" }
+    - { label: Installed, value: "{installata}" }
+    - { label: Latest, value: "{ultima}" }
+  filter: da_aggiornare == true
+  highlight: da_aggiornare == true
+  sort: nome
+label: infrastructure
+icon: package
+show_if: data
+empty: Everything up to date
+priority: 70

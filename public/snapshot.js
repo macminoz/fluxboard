@@ -1,6 +1,7 @@
-// Finestra degli snapshot: crearne uno prima di una prova, ripristinarlo, scaricarlo, eliminarlo;
-// esportare e importare tutta la configurazione su file.
+// Snapshot window: take one before an experiment, restore it, download it, delete it; export and
+// import the whole configuration to a file.
 
+import { locale } from './lingua.js';
 import { proteggi, relativo } from './formato.js';
 
 async function api(percorso, opzioni = {}) {
@@ -14,7 +15,7 @@ async function api(percorso, opzioni = {}) {
   return corpo;
 }
 
-const quando = (iso) => new Date(iso).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const quando = (iso) => new Date(iso).toLocaleString(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 export async function gestisciSnapshot({ ricarica }) {
   const dlg = document.getElementById('dlg-snapshot');

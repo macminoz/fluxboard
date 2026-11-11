@@ -1,5 +1,5 @@
-// Scelte grafiche a comparsa, vicino al pulsante che le apre: una griglia di icone e le viste di
-// una tile (caselle, scelta multipla). Si chiudono con Esc o con un click fuori.
+// Graphical pop-up choices, next to the button that opens them: a grid of icons and the views of a
+// tile (checkboxes, multiple choice). They close with Esc or a click outside.
 
 import { proteggi } from './formato.js';
 import { NOMI_ICONE, icona } from './icone.js';
@@ -27,8 +27,8 @@ function attendi(box, ancora, alClick) {
   });
 }
 
-// Icona (e, se si passano i colori, colore): restituisce il nome scelto ('' per "nessuna"), oppure
-// { colore } se si è scelto un colore; null se si chiude senza scegliere.
+// Icon (and, if colours are passed, colour): returns the chosen name ('' for "none"), or { colore }
+// if a colour was chosen; null if closed without choosing.
 export function sceltaIcona(ancora, { attuale = '', titolo = 'Icona', colori = null, colore = '' } = {}) {
   const box = comparsa(ancora, `<p class="titolo-scelta">${proteggi(titolo)}</p>
     ${colori ? `<div class="colori-scelta">${colori.map((c) => `<button type="button" data-colore-scelto="${c}" title="${c}" aria-label="Colore ${c}" aria-pressed="${c === colore}" style="--tinta: var(--c-${c})"></button>`).join('')}</div>` : ''}
@@ -43,9 +43,9 @@ export function sceltaIcona(ancora, { attuale = '', titolo = 'Icona', colori = n
   });
 }
 
-// Dove compare una tile: le viste (tutte spuntate = in tutte, come di norma), oppure "Esclusa"
-// (non compare da nessuna parte, resta salvata). Restituisce { viste, esclusa } o { togli } per
-// una tile che viene da un altro workspace; null se si chiude senza scegliere.
+// Where a tile shows: the views (all ticked = in all of them, as usual), or "Excluded" (shows
+// nowhere, stays saved). Returns { viste, esclusa } or { togli } for a tile coming from another
+// workspace; null if closed without choosing.
 export function sceltaViste(ancora, { scelte = [], viste, esclusa = false, ospite = null }) {
   const tutte = !scelte.length;
   const box = comparsa(ancora, `<p class="titolo-scelta">Dove compare</p>

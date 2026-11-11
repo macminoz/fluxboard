@@ -1,16 +1,16 @@
-// Qualunque API HTTP che risponde in JSON (le API pubbliche, Technitium, Jellyfin, ...).
+// Any HTTP API answering in JSON (public APIs, Technitium, Jellyfin, ...).
 //
-// sorgente: { tipo: http, url: <base, facoltativa>,
-//             autenticazione: { tipo: nessuna|bearer|parametro|intestazione|basic, nome, utente, segreto },
-//             parametri: { nome: valore },     // aggiunti a ogni richiesta (?nome=valore)
-//             intestazioni: { Nome: valore } }
-// dati:     { sorgente: <nome>, metodo: GET|POST, url: <assoluta o relativa alla base>,
-//             parametri: { … }, corpo: <JSON per POST>,
-//             elenco: <percorso dell'array nella risposta, facoltativo>,
-//             campi:  { nome: <percorso dentro ogni elemento> } }
+// source: { tipo: http, url: <base, optional>,
+//           autenticazione: { tipo: nessuna|bearer|parametro|intestazione|basic, nome, utente, segreto },
+//           parametri: { name: value },     // added to every request (?name=value)
+//           intestazioni: { Name: value } }
+// dati:   { sorgente: <name>, metodo: GET|POST, url: <absolute or relative to the base>,
+//           parametri: { … }, corpo: <JSON for POST>,
+//           elenco: <path of the array in the answer, optional>,
+//           campi:  { name: <path inside each element> } }
 //
-// Senza `campi` ogni elemento passa così com'è; senza `elenco` la risposta è una riga sola.
-// Le tile leggono e basta: per scrivere (aggiungere un record DNS…) ci sono le azioni.
+// Without `campi` each element passes as it is; without `elenco` the answer is a single row.
+// Tiles only read: to write (adding a DNS record…) there are actions.
 
 import { leggiPercorso } from '../util.js';
 import { compilaCondizione } from '../../public/condizione.js';
@@ -44,7 +44,7 @@ export const campiDati = ['url'];
 
 export const METODI_LETTURA = ['GET', 'POST'];
 
-// Indirizzo e intestazioni di una richiesta, autenticazione compresa. Usata anche dalle azioni.
+// Address and headers of a request, authentication included. Also used by actions.
 export function preparaRichiesta(sorgente, percorso, parametri = {}) {
   const url = sorgente.url ? new URL(percorso, sorgente.url) : new URL(percorso);
   for (const [k, v] of Object.entries({ ...(sorgente.parametri || {}), ...parametri })) url.searchParams.set(k, String(v));
@@ -57,7 +57,7 @@ export function preparaRichiesta(sorgente, percorso, parametri = {}) {
   return { url, intestazioni };
 }
 
-// Gli errori non devono mai mostrare il token: si toglie dall'indirizzo prima di citarlo.
+// Errors must never show the token: it is removed from the address before quoting it.
 export const senzaSegreti = (url) => `${url.host}${url.pathname}`;
 
 export async function leggi(sorgente, dati, { signal }) {
@@ -77,9 +77,9 @@ export async function leggi(sorgente, dati, { signal }) {
     Object.entries(dati.campi).map(([nome, percorso]) => [nome, leggiPercorso(e, percorso)])));
 }
 
-// Azione "richiesta": una chiamata che scrive (creare un record DNS, avviare una sincronizzazione…).
-// Metodo, percorso e parametri sono nel file della tile; `errore_se` è una condizione sulla risposta
-// JSON per le API che rispondono 200 anche quando falliscono (es. Technitium: "status != ok").
+// "richiesta" action: a call that writes (creating a DNS record, starting a sync…). Method, path
+// and parameters are in the tile's file; `errore_se` is a condition on the JSON answer for APIs
+// that answer 200 even when they fail (e.g. Technitium: "status != ok").
 export const azioni = {
   async richiesta(sorgente, parametri, { signal, azione, url }) {
     const metodo = (azione.metodo || 'POST').toUpperCase();

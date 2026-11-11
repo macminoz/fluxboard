@@ -1,7 +1,7 @@
-// Editor di una tile, aperto direttamente dalla dashboard (⚙ sulla tile o "+ Aggiungi tile").
-// Due schede, come negli editor di card di Home Assistant: "Impostazioni" (moduli) e "Codice"
-// (il YAML completo, per tutto ciò che i moduli non coprono). A destra l'anteprima dal vivo con
-// i dati veri della sorgente e i campi disponibili da inserire nei testi.
+// Editor of a tile, opened straight from the dashboard (⚙ on the tile or "+ Add tile"). Two tabs,
+// as in Home Assistant's card editors: "Settings" (forms) and "Code" (the full YAML, for everything
+// the forms do not cover). On the right the live preview with the source's real data and the
+// available fields to insert in the texts.
 
 import { proteggi } from './formato.js';
 import { TIPI } from './tipi.js';
@@ -23,7 +23,7 @@ const NOMI_TIPI = {
   iframe: ['Pagina incorporata', 'Un pannello Grafana o un\'altra pagina web', '⧉'],
 };
 const LIVELLI = ['base', 'intermedia', 'avanzata'];
-// Nei file il livello di mezzo si chiama "intermedia"; sulla pagina è la vista "Media".
+// In the files the middle level is called "intermedia"; on the page it is the "Medium" view.
 const NOME_LIVELLO = { base: 'Base', intermedia: 'Media', avanzata: 'Avanzata' };
 const DURATE = ['30s', '1m', '2m', '5m', '15m', '1h'];
 const CON_DATI = new Set(['elenco', 'valore', 'valori', 'grafico', 'cronologia']);
@@ -43,12 +43,12 @@ async function api(percorso, opzioni = {}) {
 const slug = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
 
-// ------------------------------------------------------------------ scelta del tipo
+// ------------------------------------------------------------------ choosing the type
 
 export async function scegliTipo({ workspace = 'default' } = {}) {
   meta = await api('/');
   const dlg = document.getElementById('dlg-tipo');
-  // Una riga per tipo: icona, nome, a cosa serve. Righe tutte uguali, in due colonne affiancate.
+  // One row per type: icon, name, what it is for. All rows the same, in two columns side by side.
   const scheda = ({ tipo }) => {
     const [nome, descrizione, icona] = NOMI_TIPI[tipo] || [tipo, '', '□'];
     return `<button type="button" class="riga-tipo" data-tipo="${tipo}"><span class="icona-tipo" aria-hidden="true">${icona}</span><span class="testo-tipo"><b>${proteggi(nome)}</b><span>${proteggi(descrizione)}</span></span></button>`;
@@ -56,7 +56,7 @@ export async function scegliTipo({ workspace = 'default' } = {}) {
   const conDati = meta.tipiTile.filter((t) => CON_DATI.has(t.tipo));
   const fissi = meta.tipiTile.filter((t) => !CON_DATI.has(t.tipo));
   const quante = meta.sorgenti.length;
-  // Due famiglie, come in Grafana: dati da una sorgente (API, database…) oppure contenuto fisso.
+  // Two families, as in Grafana: data from a source (API, database…) or fixed content.
   const altrove = meta.file.filter((f) => f.genere === 'tile' && f.workspace !== workspace && !(f.anche_in || []).includes(workspace));
   dlg.querySelector('.galleria').innerHTML = `
     <div class="famiglie">
@@ -90,8 +90,8 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
   meta = await api('/');
   const nuovo = !id;
   const originale = nuovo ? { tipo, titolo: '', ...(etichetta ? { etichetta } : {}) } : (await api(`/tile?id=${encodeURIComponent(id)}`));
-  // Tile di un genere: i campi del genere in alto; il resto dell'editor mostra la tile espansa
-  // e al salvataggio si scrivono solo le differenze dal modello.
+  // Tile of a kind: the kind's fields at the top; the rest of the editor shows the expanded tile
+  // and on save only the differences from the model are written.
   genereCorrente = null;
   let scritta = nuovo ? null : originale.oggetto;
   if (genere || originale.genere) {
@@ -104,7 +104,7 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
   const oggetto = genereCorrente
     ? { ...(await api('/generi/espandi', { method: 'POST', body: { oggetto: scritta } })).tile, titolo: scritta.titolo ?? '', etichetta: scritta.etichetta }
     : (nuovo ? originale : originale.oggetto);
-  // Il modello puro (genere + campi, senza ritocchi): si salva solo ciò che ne differisce.
+  // The plain model (kind + fields, no tweaks): only what differs from it is saved.
   const modelloPuro = genereCorrente ? (await api('/generi/espandi', { method: 'POST', body: { oggetto: { genere: scritta.genere, campi: scritta.campi || {} } } })).tile : null;
   const testoOriginale = nuovo ? '' : originale.testo;
   tipo = oggetto.tipo;
@@ -137,7 +137,7 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
     aggiornaVisibilita(box);
   }
   async function cambiaSorgente() {
-    // "+ Nuova sorgente…": si apre la gestione delle sorgenti e si torna qui con quella nuova scelta.
+    // "+ New source…": the source management opens and comes back here with the new one selected.
     if (sorgenteScelta() === '__nuova') {
       const creata = await gestisciSorgenti({ nuova: true }).catch(() => null);
       meta = await api('/');
@@ -159,7 +159,7 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
     const t = {
       id: id || 'nuova', tipo, titolo: o.titolo, riga: o.riga, testo: o.testo, vuoto: o.vuoto, voci: o.voci,
       serie: o.serie, fasce: o.fasce, soglie: o.soglie, tacche: o.tacche, gruppo: o.gruppo, se: o.se, ordine: o.ordine, finestra: o.finestra, tono: o.tono, etichetta_se: o.etichetta_se, stato: o.stato, stato_se: o.stato_se, in_fondo: o.in_fondo, asse: o.asse, unita: o.unita, decimali: o.decimali, tabella: o.tabella, azioni: o.azioni, colore_se: o.colore_se, intensita: o.intensita,
-      url: o.url, altezza: o.altezza, aggiorna_ogni: 0, diretto: true,   // anteprima: la tile non è ancora salvata
+      url: o.url, altezza: o.altezza, aggiorna_ogni: 0, diretto: true,   // preview: the tile is not saved yet
     };
     const ctx = { livello: livelloAnteprima, livelli: LIVELLI, fuso };
     const corpo = (TIPI[tipo] || TIPI.errore)(t, { righe: righeAnteprima }, ctx);
@@ -187,7 +187,7 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
       }
     } catch (e) { stato.textContent = e.message; righeAnteprima = []; }
     const campi = [...new Set(righeAnteprima.flatMap((r) => Object.keys(r)))];
-    // I campi dei dati veri, proposti nelle condizioni grafiche.
+    // The fields of the real data, offered in the graphical conditions.
     let elencoCampi = dlg.querySelector('#campi-anteprima');
     if (!elencoCampi) { elencoCampi = document.createElement('datalist'); elencoCampi.id = 'campi-anteprima'; dlg.append(elencoCampi); }
     elencoCampi.innerHTML = campi.map((c) => `<option value="${proteggi(c)}">`).join('');
@@ -207,9 +207,9 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
     if (e.target.closest('[data-dati], .campi-sorgente, .campi-genere')) { aggiornaVisibilita(form.querySelector('.impostazioni')); programmaAnteprima(); }
     else disegnaAnteprima();
   };
-  // "+ Aggiungi un valore" e "✕" delle voci di una tile "valori".
+  // "+ Add a value" and "✕" of the items of a "values" tile.
   anteprimaCorrente = () => disegnaAnteprima();
-  // A tutta finestra: per scrivere codice e query lunghe. La scelta resta finché non la si toglie.
+  // Full window: for writing long code and queries. The choice stays until it is removed.
   const pieno = dlg.querySelector('[data-tutta-finestra]');
   const statoPieno = (on) => { dlg.classList.toggle('a-tutta-finestra', on); pieno.setAttribute('aria-pressed', String(on)); pieno.textContent = on ? '⤡' : '⤢'; };
   try { statoPieno(localStorage.getItem('fluxboard.editor-pieno') === '1'); } catch { statoPieno(false); }
@@ -219,8 +219,8 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
     try { localStorage.setItem('fluxboard.editor-pieno', on ? '1' : '0'); } catch { /* niente memoria */ }
     if (!on) anteprimaCorrente();
   };
-  // Anteprima larga quanto si vuole: il divisore si trascina (o si sposta con le frecce) e la
-  // larghezza resta ricordata in questo browser.
+  // Preview as wide as you like: the divider is dragged (or moved with the arrows) and the width is
+  // remembered in this browser.
   if (!dlg.dataset.divisore) {
     dlg.dataset.divisore = '1';
     const corpo = dlg.querySelector('.dlg-corpo');
@@ -251,12 +251,12 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
       if (e.key === 'ArrowRight') imposta(attuale - 40);
     });
   }
-  // Condizioni grafiche (colore_se): una sola volta per finestra; ogni cambio aggiorna l'anteprima.
+  // Graphical conditions (colore_se): once per window; every change updates the preview.
   if (!dlg.dataset.condizioni) {
     dlg.dataset.condizioni = '1';
     const impostazioni = form.querySelector('.impostazioni');
     attivaCondizioni(impostazioni, () => anteprimaCorrente());
-    // Colore della regola: un pallino oppure il colore di un'etichetta, mai tutti e due.
+    // Colour of the rule: a dot or a label's colour, never both.
     impostazioni.addEventListener('change', (e) => {
       const regola = e.target.closest('.regola-colore');
       if (!regola) return;
@@ -343,9 +343,9 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
       const corpo = { id, nuovo };
       if (schedaAttiva(dlg) === 'codice') corpo.testo = codice.value;
       else if (genereCorrente) {
-        // Genere: i campi del genere più solo quello che differisce dal modello espanso.
-        // Solo le chiavi che l'editor gestisce: un ritocco uguale al modello si toglie (null), uno
-        // diverso si scrive; quelle che l'editor non mostra (tabella, priorità…) restano com'erano.
+        // Kind: the kind's fields plus only what differs from the expanded model. Only the keys the
+        // editor handles: a tweak equal to the model is removed (null), a different one written;
+        // those the editor does not show (table, priority…) stay as they were.
         const { __cambiati, ...s } = scrittaDaGenere(form, oggetto, modelloPuro, tipo, { conNull: !nuovo });
         corpo.campi = s;
         corpo.sostituisci = nuovo ? [['campi']] : (__cambiati || []).map((k) => ['campi', k]);
@@ -355,7 +355,8 @@ export async function apriEditor({ id = null, tipo = null, genere = null, livell
         corpo.sostituisci = __sostituisci || [];
       }
       if (nuovo) {
-        // Nel workspace "default" l'id è il nome del file; negli altri ha davanti il workspace.
+        // In the "default" workspace the id is the file name; in the others the workspace comes
+        // first.
         const prefisso = workspace === 'default' ? '' : `${workspace}/`;
         const base = slug(form.elements.titolo?.value) || tipo;
         corpo.id = `${prefisso}${base}`;
@@ -382,7 +383,7 @@ function mostraScheda(dlg, nome) {
   dlg.querySelector('.codice').hidden = nome !== 'codice';
 }
 
-// ------------------------------------------------------------------ moduli
+// ------------------------------------------------------------------ forms
 
 function perLivelli(valore) {
   if (valore == null) return { base: '', intermedia: '', avanzata: '' };
@@ -397,7 +398,7 @@ function campoTesto(nome, etichetta, valore, aiuto = '') {
     ${aiuto ? `<p class="aiuto">${aiuto}</p>` : ''}</fieldset>`;
 }
 
-// Tipi di dati senza sorgente oltre a "scritti a mano" (es. il centro avvisi): "__tipo:<tipo>".
+// Data types without a source besides "hand-written" (e.g. the alert centre): "__tipo:<type>".
 const TIPO_INTERNO = /^__tipo:(.+)$/;
 
 function campiPerSorgente(scelta, dati) {
@@ -412,12 +413,12 @@ function campiPerSorgente(scelta, dati) {
   }
   const s = meta.sorgenti.find((x) => x.nome === scelta);
   const c = meta.connettori.find((x) => x.tipo === s?.tipo);
-  // I valori già scritti valgono solo se la tile usa proprio questa sorgente.
+  // Values already written apply only if the tile uses exactly this source.
   return disegnaModulo(c?.moduloDati || [], dati.sorgente === scelta ? dati : {});
 }
 
-// Sorgenti raggruppate per tipo, come nell'elenco delle data source di Grafana ("Sonde", non
-// "Sonde (porte, pagine web, DNS)": il dettaglio è nella gestione delle sorgenti).
+// Sources grouped by type, as in Grafana's list of data sources ("Probes", not "Probes (ports, web
+// pages, DNS)": the detail is in the source management).
 const breve = (s) => String(s || '').replace(/\s*\(.*\)\s*$/, '');
 function sceltaSorgente(scelta) {
   const gruppi = {};
@@ -433,8 +434,8 @@ function sceltaSorgente(scelta) {
   </select>`;
 }
 
-// Etichetta: pillole colorate, una per etichetta, più "Nuova" per crearne una al volo. Colore e
-// icona diversi da quelli dell'etichetta stanno in un riquadro a parte, chiuso se non servono.
+// Label: coloured pills, one per label, plus "New" to create one on the fly. Colour and icon
+// different from the label's sit in a separate box, closed when not needed.
 function pillolaEtichetta(n, testo, colore, nomeIcona, scelta) {
   return `<label class="pillola-etichetta" data-colore="${proteggi(colore || 'grigio')}"><input type="radio" name="etichetta" value="${proteggi(n)}"${scelta ? ' checked' : ''}>
     <span class="segno-tile">${nomeIcona ? icona(nomeIcona) : ''}</span><span>${proteggi(testo)}</span></label>`;
@@ -464,9 +465,9 @@ function opzioniColore(scelto) {
     <optgroup label="Colori">${(meta.colori || []).map((c) => opzione(c, c)).join('')}</optgroup>`;
 }
 
-// Una regola di "colore_se": quando la condizione è vera, la tile prende quel colore.
-// Una regola: "quando" (condizione in righe: campo · operatore · valore) → "colora" (campioni di
-// colore, più i colori delle etichette) e se colorare anche lo sfondo.
+// A "colore_se" rule: when the condition is true, the tile takes that colour. A rule: "when"
+// (condition in rows: field · operator · value) → "colour" (colour swatches, plus the label
+// colours) and whether to colour the background too.
 let regole = 0;
 function rigaRegola(condizione = '', scelta = 'rosso') {
   const colore = typeof scelta === 'string' ? scelta : scelta?.colore;
@@ -488,16 +489,16 @@ function rigaRegola(condizione = '', scelta = 'rosso') {
     <button type="button" class="togli-voce togli-regola" data-azione-modulo="togli-regola" aria-label="Togli la regola" title="Togli la regola">✕</button></div>`;
 }
 
-// L'anteprima della tile aperta adesso: gli ascoltatori agganciati una volta sola chiamano questa.
+// The preview of the tile open now: the listeners attached once call this.
 let anteprimaCorrente = () => {};
-// Genere della tile aperta (null = tile personalizzata): { id, nome, descrizione, campi, valori }.
+// Kind of the open tile (null = custom tile): { id, nome, descrizione, campi, valori }.
 let genereCorrente = null;
 let wsDellaTile = 'default';   // workspace della tile aperta nell'editor
 
 function moduli(o, tipo) {
   const titolo = `<label>Titolo<input name="titolo" value="${proteggi(typeof o.titolo === 'string' ? o.titolo : '')}" placeholder="vuoto = nessuna intestazione" autocomplete="off"></label>`;
-  // Tile di un genere: prima cosa mostra (i campi del genere), poi titolo ed etichetta; il resto
-  // (colori, quando compare, click) in "Altre impostazioni", chiuso.
+  // Tile of a kind: first what it shows (the kind's fields), then title and label; the rest
+  // (colours, when it shows, click) in "Other settings", closed.
   if (genereCorrente) return `${sezioneGenere(o)}<section class="aspetto-genere"><h3>Titolo ed etichetta</h3>${titolo}${sceltaEtichetta(o)}</section>
     <details class="altre-impostazioni"><summary>Altre impostazioni <span class="aiuto">colori, quando compare, ogni quanto, click</span></summary>${altreImpostazioni(o, tipo).join('')}</details>`;
   const parti = [titolo, sceltaEtichetta(o)];
@@ -545,7 +546,7 @@ function moduli(o, tipo) {
 
 function altreImpostazioni(o, tipo) {
   const parti = [];
-  // Predefinito: quello delle Impostazioni (nascondi_vuote), le immagini restano visibili.
+  // Default: the Settings' one (nascondi_vuote), images stay visible.
   const predefinito = CON_DATI.has(tipo) && meta.nascondiVuote !== false ? 'dati' : 'sempre';
   const mostra = o.mostra_se || predefinito;
   const ogni = o.ogni || '1m';
@@ -568,7 +569,7 @@ function altreImpostazioni(o, tipo) {
   return parti;
 }
 
-// indice = posizione della voce nel file, per non perderne tono e livello; null = voce nuova.
+// index = position of the item in the file, so its tone and level are not lost; null = new item.
 function rigaVoce(v = {}, indice = null) {
   return `<div class="voce-modulo"${indice === null ? '' : ` data-indice="${indice}"`}>
     <input data-testo name="voce.etichetta" value="${proteggi(typeof v.etichetta === 'string' ? v.etichetta : '')}" placeholder="Etichetta (es. Adesso)" autocomplete="off">
@@ -584,12 +585,12 @@ function testoDaLivelli(form, nome) {
   return Object.fromEntries(LIVELLI.map((l) => [l, v[l] || null]));
 }
 
-// Solo i campi che i moduli gestiscono: tutto il resto del file (elabora, commenti, chiavi
-// scritte a mano) resta com'è.
+// Only the fields the forms handle: everything else in the file (elabora, comments, hand-written
+// keys) stays as it is.
 function campiDalModulo(form, o, tipo) {
   const el = form.elements;
   const campi = { titolo: el.titolo.value.trim(), etichetta: el.etichetta.value || null, colore: el.colore.value || null, icona: el.icona.value || null, sfondo: el.sfondo.checked ? true : (o.sfondo === undefined ? null : false) };
-  // Intensità: si scrive solo se diversa dal predefinito (10%) o se c'era già.
+  // Intensity: written only if different from the default (10%) or if it was already there.
   if (el.intensita) {
     const n = Number(el.intensita.value);
     campi.intensita = n === 10 && o.intensita === undefined ? undefined : n;
@@ -608,7 +609,7 @@ function campiDalModulo(form, o, tipo) {
       campi.dati = { ...valori, sorgente: scelta, tipo: null, righe: null };
       campi.__sostituisci = mappe.map((m) => ['dati', ...m]);
     }
-    // Una condizione scritta nel codice resta; altrimenti dati/sempre, e il predefinito non si scrive.
+    // A condition written in the code stays; otherwise data/always, and the default is not written.
     const casella = el.sparisce;
     if (casella && !(o.mostra_se && !['dati', 'sempre'].includes(o.mostra_se))) {
       const scelto = casella.checked ? 'dati' : 'sempre';
@@ -616,7 +617,7 @@ function campiDalModulo(form, o, tipo) {
     }
     campi.ogni = el.ogni.value;
   } else if (CON_DATI.has(tipo) && el.ogni) {
-    // Tile di genere: niente sezione dati, ma "quando compare" e "ogni quanto" sì.
+    // Tile of a kind: no data section, but "when it shows" and "how often" yes.
     const casella = el.sparisce;
     if (casella && !(o.mostra_se && !['dati', 'sempre'].includes(o.mostra_se))) {
       const scelto = casella.checked ? 'dati' : 'sempre';
@@ -629,8 +630,8 @@ function campiDalModulo(form, o, tipo) {
     campi.vuoto = el.vuoto.value.trim() || null;
   }
   if (tipo === 'valore' && !genereCorrente) campi.testo = testoDaLivelli(form, 'testo');
-  // Voci di "valori" e colonne di "elenco": le chiavi che il modulo non mostra (tono, livello)
-  // restano quelle della voce originale; un testo scritto per livelli resta com'è.
+  // Items of "values" and columns of "list": the keys the form does not show (tone, level) stay
+  // those of the original item; a text written per level stays as it is.
   for (const box of form.querySelectorAll('.voci[data-chiave]')) {
     const chiave = box.dataset.chiave;
     const testo = (originale, campo) => (originale && typeof originale === 'object' ? originale : campo.value.trim());
@@ -638,7 +639,7 @@ function campiDalModulo(form, o, tipo) {
       const v = riga.dataset.indice === undefined ? {} : o[chiave]?.[Number(riga.dataset.indice)] || {};
       return { ...v, etichetta: testo(v.etichetta, riga.querySelector('[name$=".etichetta"]')), valore: testo(v.valore, riga.querySelector('[name$=".valore"]')) };
     }).filter((v) => v.etichetta || v.valore);
-    // Invariate: non si riscrivono, così il file conserva la sua forma.
+    // Unchanged: not rewritten, so the file keeps its shape.
     if (JSON.stringify(voci) !== JSON.stringify(o[chiave] || [])) campi[chiave] = voci;
   }
   if (!genereCorrente) {
@@ -648,8 +649,8 @@ function campiDalModulo(form, o, tipo) {
     if (tipo === 'iframe') campi.altezza = Number(el.altezza.value) || 300;
   }
   if (tipo === 'immagine' && el.sparisce) campi.mostra_se = el.sparisce.checked ? 'dati' : null;
-  // Il "da quale livello compare" non si chiede più: dove compare una tile lo dice il 👁 (le viste).
-  // Un livello_minimo scritto nel file resta com'è.
+  // "From which level it shows" is no longer asked: where a tile shows is said by the 👁 (the
+  // views). A livello_minimo written in the file stays as it is.
   campi.attiva = el.attiva.checked ? null : false;
   if (form.querySelector('[name="anche_in"]')) {
     const scelti = [...form.querySelectorAll('[name="anche_in"]:checked')].map((x) => x.value);
@@ -671,13 +672,14 @@ function campiDalModulo(form, o, tipo) {
   return campi;
 }
 
-// I campi del genere, come modulo: il tipo "sorgente" diventa la scelta fra le sorgenti di quel tipo.
+// The kind's fields, as a form: the "source" type becomes the choice among the sources of that
+// type.
 function defsGenere() {
   return genereCorrente.campi.map((c) => {
     if (c.tipo !== 'sorgente') return c;
     const nomi = meta.sorgenti.filter((s) => s.tipo === c.sorgente).map((s) => s.nome);
-    // Niente "predefinito" qui: il modulo non scriverebbe il valore e il server non saprebbe quale
-    // sorgente usare. Se manca, si preimposta la prima (in sezioneGenere) e viene salvata.
+    // No "default" here: the form would not write the value and the server would not know which
+    // source to use. If missing, the first one is preselected (in sezioneGenere) and gets saved.
     return { ...c, tipo: 'scelta', valori: Object.fromEntries(nomi.map((n) => [n, n])), predefinito: undefined,
       aiuto: c.aiuto || (nomi.length ? '' : `Nessuna sorgente di tipo ${c.sorgente}: creala da Sorgenti.`) };
   });
@@ -687,16 +689,16 @@ function valoriIniziali() {
   const v = { ...genereCorrente.valori };
   for (const c of genereCorrente.campi) {
     if (c.tipo === 'sorgente' && v[c.nome] === undefined) v[c.nome] = meta.sorgenti.find((x) => x.tipo === c.sorgente)?.nome;
-    // Un testo lungo predefinito (es. le colonne) si mostra già scritto, per partire da lì.
+    // A long default text (e.g. the columns) shows already written, to start from there.
     if (c.tipo === 'query' && v[c.nome] === undefined && c.predefinito != null) v[c.nome] = c.predefinito;
-    // Un elenco nel file si mostra come YAML (una riga per elemento).
+    // A list in the file shows as YAML (one line per element).
     if (c.tipo === 'query' && v[c.nome] && typeof v[c.nome] === 'object') v[c.nome] = comeYaml(v[c.nome]);
   }
   return v;
 }
 
-// Il campo "dati" di un genere: la sorgente (di qualunque tipo, proposta quella preferita dal
-// genere) e i campi che quella sorgente chiede, come nelle tile libere.
+// The "dati" field of a kind: the source (of any type, the kind's preferred one offered) and the
+// fields that source asks for, as in free tiles.
 function bloccoDati(c, o) {
   const dati = o.dati || {};
   const preferita = meta.sorgenti.find((x) => x.tipo === c.preferita)?.nome || meta.sorgenti[0]?.nome || '__statico';
@@ -710,7 +712,7 @@ function sezioneGenere(o) {
   const g = genereCorrente;
   const defs = defsGenere();
   const valori = valoriIniziali();
-  // I campi nell'ordine del genere; il blocco "dati" dove il genere lo mette.
+  // The fields in the kind's order; the "dati" block where the kind puts it.
   const parti = [];
   let gruppo = [];
   const chiudiGruppo = () => { if (gruppo.length) parti.push(disegnaModulo(gruppo, valori)); gruppo = []; };
@@ -723,8 +725,9 @@ function sezioneGenere(o) {
     <div class="campi-genere" data-ambito>${defs.length ? parti.join('') : '<p class="aiuto">Questo genere non chiede niente: la tile è già pronta.</p>'}</div></section>`;
 }
 
-// La tile come si scrive nel file: genere, campi e solo le chiavi diverse dal modello espanso.
-// Le regole di colore si confrontano in una forma sola: "rosso" e { colore: rosso, sfondo: true } sono uguali.
+// The tile as written in the file: kind, fields and only the keys different from the expanded
+// model. Colour rules are compared in a single form: "rosso" and { colore: rosso, sfondo: true }
+// are equal.
 const regoleCanoniche = (r) => (r && typeof r === 'object' ? Object.fromEntries(Object.entries(r).map(([c, v]) => [c,
   typeof v === 'string' ? { colore: v, sfondo: true } : { colore: v?.colore, sfondo: v?.sfondo !== false }])) : r ?? null);
 function uguale(k, a, b) {
@@ -732,27 +735,27 @@ function uguale(k, a, b) {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
-// conNull: per una tile esistente, i ritocchi tornati uguali al modello si tolgono (null);
-// per una nuova si scrive solo ciò che differisce.
+// conNull: for an existing tile, tweaks equal to the model again are removed (null); for a new one
+// only what differs is written.
 function scrittaDaGenere(form, espansa, puro, tipo, { conNull = false } = {}) {
   const box = form.querySelector('.campi-genere');
   const { valori } = box ? leggiModulo(box) : { valori: {} };
   const campi = Object.fromEntries(Object.entries(valori).filter(([, v]) => v !== '' && v !== null && v !== undefined));
   const dalModulo = campiDalModulo(form, espansa, tipo);
-  // Il campo "dati" del genere (sorgente e i suoi campi) è un valore del genere, non un ritocco.
+  // The kind's "dati" field (source and its fields) is a value of the kind, not a tweak.
   const campoDati = genereCorrente.campi.find((c) => c.tipo === 'dati');
   if (campoDati && dalModulo.dati) campi[campoDati.nome] = senzaVuoti(dalModulo.dati);
   const ritocchi = {};
   for (const [k, v] of Object.entries(dalModulo)) {
     if (k.startsWith('__') || (campoDati && k === 'dati')) continue;
-    // Invariato rispetto alla tile aperta: non si tocca (resta il ritocco che c'era, o il modello).
-    // (Per una tile nuova no: titolo ed etichetta scelti vanno scritti anche se non si toccano.)
+    // Unchanged from the open tile: not touched (the existing tweak, or the model, stays). (Not for
+    // a new tile: the chosen title and label are written even if untouched.)
     if (conNull && uguale(k, v, espansa[k])) continue;
     if (uguale(k, v, puro[k])) { if (conNull) ritocchi[k] = null; } else ritocchi[k] = v;
   }
   if (!conNull) return { ...ritocchi, genere: genereCorrente.id, campi };
-  // Tile esistente: dei campi del genere si mandano solo quelli cambiati (gli altri restano nel
-  // file come sono scritti, con commenti e righe { … } compatte).
+  // Existing tile: of the kind's fields only the changed ones are sent (the others stay in the file
+  // as written, with comments and compact { … } lines).
   const originali = genereCorrente.valori || {};
   const cambiati = {};
   for (const c of genereCorrente.campi) {
@@ -762,13 +765,13 @@ function scrittaDaGenere(form, espansa, puro, tipo, { conNull = false } = {}) {
   return { ...ritocchi, genere: genereCorrente.id, campi: cambiati, __cambiati: Object.keys(cambiati) };
 }
 
-// Il valore nel modulo è quello già scritto nel file? (Un elenco si confronta come lo mostra il
-// modulo, un testo senza spazi ai bordi, un campo vuoto con il suo predefinito.)
+// Is the value in the form the one already written in the file? (A list is compared as the form
+// shows it, a text without surrounding spaces, an empty field with its default.)
 const canonico = (x) => JSON.stringify(x, (_k, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v));
 function stessoValore(c, v, o) {
   if (v === undefined || v === null || v === '') return o === undefined || o === null || o === '' || (c.predefinito != null && String(o) === String(c.predefinito));
   if (c.tipo === 'dati') {
-    // Dentro i dati un elenco (es. i software, i servizi) arriva dal modulo come testo YAML.
+    // Inside the data a list (e.g. the software, the services) arrives from the form as YAML text.
     if (!o || typeof o !== 'object' || !v || typeof v !== 'object') return canonico(v) === canonico(o);
     const chiavi = new Set([...Object.keys(v), ...Object.keys(o)]);
     return [...chiavi].every((k) => (typeof v[k] === 'string' && o[k] && typeof o[k] === 'object'

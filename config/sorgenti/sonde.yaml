@@ -1,4 +1,4 @@
-# Sonde: Fluxboard controlla da sé porte TCP, pagine web e server DNS. Nessuna configurazione:
-# l'elenco dei servizi da controllare sta nelle tile.
-tipo: sonde
+# Probes: Fluxboard itself checks TCP ports, web pages and DNS servers. Nothing to configure:
+# the list of services to check lives in the tiles.
+type: probes
 timeout: 15s

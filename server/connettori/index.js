@@ -1,11 +1,11 @@
-// Registro dei connettori. Ogni file .js in questa cartella e nella cartella `plugin/` del
-// progetto che esporta `tipo` e `leggi()` diventa un tipo di sorgente utilizzabile nel YAML.
+// Connector registry. Every .js file in this folder and in the project's `plugin/` folder that
+// exports `tipo` and `leggi()` becomes a source type usable in YAML.
 //
-// Interfaccia di un connettore (è l'unico contratto "da programmatore" di Fluxboard):
-//   export const tipo = 'nome';                    // il valore di `tipo:` nel file della sorgente
+// Connector interface (the only "programmer" contract of Fluxboard):
+//   export const tipo = 'name';                    // the value of `tipo:` in the source file
 //   export const descrizione = '...';
-//   export const campiSorgente = ['url', ...];      // obbligatori nel file della sorgente
-//   export const campiDati = ['query', ...];        // obbligatori nel blocco `dati:` della tile
+//   export const campiSorgente = ['url', ...];      // required in the source file
+//   export const campiDati = ['query', ...];        // required in the tile's `dati:` block
 //   export async function leggi(sorgente, dati, { signal }) { return [ { ... }, ... ]; }
 
 import fs from 'node:fs/promises';

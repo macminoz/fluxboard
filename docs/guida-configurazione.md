@@ -1,7 +1,15 @@
 # Guida alla configurazione
 
-Riferimento completo di Fluxboard 0.2.0: tutto ciò che si può scrivere nei file YAML, con esempi
+[English](guide.md) · **Italiano**
+
+Riferimento completo di Fluxboard: tutto ciò che si può scrivere nei file YAML, con esempi
 pronti da copiare. Vale per chi modifica a mano, dall'editor web o tramite un'IA.
+
+**Chiavi in italiano o in inglese.** Ogni chiave e ogni valore di un elenco fisso si può scrivere
+in italiano o in inglese (`titolo` o `title`, `tipo: elenco` o `type: list`), anche mescolati
+nello stesso file: l'elenco completo delle corrispondenze è in `server/alias.js` e la
+[guida inglese](guide.md) usa le chiavi inglesi. I nomi dei campi dei dati non si traducono mai.
+L'editor continua a scrivere un file nella lingua in cui è già scritto.
 
 > **Regola d'oro:** una tile = un file. Aggiungere o togliere un'informazione non tocca mai le
 > altre tile né il codice. Se un file è sbagliato viene rifiutato e resta in vigore la versione
@@ -57,7 +65,7 @@ I file si ricaricano da soli quando cambiano: non serve riavviare.
 | Chiave | Valori | Significato |
 |---|---|---|
 | `titolo` | testo | Titolo in alto a sinistra e della scheda del browser |
-| `lingua` | `it` | Lingua di date e numeri |
+| `lingua` | `en` · `it` | Lingua dell'interfaccia, di date e numeri (predefinita `en`) |
 | `fuso` | es. `Europe/Rome` | Fuso orario per `{campo:ora}` e `{campo:data}` |
 | `livello` | `base` · `intermedia` · `avanzata` | Livello di lettura predefinito |
 | `tema` | `auto` · `chiaro` · `scuro` | `auto` segue il sistema |
@@ -88,7 +96,7 @@ argomenti:                               # = le etichette, nell'ordine delle sez
   statistiche: viola                     # anche solo il colore
 ```
 
-Colori disponibili: `blu` `azzurro` `verde` `giallo` `arancio` `rosso` `viola` `grigio`.
+Colori disponibili: `blu` `azzurro` `verde` `giallo` `arancio` `rosso` `viola` `rosa` `ciano` `indaco` `lime` `ambra` `marrone` `grigio`.
 **L'ordine delle etichette è l'ordine delle sezioni** e la priorità di *Riordina le tile*. Si
 cambia con ↑ ↓ nelle Impostazioni o trascinando l'intestazione di una sezione in Modifica.
 
@@ -108,12 +116,15 @@ sotto i 700 px e altrimenti il primo):
 ```yaml
 display:
   browser: { colonne: 12 }
-  tsw:     { colonne: 6, livello: base, controlli: false }
+  pannello: { colonne: 6, livello: base, controlli: false, pannello: true }
   eink:    { colonne: 4, livello: base, controlli: false, escludi: [telecamera-ingresso] }
 ```
 
 `controlli: false` nasconde selettore di livello e pulsante Modifica. `escludi` toglie tile da
-quel display.
+quel display. `pannello: true` rende il display **in sola lettura e leggero**, per i touch a muro:
+niente comandi di modifica, niente link che aprono schede, niente sfocature né animazioni continue,
+telecamere a un fotogramma ogni 2 secondi. In *Impostazioni → Schermi* si vede chi si collega
+(indirizzo e browser) e si assegna un profilo a ogni schermo (`schermi:` in `global.yaml`).
 
 **Durate**: `30s`, `5m`, `1h`, `2d`.
 
@@ -770,8 +781,8 @@ possono scrivere con o senza virgolette: `stato == "in linea"`, `stato == acceso
 | `{v:%}` | da `0.42` → `42%` |
 | `{t:ora}` | `16:00` |
 | `{t:data}` | `3 novembre` |
-| `{t:rel}` | `5 minuti fa` / `fra 2 ore` |
-| `{t:durata}` | `5 minuti` (tempo passato, senza "fa": "giù da {dal:durata}") |
+| `{t:rel}` | `5m fa` / `fra 2h` |
+| `{t:durata}` | `5m` (tempo passato, senza "fa": "giù da {dal:durata}") |
 | `{h:nome}` | da `nas.casa.lan` → `nas` (nome host breve; un IP resta intero) |
 | `{e:casella}` | da `mario@posta.lan` → `mario` (indirizzi email senza dominio, anche dentro un testo) |
 | `{a.b}` | campo dentro un oggetto |

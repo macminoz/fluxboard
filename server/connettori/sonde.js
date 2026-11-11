@@ -1,23 +1,23 @@
-// Sonde: Fluxboard controlla da sé se un servizio risponde, non solo se la macchina è accesa
-// (un ping dice che l'LXC è vivo anche se il server SIP dentro è fermo). Tre tipi di controllo:
-//   tcp:  "192.168.1.5:5060"                       la porta accetta connessioni
-//   http: "http://192.168.1.10/"                     risponde con un codice < 400 (o `atteso`)
-//   dns:  "192.168.1.1", nome: dns.casa.lan        il server DNS risolve quel nome
+// Probes: Fluxboard checks by itself whether a service answers, not only whether the machine is on
+// (a ping says the LXC is alive even when the SIP server inside it is stopped). Three kinds of check:
+//   tcp:  "192.168.1.5:5060"                       the port accepts connections
+//   http: "http://192.168.1.10/"                     answers with a code < 400 (or `atteso`)
+//   dns:  "192.168.1.1", nome: dns.home.lan        the DNS server resolves that name
 //
-// sorgente: { tipo: sonde }                          (nessuna configurazione: le sonde sono nella tile)
-// dati:     { sorgente: <nome>, servizi: [
-//             { nome: Centralino SIP, tcp: "192.168.1.5:5060" },
-//             { nome: httpd, http: "http://192.168.1.10/", contiene: "gallery" },
-//             { nome: DNS di casa, dns: 192.168.1.1, risolve: dns.casa.lan },
-//             { nome: Vaultwarden, http: "https://192.168.1.15/alive", verifica_certificato: false } ] }
+// source: { tipo: sonde }                          (nothing to configure: the probes are in the tile)
+// dati:   { sorgente: <name>, servizi: [
+//           { nome: SIP server, tcp: "192.168.1.5:5060" },
+//           { nome: httpd, http: "http://192.168.1.10/", contiene: "gallery" },
+//           { nome: Home DNS, dns: 192.168.1.1, risolve: dns.home.lan },
+//           { nome: Vaultwarden, http: "https://192.168.1.15/alive", verifica_certificato: false } ] }
 //
-// Una riga per servizio: { nome, gruppo, tipo, bersaglio, codice, stato, ms, dettaglio }
-//   codice: 1 risponde · 2 risponde ma c'è da fare attenzione (certificato scaduto o in scadenza)
-//           · 0 non risponde      ms: tempo di risposta
-//   certificato_scade, certificato_giorni: per i siti https (anche con verifica_certificato: false,
-//   così un certificato scaduto si vede comunque). `avviso_certificato` (predefinito 14) = giorni
-//   prima della scadenza da cui segnalarlo.
-// Per vedere solo i problemi: `elabora: [ { filtra: "codice != 1" } ]`.
+// One row per service: { nome, gruppo, tipo, bersaglio, codice, stato, ms, dettaglio }
+//   codice: 1 answers · 2 answers but needs attention (expired or expiring certificate)
+//           · 0 does not answer      ms: response time
+//   certificato_scade, certificato_giorni: for https sites (also with verifica_certificato: false,
+//   so an expired certificate shows anyway). `avviso_certificato` (default 14) = days before
+//   expiry from which to report it.
+// To see only the problems: `elabora: [ { filtra: "codice != 1" } ]`.
 
 import net from 'node:net';
 import { Resolver } from 'node:dns/promises';
@@ -61,7 +61,7 @@ async function http(sv, attesa, signal) {
   const { request } = await import(url.protocol === 'https:' ? 'node:https' : 'node:http');
   return new Promise((risolvi, rifiuta) => {
     const req = request(url, { method: 'GET', signal, timeout: attesa, rejectUnauthorized: sv.verifica_certificato !== false, headers: { 'User-Agent': 'fluxboard-sonda' } }, (r) => {
-      // Il certificato si legge subito, finché il socket è aperto.
+      // The certificate is read right away, while the socket is open.
       const cert = url.protocol === 'https:' ? r.socket?.getPeerCertificate?.() : null;
       let corpo = '';
       r.setEncoding('utf8');
@@ -95,7 +95,7 @@ async function dns(sv, attesa) {
 }
 
 export async function leggi(sorgente, dati, { signal }) {
-  // Molte richieste in parallelo sullo stesso segnale: oltre 10 Node avvisa di una (finta) perdita.
+  // Many requests in parallel on the same signal: past 10 Node warns about a (false) leak.
   if (signal) setMaxListeners(200, signal);
   const elenco = typeof dati.servizi === 'string' ? YAML.parse(dati.servizi) || [] : Array.isArray(dati.servizi) ? dati.servizi : [];
   if (!elenco.length) throw new Error('manca "servizi": un elenco di { nome, tcp | http | dns }');

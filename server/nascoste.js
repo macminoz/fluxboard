@@ -1,15 +1,15 @@
-// Righe nascoste: Ack e Ignora per le tile che non passano dal centro avvisi (es. "Chi scrive di
-// più nel syslog"). Una riga si riconosce dal valore di un suo campo (la `chiave` dell'azione,
-// es. host): con Ack sparisce per 24 ore, con Ignora per sempre, finché non si ripristina.
+// Hidden rows: Ack and Ignore for the tiles that do not go through the alert centre (e.g. "Top
+// syslog writers"). A row is recognised by the value of one of its fields (the action's `chiave`,
+// e.g. host): with Ack it disappears for 24 hours, with Ignore for good, until restored.
 //
-// Operazioni interne, valide per qualunque tile e senza password (non toccano niente fuori da
-// Fluxboard):
+// Internal operations, valid for any tile and without a password (they touch nothing outside
+// Fluxboard; English names: hide_row, ignore_row, restore_rows):
 //   { id: ack, etichetta: Ack, operazione: nascondi_riga, chiave: host, subito: true }
 //   { id: ignora, etichetta: Ignora, operazione: ignora_riga, chiave: host }
 //   { id: ripristina, etichetta: Ripristina, operazione: ripristina_righe, globale: true }
-// Lo storico (elenco) finisce nello stato della tile: dalla tile si riammette una riga alla volta.
+// The history (elenco) goes into the tile's state: rows are readmitted one at a time from the tile.
 //
-// Stanno in cache/nascoste.json: { <tile>: { campo, valori: { <valore>: { dal, fino (ms) | null } } } }
+// Stored in cache/nascoste.json: { <tile>: { campo, valori: { <value>: { dal, fino (ms) | null } } } }
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -37,7 +37,7 @@ export class Nascoste {
     } catch (e) { console.error('[nascoste]', e.message); }
   }
 
-  // Le righe della tile senza quelle nascoste (e dimentica gli Ack scaduti).
+  // The tile's rows without the hidden ones (and forgets expired Acks).
   filtra(tile, righe) {
     const n = this.voci[tile];
     if (!n || !Array.isArray(righe)) return righe;
@@ -61,7 +61,8 @@ export class Nascoste {
   }
 }
 
-// Storico per la tile: [{ chiave, testo, dal, fino }] (fino null = ignorata per sempre), più recenti prima.
+// History for the tile: [{ chiave, testo, dal, fino }] (fino null = ignored for good), most recent
+// first.
 Nascoste.prototype.elenco = function elenco(tile) {
   const n = this.voci[tile];
   if (!n) return [];
@@ -71,7 +72,7 @@ Nascoste.prototype.elenco = function elenco(tile) {
     .sort((a, b) => (b.dal ?? 0) - (a.dal ?? 0));
 };
 
-// Riammette una riga (risolto il problema): torna nell'elenco alla prossima lettura.
+// Readmits a row (problem fixed): it is back in the list at the next read.
 Nascoste.prototype.riammetti = async function riammetti(tile, chiave) {
   const n = this.voci[tile];
   if (!n || !(String(chiave) in n.valori)) throw new Error('non è (più) fra le righe nascoste');

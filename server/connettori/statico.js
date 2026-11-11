@@ -1,6 +1,5 @@
-// Righe scritte direttamente nel YAML della tile: note, promemoria, elenchi fissi.
-//
-// dati: { righe: [ { testo: "..." }, ... ] }   (non serve una sorgente)
+// Rows written straight in the tile's YAML: notes, reminders, fixed lists. dati: { righe: [ {
+// testo: "..." }, ... ] } (no source needed)
 
 export const tipo = 'statico';
 export const nome = 'Scritti a mano';

@@ -1,32 +1,38 @@
-# Servizi da controllare: Fluxboard prova da sé porte TCP, pagine web e server DNS.
-# Sostituisci gli esempi con i servizi della tua rete (vedi la guida, "sonde").
-titolo: Servizi critici
-tipo: elenco
-etichetta: allarmi
-icona: server
-priorita: 91
-larghezza: media
-ogni: 1m
-scadenza: 5m
-colore_se:
-  "codice == 0": { colore: rosso, sfondo: true }
-  "codice == 2": { colore: giallo, sfondo: false }
-avvisi:
-  quando: "codice != 1"
-  messaggio: "{nome}: {dettaglio}"
+# Services to check: Fluxboard itself tries TCP ports, web pages and DNS servers.
+# Replace the examples with the services of your network (see the guide, "probes").
+title: Critical services
+type: list
+label: alarms
+icon: server
+priority: 91
+width: medium
+every: 1m
+stale_after: 5m
+colour_if:
+  codice == 0:
+    colour: red
+    background: true
+  codice == 2:
+    colour: yellow
+    background: false
+alerts:
+  when: codice != 1
+  message: "{nome}: {dettaglio}"
   host: "{nome}"
-  chiave: "{nome}"
-  gravita: { "codice == 0": critico, "codice == 2": attenzione }
-dati:
-  sorgente: "sonde"
-  servizi:
-    - { nome: Sito di esempio, gruppo: Internet, http: "https://example.com/" }
-    - { nome: DNS pubblico, gruppo: Internet, dns: 1.1.1.1, risolve: example.com }
-    - { nome: Porta che non risponde, gruppo: Esempi, tcp: "192.0.2.1:22" }
-elabora:
-  - ordina: "codice, gruppo, nome"
-tabella:
-  - { etichetta: Servizio, valore: "{nome}" }
-  - { etichetta: Stato, valore: "{stato}", tono: { "codice == 0": allarme, "codice == 2": attenzione, "codice == 1": ok } }
-  - { etichetta: Dettaglio, valore: "{dettaglio}", livello: intermedia }
-  - { etichetta: Tempo, valore: "{ms} ms", livello: avanzata }
+  key: "{nome}"
+  severity:
+    codice == 0: critical
+    codice == 2: warning
+data:
+  source: sonde
+  services:
+    - { name: Example site, group: Internet, http: https://example.com/ }
+    - { name: Public DNS, group: Internet, dns: 1.1.1.1, resolves: example.com }
+    - { name: A port that does not answer, group: Examples, tcp: 192.0.2.1:22 }
+process:
+  - { sort: "codice, gruppo, nome" }
+table:
+  - { label: Service, value: "{nome}" }
+  - { label: Status, value: "{stato}", tone: { codice == 0: alarm, codice == 2: warning, codice == 1: ok } }
+  - { label: Detail, value: "{dettaglio}", level: intermediate }
+  - { label: Time, value: "{ms} ms", level: advanced }

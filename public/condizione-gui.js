@@ -1,7 +1,7 @@
-// Editor grafico di una condizione ("valvola == acceso e temperatura < 18"): una riga per pezzo
-// con campo · operatore · valore, unite da "e" (tutte vere) oppure "o" (almeno una). Produce la
-// stessa stringa che si scriverebbe a mano (public/condizione.js). Una condizione che le righe non
-// sanno rappresentare (calcoli, campo contro campo…) resta modificabile come testo.
+// Graphical editor of a condition ("valve == on and temperature < 18"): one row per piece with
+// field · operator · value, joined by "and" (all true) or "or" (at least one). It produces the same
+// string one would write by hand (public/condizione.js). A condition the rows cannot represent
+// (calculations, field against field…) stays editable as text.
 
 import { proteggi } from './formato.js';
 
@@ -12,12 +12,12 @@ export const OPERATORI = [
 const PEZZO = /^([\w.]+)\s*(==|!=|>=|<=|>|<|!~|~)\s*(.+)$/;
 const TEMPO = /^([\w.]+)\s+(entro|oltre)\s+(\d+(?:\.\d+)?\s*[smhd])$/;
 
-// "a == b e c > 1" → { unione: 'e', pezzi: [{ campo, op, valore }] }; null se non si può.
+// "a == b e c > 1" → { unione: 'e', pezzi: [{ campo, op, valore }] }; null if not possible.
 export function scomponi(testo) {
   const t = String(testo || '').trim();
   if (!t) return { unione: 'e', pezzi: [] };
   const conO = /\s+o\s+/.test(t), conE = /\s+e\s+/.test(t);
-  if (conO && conE) return null;                  // misto: solo come testo
+  if (conO && conE) return null;                  // mixed: text only
   const unione = conO ? 'o' : 'e';
   const pezzi = [];
   for (const parte of t.split(unione === 'o' ? /\s+o\s+/ : /\s+e\s+/)) {
@@ -25,7 +25,7 @@ export function scomponi(testo) {
     if (!m) return null;
     let valore = m[3].trim();
     if (/^".*"$|^'.*'$/.test(valore)) valore = valore.slice(1, -1);
-    else if (/[{}%]/.test(valore)) return null;   // campo contro campo, calcoli: testo
+    else if (/[{}%]/.test(valore)) return null;   // field against field, calculations: text
     pezzi.push({ campo: m[1], op: m[2], valore });
   }
   return { unione, pezzi };
@@ -52,7 +52,8 @@ function rigaPezzo(p = { campo: '', op: '==', valore: '' }) {
     <button type="button" class="togli-pezzo" data-azione-condizione="togli" aria-label="Togli questa parte">✕</button></span>`;
 }
 
-// HTML dell'editor. `nome`: dove sta la stringa risultante (un input nascosto con data-regola o name).
+// HTML of the editor. `nome`: where the resulting string goes (a hidden input with data-regola or
+// name).
 export function editorCondizione(testo, attributo) {
   const parti = scomponi(testo);
   const comeTesto = parti === null;
@@ -69,7 +70,7 @@ export function editorCondizione(testo, attributo) {
   </div>`;
 }
 
-// Tiene allineata la stringa nascosta con quello che si vede; da chiamare a ogni input/change.
+// Keeps the hidden string in line with what is shown; call it at every input/change.
 function sincronizza(box) {
   const nascosto = box.querySelector('input[type="hidden"]');
   if (box.classList.contains('come-testo')) { nascosto.value = box.querySelector('.testo-condizione').value.trim(); return; }
@@ -89,7 +90,7 @@ function ridisegnaUnioni(box) {
   pezzi.slice(1).forEach((p) => p.insertAdjacentHTML('beforebegin', `<span class="unione">${box.dataset.unione}</span>`));
 }
 
-// Delegazione degli eventi, una volta per contenitore (il modulo dell'editor).
+// Event delegation, once per container (the editor's form).
 export function attivaCondizioni(radice, quandoCambia = () => {}) {
   radice.addEventListener('click', (e) => {
     const b = e.target.closest('[data-azione-condizione]');

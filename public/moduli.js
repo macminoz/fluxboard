@@ -1,9 +1,9 @@
-// Moduli generati dalla descrizione dei campi di un connettore (moduloSorgente / moduloDati):
-// così ogni tipo di sorgente ha il suo modulo, come le "data source" di Grafana, senza scrivere
-// HTML per ciascuno. Un campo:
+// Forms generated from the description of a connector's fields (moduloSorgente / moduloDati):
+// each source type has its own form, like Grafana's "data sources", without writing HTML for
+// each. A field:
 //   { nome: 'autenticazione.tipo', etichetta, tipo, obbligatorio, predefinito, esempio, aiuto,
-//     valori: { chiave: testo } (per "scelta"), quando: { altroCampo: [valori] } }
-// tipi: testo · url · durata · numero · scelta · query (testo lungo) · segreto · mappa · si-no
+//     valori: { key: text } (for "scelta"), quando: { otherField: [values] } }
+// types: testo · url · durata · numero · scelta · query (long text) · segreto · mappa · si-no
 
 import { proteggi } from './formato.js';
 
@@ -23,14 +23,15 @@ function rigaMappa(chiave = '', valore = '') {
     <button type="button" class="togli-voce" data-azione-modulo="togli-riga" aria-label="Togli">✕</button></div>`;
 }
 
-// segreti: l'elenco di /api/config/segreti, per dire se il segreto citato è impostato.
+// segreti: the list from /api/config/segreti, to tell whether the quoted secret is set.
 function controllo(def, valore, segreti) {
   const id = `m-${def.nome.replace(/\W/g, '-')}`;
   const segnaposto = def.esempio ? ` placeholder="${proteggi(String(def.esempio).split('\n')[0])}"` : '';
   switch (def.tipo) {
     case 'scelta': {
       const scelto = valore ?? def.predefinito;
-      // Un valore scritto nel file che la scelta non conosce resta selezionabile: non si perde salvando.
+      // A value written in the file that the choice does not know stays selectable: it is not lost
+      // on save.
       const valori = { ...(def.valori || {}) };
       if (scelto != null && !(String(scelto) in valori)) valori[String(scelto)] = String(scelto);
       return `<select id="${id}" data-modulo>${Object.entries(valori).map(([k, t]) =>
@@ -59,8 +60,8 @@ function controllo(def, valore, segreti) {
   }
 }
 
-// Un elenco o un oggetto come YAML compatto, come si scrive nei file: un elemento per riga,
-// "- { nome: Grafana, repo: grafana/grafana }". Il server lo rilegge come YAML.
+// A list or an object as compact YAML, as written in the files: one element per line, "- { nome:
+// Grafana, repo: grafana/grafana }". The server reads it back as YAML.
 function yamlValore(v) {
   if (Array.isArray(v)) return `[${v.map(yamlValore).join(', ')}]`;
   if (v && typeof v === 'object') return `{ ${Object.entries(v).map(([k, x]) => `${k}: ${yamlValore(x)}`).join(', ')} }`;
@@ -78,7 +79,8 @@ export function disegnaModulo(defs, valori = {}, { segreti = [] } = {}) {
       ${def.aiuto ? `<p class="aiuto">${def.aiuto}</p>` : ''}</div>`).join('');
 }
 
-// Mostra solo i campi che valgono per le scelte fatte (es. "Utente" solo con autenticazione basic).
+// Shows only the fields that apply to the choices made (e.g. "User" only with basic
+// authentication).
 export function aggiornaVisibilita(contenitore) {
   const valoreDi = (nome) => {
     const el = contenitore.querySelector(`.campo-modulo[data-campo="${CSS.escape(nome)}"] [data-modulo]`);
@@ -90,13 +92,13 @@ export function aggiornaVisibilita(contenitore) {
   }
 }
 
-// I valori del modulo come oggetto annidato. Un campo vuoto o nascosto vale null (= togli la chiave
-// dal file); i segreti scritti tornano a parte, perché il server li salva fra i segreti.
-// `mappe` elenca i percorsi delle mappe, che vanno sostituite intere.
+// The form's values as a nested object. An empty or hidden field is null (= remove the key from the
+// file); written secrets come back apart, because the server saves them among the secrets. `mappe`
+// lists the paths of the maps, which are replaced whole.
 export function leggiModulo(contenitore) {
   const valori = {}, segreti = {}, mappe = [];
-  // Un modulo dentro un altro (i campi della sorgente dentro quelli di un genere) si legge a parte:
-  // ognuno legge solo i campi del suo ambito.
+  // A form inside another (the source's fields inside a kind's) is read separately: each reads only
+  // the fields of its scope.
   const ambito = contenitore.closest('[data-ambito]');
   for (const campo of contenitore.querySelectorAll('.campo-modulo')) {
     if (campo.closest('[data-ambito]') !== ambito) continue;
@@ -113,14 +115,14 @@ export function leggiModulo(contenitore) {
       mappe.push(nome.split('.'));
     } else if (tipo === 'numero') v = el.value === '' ? null : Number(el.value);
     else v = el.value.trim() || null;
-    // Il valore predefinito non si scrive nel file: resta più corto e segue eventuali cambi futuri.
+    // The default value is not written in the file: it stays shorter and follows future changes.
     if (v != null && campo.dataset.predefinito !== undefined && String(v) === campo.dataset.predefinito) v = null;
     imposta(valori, nome, v);
   }
   return { valori, segreti, mappe };
 }
 
-// "+ Aggiungi" e "✕" delle mappe; da agganciare al click del contenitore.
+// "+ Add" and "✕" of the maps; to hook to the container's click.
 export function gestisciClickModulo(e) {
   const b = e.target.closest('[data-azione-modulo]');
   if (!b) return false;
@@ -133,7 +135,7 @@ export function gestisciClickModulo(e) {
   return false;
 }
 
-// Campi obbligatori mancanti, per un messaggio chiaro prima di salvare.
+// Missing required fields, for a clear message before saving.
 export function mancanti(defs, contenitore) {
   return defs.filter((d) => d.obbligatorio && d.tipo !== 'segreto').filter((d) => {
     const campo = contenitore.querySelector(`.campo-modulo[data-campo="${CSS.escape(d.nome)}"]`);

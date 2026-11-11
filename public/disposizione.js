@@ -1,16 +1,16 @@
-// Disposizione delle tile in una griglia, come in Grafana e Home Assistant: ogni tile ha una
-// posizione esplicita (colonna x, riga y) e una misura (w colonne, h righe da 8 px) e resta dove
-// la si lascia. Quando una tile si sposta o cambia misura, quelle che le finiscono sotto scendono
-// di quanto serve; poi tutto "cade" verso l'alto a chiudere i vuoti (gravità verticale). Nessuna
-// tile cambia mai larghezza da sola.
+// Layout of the tiles on a grid, as in Grafana and Home Assistant: each tile has an explicit
+// position (column x, row y) and a size (w columns, h rows of 8 px) and stays where it is left.
+// When a tile moves or changes size, those ending up under it move down as much as needed; then
+// everything "falls" upwards to close the gaps (vertical gravity). No tile ever changes width by
+// itself.
 //
-// Nessun DOM qui: entra un elenco di voci, esce una posizione per voce. Così si prova da Node.
+// No DOM here: a list of items goes in, a position per item comes out. So it can be tested from Node.
 //
 //   disponi([{ id, x, y, w, h }, …], colonne, { mosso: id }) → Map(id → { x, y, w, h })
 //
-// x e y possono mancare (tile nuova, disposizione di prima della 0.4): quelle tile vanno nel primo
-// posto libero dall'alto, nell'ordine dato. Se nessuna voce ha una posizione, la griglia si
-// riempie così per intero: è come si disponevano le tile prima (a mattoni, nell'ordine).
+// x and y can be missing (new tile, layout from before 0.4): those tiles go to the first free
+// place from the top, in the given order. If no item has a position, the whole grid is filled
+// this way: it is how tiles were arranged before (bricks, in order).
 
 const sovrapposte = (a, b) => a !== b && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const haPosizione = (v) => Number.isInteger(v.x) && Number.isInteger(v.y);
@@ -35,9 +35,9 @@ export function disponi(voci, colonne, { mosso = null } = {}) {
   const conPosto = tutte.filter((v) => v.fissa);
   const posate = [];
 
-  // 1. La tile mossa prende il suo posto. Chi urta scende sotto di lei, a catena; ma se il centro
-  //    della tile mossa ha superato il centro di quella urtata (la si sta trascinando oltre, verso
-  //    il basso), quella sale sopra: così due tile si scambiano di posto.
+  // 1. The moved tile takes its place. Whoever it hits moves below it, in a chain; but if the centre
+  //    of the moved tile has passed the centre of the one hit (it is being dragged past it, downwards),
+  //    that one moves above: so two tiles swap places.
   const m = conPosto.find((v) => v.id === mosso);
   if (m) {
     const centro = (v) => v.y + v.h / 2;
@@ -53,8 +53,8 @@ export function disponi(voci, colonne, { mosso = null } = {}) {
     spingi(m);
   }
 
-  // 2. Gravità: dall'alto in basso (a pari riga prima la mossa, poi da sinistra), ogni tile sale
-  //    finché trova spazio; se si sovrappone a una già posata scende sotto di lei.
+  // 2. Gravity: top to bottom (on the same row the moved one first, then from the left), each tile
+  //    rises until it finds room; if it overlaps one already placed it moves below it.
   conPosto.sort((a, b) => (a.y - b.y) || ((b === m) - (a === m)) || (a.x - b.x));
   for (const v of conPosto) {
     while (v.y > 0 && !posate.some((p) => sovrapposte({ ...v, y: v.y - 1 }, p))) v.y--;
@@ -62,7 +62,7 @@ export function disponi(voci, colonne, { mosso = null } = {}) {
     posate.push(v);
   }
 
-  // 3. Le tile senza posizione: nel primo posto libero, nell'ordine in cui arrivano.
+  // 3. Tiles without a position: in the first free place, in the order they arrive.
   for (const v of tutte.filter((x) => !x.fissa)) {
     Object.assign(v, primoPostoLibero(v, posate, colonne));
     posate.push(v);

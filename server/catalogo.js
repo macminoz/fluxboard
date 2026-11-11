@@ -1,19 +1,21 @@
-// Catalogo delle tile (tile market): modelli pronti in catalogo/<id>.yaml, distribuiti con il codice.
-// Ogni modello dichiara il tipo di sorgente che gli serve e i parametri da chiedere; aggiungerlo
-// scrive una tile normale in config/tile/, che ricorda da dove viene con `da_catalogo`.
-// Il formato dei modelli è descritto in catalogo/LEGGIMI.md.
+// Tile catalogue (Tile market): ready-made models in catalogo/<id>.yaml, shipped with the code.
+// Each model declares the source type it needs and the parameters to ask for; adding it writes a
+// normal tile in config/tile/, which remembers where it comes from with `da_catalogo`. The model
+// format is described in catalogo/README.md.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import YAML from 'yaml';
 import { durata } from './util.js';
+import { inInglese } from './alias.js';
+import { t, traduci } from '../public/lingua.js';
 
 const SEGNAPOSTO = /\{\{(\w+)\}\}/g;
 
 export class Catalogo {
   constructor(cartella) { this.cartella = cartella; }
 
-  // Riletto a ogni richiesta: sono pochi file, e così un modello nuovo si vede senza riavviare.
+  // Re-read at every request: they are few files, and a new model shows up without a restart.
   async elenco() {
     let nomi = [];
     try { nomi = (await fs.readdir(this.cartella)).filter((f) => /^[a-z0-9-]+\.yaml$/.test(f)); } catch { return []; }
@@ -27,10 +29,10 @@ export class Catalogo {
           id: f.replace(/\.yaml$/, ''),
           nome: m.nome || o.tile.titolo || f,
           descrizione: m.descrizione || '',
-          genere: m.genere || null,      // il genere sotto cui compare nel market
+          genere: m.genere || null,      // the kind it is listed under in the market
           icona: m.icona || null,
           sorgente: m.sorgente || null,
-          indirizzo: m.indirizzo || null,   // per le API esterne: solo le sorgenti che puntano lì
+          indirizzo: m.indirizzo || null,   // for external APIs: only the sources pointing there
           parametri: (m.parametri || []).map((p) => ({ nome: p.nome, etichetta: p.etichetta || p.nome, tipo: p.tipo || 'testo', esempio: p.esempio ?? '' })),
           tipo: o.tile.tipo,
         });
@@ -45,9 +47,9 @@ export class Catalogo {
     catch { throw new Error(`il modello "${id}" non è nel catalogo`); }
   }
 
-  // La tile pronta da salvare: segnaposto sostituiti, `da_catalogo` aggiunto. Errori in italiano
-  // per ogni parametro mancante o scritto male.
-  async costruisci(id, { sorgente, parametri = {} } = {}) {
+  // The tile ready to save: placeholders replaced, `da_catalogo` added. Errors for every missing or
+  // badly written parameter.
+  async costruisci(id, { sorgente, parametri = {}, lingua = 'it' } = {}) {
     const o = await this.modello(id);
     const m = o.mercato;
     const valori = { sorgente: sorgente || '' };
@@ -69,8 +71,8 @@ export class Catalogo {
         valori[p.nome] = v;
       } else valori[p.nome] = String(testo);
     }
-    // Si lavora sul documento YAML, non sull'oggetto: la tile scritta conserva commenti e stile
-    // (le righe { … } compatte) del modello.
+    // We work on the YAML document, not on the object: the written tile keeps the model's comments
+    // and style (the compact { … } lines).
     const doc = YAML.parseDocument(await fs.readFile(path.join(this.cartella, `${id}.yaml`), 'utf8'));
     const nodo = doc.get('tile', true);
     YAML.visit(nodo, {
@@ -81,7 +83,7 @@ export class Catalogo {
           const v = valori[intero[1]];
           if (typeof v !== 'object') { n.value = v; n.type = undefined; return undefined; }
           const nuovo = doc.createNode(v);
-          // Un elenco di oggetti si scrive come nei modelli: una riga { … } per elemento.
+          // A list of objects is written as in the models: one { … } line per item.
           if (YAML.isSeq(nuovo)) for (const el of nuovo.items) if (YAML.isMap(el)) el.flow = true;
           return nuovo;
         }
@@ -93,7 +95,31 @@ export class Catalogo {
     const uscita = new YAML.Document();
     uscita.contents = nodo;
     const tile = uscita.toJSON();
+    if (lingua === 'en') return { tile, testo: inglese(tile, m) };
     const testa = `# ${m.nome}: ${m.descrizione || ''}\n# Aggiunta dal Tile market il ${new Date().toLocaleDateString('it-IT')}: da qui in poi è una tile come le altre.\n`;
     return { tile, testo: testa + uscita.toString({ lineWidth: 0 }) };
   }
+}
+
+// The tile for an English installation: English keys and values (server/alias.js) and the
+// human text of the recipe (title, column headings, empty message, confirmations) in English.
+// The label (`etichetta`) at the top stays as it is: it is the name of a label in global.yaml.
+const FORMATI_EN = { durata: 'duration', nome: 'name', ora: 'time', data: 'date', casella: 'mailbox' };
+function inglese(tile, m) {
+  const testi = (x, dentroElenco = false) => {
+    if (Array.isArray(x)) return x.map((v) => testi(v, true));
+    if (!x || typeof x !== 'object') return x;
+    return Object.fromEntries(Object.entries(x).map(([k, v]) => {
+      if (typeof v === 'string' && (['titolo', 'vuoto', 'conferma', 'messaggio'].includes(k) || (k === 'etichetta' && dentroElenco) || k === 'valore')) {
+        // Paragraph by paragraph (a confirmation can have more than one); formats in English.
+        return [k, v.split(/\n\n+/).map((p) => traduci(p)).join('\n\n').replace(/\{([^{}:|]+(?:\|[^{}:]+)?):(durata|nome|ora|data|casella)\}/g, (_, c, f) => `{${c}:${FORMATI_EN[f]}}`)];
+      }
+      return [k, testi(v, dentroElenco)];
+    }));
+  };
+  const doc = new YAML.Document(inInglese(testi(tile)));
+  // Lists of objects as in the recipes: one compact { … } line per item.
+  YAML.visit(doc, { Seq(_k, s) { for (const el of s.items) if (YAML.isMap(el)) el.flow = true; } });
+  const testa = `# ${traduci(m.nome)}: ${traduci(m.descrizione || '')}\n# Added from the Tile market on ${new Date().toISOString().slice(0, 10)}: from now on it is a tile like any other.\n`;
+  return testa + doc.toString({ lineWidth: 0 });
 }

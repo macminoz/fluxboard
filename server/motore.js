@@ -1,6 +1,6 @@
-// Il motore: legge periodicamente le sorgenti di ogni tile, applica `elabora` e conserva l'ultimo
-// risultato. Ogni tile vive da sola: un errore o un timeout non tocca le altre, e in caso di
-// errore resta visibile l'ultimo dato buono (con la sua età), mai una tile vuota.
+// The engine: reads each tile's sources periodically, applies `elabora` and keeps the last result.
+// Each tile lives on its own: an error or a timeout does not touch the others, and on error the
+// last good data stays visible (with its age), never an empty tile.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -21,11 +21,11 @@ export class Motore extends EventEmitter {
     this.config = config;
     this.connettori = connettori;
     this.fileCache = path.join(cartellaCache, 'stato.json');
-    this.stato = new Map();   // id tile → { righe, aggiornato, errore, erroreDal }
+    this.stato = new Map();   // tile id → { righe, aggiornato, errore, erroreDal }
     this.timer = new Map();
-    this.riprova = new Map();   // id tile → nuovo tentativo dopo un errore (per le tile lente)
+    this.riprova = new Map();   // tile id → retry after an error (for slow tiles)
     this.inCorso = new Set();
-    this.firma = new Map();   // id tile → JSON del blocco dati, per non rileggere ciò che non cambia
+    this.firma = new Map();   // tile id → JSON of the data block, so unchanged ones are not re-read
     this.salvataggio = null;
   }
 
@@ -46,9 +46,9 @@ export class Motore extends EventEmitter {
     }, 2000);
   }
 
-  // Esegue la lettura di una tile (senza salvarla) e restituisce le righe già elaborate.
-  // Con `id`, senza le righe nascoste con Ack o Ignora (server/nascoste.js), prima di `elabora`:
-  // così un "limita: 8" mostra comunque otto righe.
+  // Runs a tile's read (without saving it) and returns the rows already processed. With `id`,
+  // without the rows hidden with Ack or Ignore (server/nascoste.js), before `elabora`: so a
+  // "limita: 8" still shows eight rows.
   async leggiTile(tile, id) {
     const d = tile.dati;
     let sorgente = {}, connettore;
@@ -58,7 +58,7 @@ export class Motore extends EventEmitter {
     } else connettore = this.connettori.get(d.tipo);
     if (!connettore) throw new Error('connettore non disponibile');
     const timeout = durata(sorgente.timeout, TIMEOUT_PREDEFINITO);
-    // `sorgenti`: per i connettori che si appoggiano a un'altra sorgente (es. versioni → AdGuard).
+    // `sorgenti`: for connectors relying on another source (e.g. versioni → AdGuard).
     const righe = await connettore.leggi(sorgente, d, { signal: AbortSignal.timeout(timeout), sorgenti: (nome) => this.config.sorgenteRisolta(nome) });
     return elabora(id ? nascoste.filtra(id, righe) : righe, tile.elabora);
   }
@@ -72,15 +72,16 @@ export class Motore extends EventEmitter {
     try {
       const righe = await this.leggiTile(tile, id);
       nuovo = { righe, aggiornato: Date.now(), errore: null, erroreDal: null };
-      // Storico di quello che è stato nascosto con Ack o Ignora: dalla tile si riammette.
+      // History of what was hidden with Ack or Ignore: readmitted from the tile.
       const storico = tile.dati.tipo === 'avvisi' ? avvisi.ignorati() : nascoste.elenco(id);
       if (storico.length) nuovo.ignorati = storico.slice(0, 50);
-      // Le righe che rispettano il blocco `avvisi` della tile vanno nel centro avvisi.
+      // The rows matching the tile's `avvisi` block go to the alert centre.
       if (tile.avvisi) for (const regola of [].concat(tile.avvisi)) avvisi.registra([].concat(tile.avvisi).length > 1 ? `${id}#${[].concat(tile.avvisi).indexOf(regola)}` : id, regola, righe);
     } catch (e) {
       const messaggio = e.name === 'TimeoutError' ? 'la sorgente non ha risposto in tempo' : e.message;
       nuovo = { ...precedente, righe: precedente.righe ?? null, errore: messaggio, erroreDal: precedente.erroreDal || Date.now() };
-      // Una tile che legge di rado (es. ogni ora) non aspetta il giro dopo: riprova fra 5 minuti.
+      // A tile that reads rarely (e.g. every hour) does not wait for the next round: it retries in
+      // 5 minutes.
       const ogni = durata(tile.ogni, durata(this.config.globale.aggiornamento, 60_000));
       if (ogni > RIPROVA && !this.riprova.has(id)) {
         this.riprova.set(id, setTimeout(() => { this.riprova.delete(id); this.aggiorna(id); }, RIPROVA));
@@ -93,7 +94,7 @@ export class Motore extends EventEmitter {
     this.#salvaCache();
   }
 
-  // Da chiamare a ogni ricarica della configurazione: riprogramma solo le tile cambiate.
+  // To call at every configuration reload: reschedules only the tiles that changed.
   programma() {
     const predefinito = durata(this.config.globale.aggiornamento, 60_000);
     const attive = new Set();

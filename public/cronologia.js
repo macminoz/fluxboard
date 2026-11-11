@@ -1,11 +1,11 @@
-// Tile "cronologia": una riga per elemento (stanza, servizio…) con i tratti di tempo in cui era
-// "acceso", come la state timeline di Grafana ma compatta e con lo stato di adesso in fondo.
-// HTML e CSS, niente SVG: le righe restano nitide a ogni larghezza e le scritte della loro misura.
-//
-// I dati: righe con il tempo (asse, predefinito _time), il campo che dice la riga (gruppo) e i
-// campi di stato. Un dato vale finché non ne arriva un altro per la stessa riga; i campi vuoti
-// tengono il valore precedente, così una riga "di adesso" con solo la temperatura non spegne nulla.
+// "Timeline" tile: one row per item (room, service…) with the stretches of time when it was "on",
+// like Grafana's state timeline but compact and with the current state at the end. HTML and CSS, no
+// SVG: rows stay sharp at any width and the text at its size. The data: rows with the time (axis,
+// default _time), the field naming the row (gruppo) and the status fields. A data point holds until
+// another one arrives for the same row; empty fields keep the previous value, so a "now" row with
+// only the temperature turns nothing off.
 
+import { locale } from './lingua.js';
 import { proteggi, riempi, comeData } from './formato.js';
 import { compilaCondizione } from './condizione.js';
 
@@ -21,22 +21,22 @@ function tacche(t0, t1, fuso) {
   const passo = ([1, 2, 3, 6, 12, 24, 48, 168].find((h) => ore / h <= 4) || 168) * 3_600_000;
   const formato = passo >= 86_400_000 ? { day: 'numeric', month: 'short' } : { hour: '2-digit', minute: '2-digit' };
   const fuori = [];
-  // Tacche sulle ore "tonde" del fuso della dashboard (non di UTC).
+  // Ticks on the "round" hours of the dashboard's time zone (not UTC).
   const scarto = -new Date(t0).getTimezoneOffset() * 60_000;
   for (let t = Math.ceil((t0 + scarto) / passo) * passo - scarto; t < t1; t += passo) {
-    fuori.push({ t, testo: new Date(t).toLocaleString('it-IT', { ...formato, timeZone: fuso }) });
+    fuori.push({ t, testo: new Date(t).toLocaleString(locale(), { ...formato, timeZone: fuso }) });
   }
   return fuori;
 }
 
-// Finestra scelta da chi guarda fra quelle della tile ("finestre: [6h, 12h, 24h]"): resta in
-// questo browser. La query deve leggere la più lunga; qui si mostra solo il tratto scelto.
+// Window chosen by the viewer among the tile's ("finestre: [6h, 12h, 24h]"): it stays in this
+// browser. The query must read the longest; only the chosen stretch is shown here.
 export function finestraScelta(t) {
   let scelta = null;
   try { scelta = localStorage.getItem(`fluxboard.finestra.${t.id}`); } catch { /* niente memoria */ }
   return (t.finestre || []).map(String).includes(scelta) ? scelta : (t.finestra || t.finestre?.at(-1) || '24h');
 }
-// I pulsanti dei periodi: stanno nell'intestazione della tile, sulla riga del titolo.
+// The period buttons: in the tile header, on the title row.
 export function selettoreFinestre(t) {
   if ((t.finestre || []).length < 2) return '';
   const scelta = finestraScelta(t);
@@ -52,12 +52,12 @@ export function disegnaCronologia(t, s, ctx) {
   const t1 = Date.now();
   const finestra = finestraScelta(t);
   const t0 = t1 - durata(finestra, 86_400_000);
-  const ora = (x) => new Date(x).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: ctx.fuso });
+  const ora = (x) => new Date(x).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', timeZone: ctx.fuso });
   const pos = (x) => ((Math.min(Math.max(x, t0), t1) - t0) / (t1 - t0)) * 100;
   let acceso;
   try { acceso = compilaCondizione(t.se); } catch { return '<p class="vuoto">Condizione "se" non valida</p>'; }
 
-  // Righe raggruppate, ognuna in ordine di tempo.
+  // Rows grouped, each in time order.
   const gruppi = new Map((t.ordine || []).map((n) => [String(n), []]));
   for (const r of s?.righe || []) {
     const tempo = comeData(r[asse])?.getTime();
@@ -70,9 +70,9 @@ export function disegnaCronologia(t, s, ctx) {
 
   const tono = proteggi(t.tono || 'caldo');
   const nomeSe = t.etichetta_se || 'Acceso';
-  // In fondo a ogni riga: una o più colonne (in_fondo: [{ etichetta, valore, tenue }]); senza,
-  // la sola colonna "stato". Lo "stato_se" degli elementi accesi va sotto il grafico, una riga
-  // per elemento, così le colonne in fondo restano allineate.
+  // At the end of each row: one or more columns (in_fondo: [{ etichetta, valore, tenue }]); without
+  // it, the single "stato" column. The "stato_se" of the items that are on goes below the chart,
+  // one line per item, so the end columns stay aligned.
   const inFondo = Array.isArray(t.in_fondo) && t.in_fondo.length
     ? t.in_fondo.map((c) => (typeof c === 'string' ? { valore: c } : c))
     : [{ valore: t.stato ?? '' }];
@@ -89,7 +89,8 @@ export function disegnaCronologia(t, s, ctx) {
     }
     const adesso = da !== null;
     if (adesso) bande.push([da, t1]);
-    // _da: da quando è acceso adesso; vuoto se lo era già all'inizio della finestra (non si sa da quando).
+    // _da: since when it is on now; empty if it already was at the start of the window (unknown
+    // since when).
     const riga = { ...stato, _da: adesso && da > t0 + 1000 ? da : null, _nome: nome };
     if (adesso && t.stato_se) attivi.push(`<li><b>${proteggi(nome)}</b> ${riempi(t.stato_se, riga, ctx.fuso)}</li>`);
     const html = bande.filter(([a, b]) => b > t0).map(([a, b]) => {

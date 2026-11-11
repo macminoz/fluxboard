@@ -1,5 +1,7 @@
 # Generi di tile (modelli)
 
+[English](README.md) · **Italiano**
+
 Un genere è un modello di tile: dice quali **campi** chiedere nell'editor e com'è fatta la tile
 (il **modello**, con `{{campo}}` dove vanno i valori). Questi sono quelli di base, distribuiti con
 Fluxboard. I propri vanno in `config/generi/` (un file con lo stesso nome sostituisce quello di

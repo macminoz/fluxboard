@@ -1,10 +1,10 @@
-// Snapshot ed export della configurazione: un solo file JSON con tutti i file di config/
-// (cornice, sorgenti, tile e disposizioni di ogni workspace, certificati). I segreti non ci
-// sono mai: si salvano solo i loro nomi, così un export si può passare a chiunque.
+// Snapshots and export of the configuration: a single JSON file with every file of config/ (frame,
+// sources, tiles and layouts of every workspace, certificates). Secrets are never there: only their
+// names are saved, so an export can be handed to anyone.
 //
-// Uno snapshot è lo stesso pacchetto conservato in config/.snapshot/: prima di una prova se ne fa
-// uno, e se la prova va male lo si ripristina. Ripristinare (o importare) fa sempre prima uno
-// snapshot automatico dello stato attuale, quindi anche un ripristino si può annullare.
+// A snapshot is the same package kept in config/.snapshot/: take one before an experiment, and if
+// it goes wrong restore it. Restoring (or importing) always takes an automatic snapshot of the
+// current state first, so a restore can be undone too.
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -44,8 +44,8 @@ export class Snapshot {
     for await (const rel of fileDi(this.config.cartella)) file[rel] = await fs.readFile(path.join(this.config.cartella, rel), 'utf8');
     return {
       formato: FORMATO, versione: this.versione, creato: new Date().toISOString(), nome,
-      segreti: this.segreti.elenco(this.config.sorgenti).map((s) => s.nome),   // solo i nomi
-      workspace: this.config.workspace,                                        // anche quelli vuoti
+      segreti: this.segreti.elenco(this.config.sorgenti).map((s) => s.nome),   // names only
+      workspace: this.config.workspace,                                        // empty ones too
       file,
     };
   }
@@ -63,8 +63,8 @@ export class Snapshot {
     return voci;
   }
 
-  // Snapshot con nome: al massimo MASSIMO_CON_NOME (lo stesso nome sostituisce quello vecchio);
-  // automatici (prima di un ripristino): si tengono gli ultimi MASSIMO_AUTOMATICI.
+  // Named snapshots: at most MASSIMO_CON_NOME (the same name replaces the old one); automatic ones
+  // (before a restore): the last MASSIMO_AUTOMATICI are kept.
   async crea(nome, { automatico = false } = {}) {
     const elenco = await this.elenco();
     if (!automatico) {
@@ -99,8 +99,8 @@ export class Snapshot {
 
   async elimina(id) { await fs.unlink(this.#percorso(id)); }
 
-  // Riporta config/ esattamente com'era nel pacchetto: i file che nel pacchetto non ci sono
-  // finiscono nel cestino (recuperabili), quelli del pacchetto vengono riscritti.
+  // Puts config/ back exactly as it was in the package: files not in the package go to the trash
+  // (recoverable), the package's files are rewritten.
   async applica(pacchetto, motivo) {
     if (pacchetto?.formato !== FORMATO || !pacchetto.file || typeof pacchetto.file !== 'object') {
       throw Object.assign(new Error('non è un export di Fluxboard'), { codice: 400 });
@@ -124,7 +124,8 @@ export class Snapshot {
       await fs.writeFile(temporaneo, testo);
       await fs.rename(temporaneo, destinazione);
     }
-    // Workspace: si ricreano quelli del pacchetto (anche vuoti); gli altri, ormai svuotati, si tolgono.
+    // Workspaces: the package's ones are recreated (even empty); the others, now emptied, are
+    // removed.
     const daTenere = new Set((pacchetto.workspace || []).filter((w) => w !== 'default'));
     for (const rel of Object.keys(pacchetto.file)) if (rel.startsWith('workspace/')) daTenere.add(rel.split('/')[1]);
     for (const ws of daTenere) for (const t of ['tile', 'layout']) await fs.mkdir(path.join(this.config.cartella, 'workspace', ws, t), { recursive: true });

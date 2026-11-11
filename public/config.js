@@ -1,17 +1,18 @@
-// Editor web delle configurazioni: elenco dei file, modifica con validazione mentre si scrive,
-// prova della lettura dati prima di salvare, versioni precedenti. Il server rifiuta un file non
-// valido, quindi un errore di battitura non può rompere la dashboard.
+// Web editor of the configuration: list of files, editing with validation while typing, test of the
+// data read before saving, previous versions. The server refuses an invalid file, so a typo cannot
+// break the dashboard.
 
 import { proteggi } from './formato.js';
+import { impostaLingua, osservaPagina, linguaAttuale } from './lingua.js';
 
 const $ = (id) => document.getElementById(id);
 const testo = $('testo');
-let elenco = null;          // risposta di /api/config
-let corrente = null;        // percorso aperto
-let salvato = '';           // testo come sta sul server
-let nuovoFile = false;      // il file aperto non esiste ancora sul server
+let elenco = null;          // answer of /api/config
+let corrente = null;        // open path
+let salvato = '';           // text as it is on the server
+let nuovoFile = false;      // the open file does not exist on the server yet
 let attesaValidazione = null;
-let segreti = [];           // da /api/config/segreti: nomi e stato, mai i valori
+let segreti = [];           // from /api/config/segreti: names and state, never the values
 let segretoAperto = null;
 
 async function api(percorso, opzioni = {}) {
@@ -39,8 +40,13 @@ function disegnaElenco() {
         <span class="${f.attiva === false ? 'spenta' : ''}">${proteggi(f.genere === 'globale' ? 'global.yaml' : f.nome)}</span>${segno(f)}
       </button></li>`).join('');
   }
-  $('tipi-tile').textContent = elenco.tipiTile.map((t) => t.tipo).join(' · ');
-  $('tipi-sorgente').textContent = elenco.connettori.filter((c) => !c.senzaSorgente).map((c) => c.tipo).join(', ');
+  // Quick guide: the one in the current language, with the type names of that language.
+  const inglese = linguaAttuale() === 'en';
+  for (const g of document.querySelectorAll('.guida')) g.hidden = g.lang !== (inglese ? 'en' : 'it');
+  const TIPI_EN = { elenco: 'list', valore: 'value', valori: 'values', grafico: 'chart', cronologia: 'timeline', testo: 'text', orologio: 'clock', immagine: 'image', statico: 'static', sonde: 'probes', versioni: 'versions', avvisi: 'alerts' };
+  const nome = (x) => (inglese && TIPI_EN[x]) || x;
+  for (const s of document.querySelectorAll('[data-tipi-tile]')) s.textContent = elenco.tipiTile.map((x) => nome(x.tipo)).join(' · ');
+  for (const s of document.querySelectorAll('[data-tipi-sorgente]')) s.textContent = elenco.connettori.filter((c) => !c.senzaSorgente).map((c) => nome(c.tipo)).join(', ');
 }
 
 async function ricaricaElenco() {
@@ -149,7 +155,7 @@ async function elimina() {
   await ricaricaElenco();
 }
 
-// ---------------------------------------------------------------- segreti (sola scrittura)
+// ---------------------------------------------------------------- secrets (write only)
 
 
 function disegnaSegreti() {
@@ -211,7 +217,7 @@ $('lista-segreti').addEventListener('click', (e) => {
   if (b) apriSegreto(b.dataset.segreto);
 });
 
-// ---------------------------------------------------------------- nuovo file
+// ---------------------------------------------------------------- new file
 
 let genereNuovo = 'tile';
 for (const b of document.querySelectorAll('.aggiungi')) {
@@ -235,7 +241,7 @@ $('nuovo').addEventListener('close', async () => {
   await apri(percorso, modello);
 });
 
-// ---------------------------------------------------------------- eventi
+// ---------------------------------------------------------------- events
 
 document.querySelector('.elenco-file').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-percorso]');
@@ -271,6 +277,12 @@ $('versioni').addEventListener('change', async () => {
 });
 addEventListener('beforeunload', (e) => { if (corrente && (nuovoFile || testo.value !== salvato)) e.preventDefault(); });
 
+// Language: ?lang=, otherwise the one in global.yaml (English if not set).
+try {
+  const { globale } = await (await fetch('/api/config/globale')).json();
+  impostaLingua(new URLSearchParams(location.search).get('lang') || globale?.lingua || 'en');
+} catch { impostaLingua('en'); }
+osservaPagina();
 await ricaricaElenco();
 await caricaSegreti();
 const daAprire = decodeURIComponent(location.hash.slice(1));
