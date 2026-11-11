@@ -1,0 +1,26 @@
+mercato:
+  nome: Nodi Proxmox
+  descrizione: I nodi del cluster con stato, CPU e memoria
+  genere: correlazione
+  icona: server
+  sorgente: proxmox
+  parametri: []
+tile:
+  titolo: Nodi Proxmox
+  tipo: elenco
+  etichetta: infrastruttura
+  icona: server
+  priorita: 56
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  colore_se:
+    "codice != online": { colore: rosso, sfondo: true }
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: nodi
+  tabella:
+    - { etichetta: Nodo, valore: "{nodo}" }
+    - { etichetta: Stato, valore: "{stato}", tono: { "codice == online": ok, "codice != online": allarme } }
+    - { etichetta: CPU, valore: "{cpu:0} %" }
+    - { etichetta: Memoria, valore: "{memoria:0} %", livello: intermedia }

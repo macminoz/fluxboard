@@ -1,0 +1,31 @@
+mercato:
+  nome: Messaggi critici (con conferma)
+  descrizione: Gli avvisi raccolti dalle altre tile (servizi giù, certificati scaduti, syslog critico), raggruppati; restano finché non premi Ack (sospeso 24 ore) o Ignora (per sempre)
+  genere: messaggi
+  icona: allarme
+  parametri: []
+tile:
+  titolo: Messaggi critici
+  tipo: elenco
+  etichetta: allarmi
+  icona: allarme
+  priorita: 92
+  larghezza: larga
+  ogni: 1m
+  scadenza: 5m
+  vuoto: Nessun messaggio da vedere
+  colore_se:
+    "da_vedere == true e gravita == critico e attivo == true": { colore: rosso, sfondo: true }
+  dati:
+    tipo: avvisi
+  elabora:
+    - filtra: "da_vedere == true"
+  tabella:
+    - { etichetta: Quando, valore: "{ultimo:durata} fa", livello: intermedia }
+    - { etichetta: Host, valore: "{host}" }
+    - { etichetta: Messaggio, valore: "{messaggio}", tono: { "attivo == false": spento, "gravita == critico": allarme, "gravita == attenzione": attenzione } }
+    - { etichetta: Volte, valore: "×{volte}", livello: intermedia }
+  azioni:
+    - { id: visto, etichetta: Ack, tono: ack, operazione: conferma, chiave: chiave, parametri: { chiave: "{chiave}" }, subito: true, livello: base }
+    - { id: ignora, etichetta: Ignora, tono: ignora, operazione: ignora, chiave: chiave, parametri: { chiave: "{chiave}" }, livello: base, conferma: "Sei davvero sicuro di ignorare questo evento?\n\n«{messaggio}» sparisce dall'elenco, anche quando si ripete. Resta nello storico della tile (pulsante «Ignorati») per riammetterlo quando l'hai risolto." }
+    - { id: visti-tutti, etichetta: Ack tutti, tono: ack, operazione: conferma_tutti, globale: true, livello: base, conferma: "Ack di tutti i messaggi? Restano sospesi per 24 ore." }

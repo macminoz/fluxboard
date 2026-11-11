@@ -1,0 +1,29 @@
+genere:
+  nome: Andamento
+  descrizione: Come cambia nel tempo, a linee (temperature, consumi, traffico), con soglie e tacche orarie
+  icona: grafico
+  ordine: 1
+  campi:
+    - { nome: dati, etichetta: Da dove, tipo: dati, preferita: influx, aiuto: "Una riga per istante: il campo del tempo (<code>_time</code>) e un campo per linea." }
+    - nome: serie
+      etichetta: Linee
+      tipo: query
+      obbligatorio: true
+      esempio: "- { campo: Sala, etichetta: Sala }"
+      aiuto: Una per riga, il campo dei dati e il nome da mostrare.
+    - { nome: unita, etichetta: Unità, tipo: testo, esempio: "°" }
+    - { nome: decimali, etichetta: Decimali, tipo: numero, predefinito: 1 }
+    - { nome: tacche, etichetta: Un'ora sull'asse ogni, tipo: durata, esempio: 3h }
+    - { nome: soglie, etichetta: Linee di riferimento, tipo: query, esempio: "- { valore: 5.5, etichetta: Soglia, tono: allarme }" }
+modello:
+  tipo: grafico
+  icona: grafico
+  larghezza: media
+  ogni: 5m
+  scadenza: 30m
+  dati: "{{dati}}"
+  serie: "{{serie}}"
+  unita: "{{unita}}"
+  decimali: "{{decimali}}"
+  tacche: "{{tacche}}"
+  soglie: "{{soglie}}"

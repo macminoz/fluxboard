@@ -1,0 +1,27 @@
+mercato:
+  nome: Chi scrive di più nel syslog
+  descrizione: Gli host che hanno mandato più righe nell'ultima ora; un host che esplode di messaggi di solito ha un problema
+  genere: correlazione
+  icona: grafico
+  sorgente: logsql
+  parametri: []
+tile:
+  titolo: Chi scrive di più nel syslog
+  tipo: elenco
+  etichetta: statistiche
+  icona: grafico
+  priorita: 40
+  larghezza: media
+  ogni: 5m
+  scadenza: 30m
+  dati:
+    sorgente: "{{sorgente}}"
+    query: "_time:1h | stats by (host) count() righe | sort by (righe desc) | limit 20"
+  elabora:
+    - limita: 8
+  tabella:
+    - { etichetta: Host, valore: "{host:nome}" }
+    - { etichetta: Ultima ora, valore: "{righe}" }
+  azioni:
+    - { id: ack, etichetta: Ack, tono: ack, operazione: nascondi_riga, chiave: host, subito: true, livello: base }
+    - { id: ignora, etichetta: Ignora, tono: ignora, operazione: ignora_riga, chiave: host, livello: base, conferma: "Sei davvero sicuro di ignorare questo evento?\n\n«{host}» sparisce dall'elenco, anche quando si ripete. Resta nello storico della tile (pulsante «Ignorati») per riammetterlo quando l'hai risolto." }

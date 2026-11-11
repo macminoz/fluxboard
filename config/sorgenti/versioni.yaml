@@ -1,0 +1,12 @@
+# Ultime versioni pubblicate su GitHub, da confrontare con quelle installate.
+# Senza token: 60 letture l'ora. "installata" può essere scritta a mano o letta da un indirizzo
+# (vedi server/connettori/versioni.js).
+tipo: versioni
+timeout: 15s
+software:
+  - nome: Grafana
+    repo: grafana/grafana
+    installata: "10.0.0"
+  - nome: Node-RED
+    repo: node-red/node-red
+    installata: "3.0.0"

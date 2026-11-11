@@ -1,0 +1,12 @@
+# Una nota scritta a mano: si modifica dall'editor (Modifica → matita sulla tile) o da /config.
+titolo: Promemoria
+tipo: elenco
+icona: nota
+priorita: 20
+larghezza: media
+mostra_se: dati
+dati:
+  tipo: statico
+  righe:
+    - testo: Benvenuto in Fluxboard. Apri Modifica (la matita in alto) per aggiungere tile dal Tile market.
+riga: "{testo}"

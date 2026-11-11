@@ -1,0 +1,26 @@
+mercato:
+  nome: Node-RED, un nodo
+  descrizione: Lo stato di un nodo solo (per nome), per esempio la connessione a un broker o a un inverter
+  genere: shell
+  icona: rete
+  sorgente: node-red
+  parametri:
+    - { nome: nodo, etichetta: Nome del nodo, esempio: MQTT broker }
+tile:
+  titolo: "{{nodo}}"
+  tipo: elenco
+  icona: rete
+  priorita: 60
+  larghezza: stretta
+  ogni: 1m
+  scadenza: 5m
+  colore_se:
+    "codice == 0": { colore: rosso, sfondo: true }
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: nodi
+  elabora:
+    - filtra: 'nome == "{{nodo}}"'
+  tabella:
+    - { etichetta: Flusso, valore: "{flusso}" }
+    - { etichetta: Stato, valore: "{stato}", tono: { "codice == 0": allarme, "codice == 2": attenzione, "codice == 1": ok } }

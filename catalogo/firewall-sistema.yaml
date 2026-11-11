@@ -1,0 +1,24 @@
+mercato:
+  nome: Firewall Palo Alto
+  descrizione: Versione di PAN-OS, da quanto è acceso, firme di minacce e antivirus
+  genere: misura
+  icona: rete
+  sorgente: panos
+  parametri: []
+tile:
+  titolo: Firewall
+  tipo: valori
+  etichetta: infrastruttura
+  icona: rete
+  priorita: 58
+  larghezza: media
+  ogni: 10m
+  scadenza: 1h
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: sistema
+  voci:
+    - { etichetta: PAN-OS, valore: "{versione}" }
+    - { etichetta: Acceso da, valore: "{uptime}" }
+    - { etichetta: Minacce, valore: "{minacce}", livello: intermedia }
+    - { etichetta: Antivirus, valore: "{antivirus}", livello: avanzata }

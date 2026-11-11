@@ -1,0 +1,64 @@
+.editor-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.elenco-file, .area, .guida { background: var(--superficie); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 14px; }
+.elenco-file h2, .guida h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tenue); margin: 14px 0 6px; display: flex; justify-content: space-between; align-items: center; }
+.elenco-file h2:first-child, .guida h2:first-child { margin-top: 0; }
+.elenco-file ul { list-style: none; margin: 0; padding: 0; }
+.elenco-file { min-width: 0; overflow: hidden; }
+.elenco-file li button { width: 100%; text-align: left; border: 0; background: none; padding: 5px 8px; border-radius: 6px; display: flex; justify-content: space-between; gap: 6px; min-width: 0; }
+.elenco-file li button > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.elenco-file li button .mono { font-size: .78rem; }
+.elenco-file li button:hover { background: var(--sfondo); }
+.elenco-file li button[aria-current="true"] { background: var(--sfondo); outline: 1px solid var(--accento); }
+.elenco-file .spenta { color: var(--tenue); text-decoration: line-through; }
+.segno { font-size: .75rem; }
+.segno.errore { color: var(--errore); }
+.segno.avviso { color: var(--problema); }
+.aggiungi { padding: 0 8px; line-height: 1.4; }
+
+.area { display: flex; flex-direction: column; gap: 10px; min-height: 70vh; }
+.area-testa { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.area-testa h2 { font-size: 1rem; margin: 0; font-family: var(--mono); }
+.modificato { color: var(--problema); font-size: .8rem; }
+.azioni { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+button.primario { background: var(--accento); color: #fff; border-color: var(--accento); }
+button:disabled { opacity: .5; cursor: default; }
+#testo {
+  flex: 1; min-height: 55vh; width: 100%; resize: vertical; tab-size: 2;
+  font: 13.5px/1.5 var(--mono); color: var(--testo); background: var(--sfondo);
+  border: 1px solid var(--bordo); border-radius: 8px; padding: 12px;
+}
+#testo:focus { outline: 2px solid var(--accento); outline-offset: -1px; }
+.messaggi p { margin: 0 0 4px; font-size: .9rem; }
+.messaggi .errore { color: var(--errore); }
+.messaggi .avviso { color: var(--problema); }
+.messaggi .ok { color: var(--ok); }
+.risultato { overflow-x: auto; }
+.risultato table { border-collapse: collapse; font-size: .82rem; font-family: var(--mono); }
+.risultato th, .risultato td { border: 1px solid var(--bordo); padding: 3px 8px; text-align: left; white-space: nowrap; }
+.risultato th { background: var(--sfondo); }
+
+.guida { font-size: .88rem; }
+.guida details { margin: 0 0 10px; }
+.guida summary { cursor: pointer; font-weight: 600; margin-bottom: 4px; }
+.guida ul { padding-left: 18px; margin: 4px 0; }
+.guida p { margin: 4px 0; }
+code { font-family: var(--mono); font-size: .9em; background: var(--sfondo); padding: 0 3px; border-radius: 4px; }
+
+dialog { background: var(--superficie); color: var(--testo); border: 1px solid var(--bordo); border-radius: var(--raggio); padding: 18px; width: min(380px, 92vw); }
+dialog::backdrop { background: rgb(0 0 0 / 40%); }
+dialog h2 { margin: 0 0 12px; font-size: 1rem; }
+dialog label { display: block; margin: 0 0 12px; font-size: .9rem; color: var(--tenue); }
+dialog input, dialog select { display: block; width: 100%; margin-top: 4px; font: inherit; color: var(--testo); background: var(--sfondo); border: 1px solid var(--bordo); border-radius: 8px; padding: 6px 8px; }
+dialog menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; margin: 0; }
+
+@media (max-width: 1100px) { .editor-layout { grid-template-columns: 200px minmax(0, 1fr); } .guida { grid-column: 1 / -1; } }
+@media (max-width: 700px) { .editor-layout { grid-template-columns: minmax(0, 1fr); } }
+.nota-layout { font-size: .78rem; color: var(--tenue); margin: 4px 8px 0; }
+
+.pannello-segreto { display: grid; gap: 10px; max-width: 560px; padding: 4px 0 12px; }
+.pannello-segreto label { display: grid; gap: 4px; font-size: .9rem; color: var(--tenue); }
+.pannello-segreto input { font: 13px var(--mono); color: var(--testo); background: var(--sfondo); border: 1px solid var(--bordo); border-radius: 8px; padding: 8px 10px; }
+.pannello-segreto .ok { color: var(--ok); }
+.pannello-segreto .errore { color: var(--errore); }
+.pannello-segreto .aiuto { font-size: .82rem; color: var(--tenue); margin: 0; }
+.pannello-segreto .azioni { display: flex; gap: 8px; justify-content: flex-end; }

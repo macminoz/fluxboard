@@ -1,0 +1,33 @@
+mercato:
+  nome: Solo i servizi giù
+  descrizione: Come Servizi critici, ma compare solo quando qualcosa non risponde
+  genere: shell
+  icona: allarme
+  sorgente: sonde
+  parametri:
+    - nome: servizi
+      etichetta: Servizi da controllare
+      tipo: yaml
+      esempio: |-
+        - { nome: DNS, dns: 192.168.1.1, risolve: example.com }
+        - { nome: Sito interno, http: "http://192.168.1.10/" }
+tile:
+  titolo: Servizi che non rispondono
+  tipo: elenco
+  etichetta: allarmi
+  icona: allarme
+  priorita: 97
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  mostra_se: dati
+  colore_se:
+    "codice == 0": { colore: rosso, sfondo: true }
+  dati:
+    sorgente: "{{sorgente}}"
+    servizi: "{{servizi}}"
+  elabora:
+    - filtra: "codice != 1"
+  tabella:
+    - { etichetta: Servizio, valore: "{nome}" }
+    - { etichetta: Problema, valore: "{dettaglio}", tono: allarme }

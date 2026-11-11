@@ -1,0 +1,23 @@
+mercato:
+  nome: Sessioni del firewall
+  descrizione: Sessioni attive, occupazione della tabella e traffico del Palo Alto
+  genere: misura
+  icona: grafico
+  sorgente: panos
+  parametri: []
+tile:
+  titolo: Sessioni del firewall
+  tipo: valori
+  etichetta: infrastruttura
+  icona: grafico
+  priorita: 57
+  larghezza: media
+  ogni: 1m
+  scadenza: 10m
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: sessioni
+  voci:
+    - { etichetta: Attive, valore: "{attive}" }
+    - { etichetta: Occupazione, valore: "{occupazione:0} %", tono: { "occupazione >= 80": allarme, "occupazione >= 60": attenzione } }
+    - { etichetta: Traffico, valore: "{kbps} kbps", livello: intermedia }

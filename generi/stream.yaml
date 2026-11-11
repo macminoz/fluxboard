@@ -1,0 +1,15 @@
+genere:
+  nome: Stream
+  descrizione: Una telecamera (MJPEG) o un'immagine che si ricarica, passando da Fluxboard
+  icona: telecamera
+  ordine: 6
+  campi:
+    - { nome: url, etichetta: Indirizzo, tipo: url, obbligatorio: true, esempio: "http://192.168.1.22/getimage" }
+    - { nome: aggiorna_ogni, etichetta: Ricarica ogni, tipo: durata, predefinito: "0", aiuto: "0 = stream continuo; per un'immagine fissa per esempio 30s." }
+modello:
+  tipo: immagine
+  icona: telecamera
+  larghezza: stretta
+  url: "{{url}}"
+  aggiorna_ogni: "{{aggiorna_ogni}}"
+  mostra_se: dati

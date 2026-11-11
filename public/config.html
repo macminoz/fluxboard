@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fluxboard · Configura</title>
+  <link rel="icon" href="icona.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="stile.css">
+  <link rel="stylesheet" href="config.css">
+</head>
+<body class="editor-pagina">
+  <header class="barra">
+    <h1><a class="home" href="/" title="Torna alla dashboard"><img class="logo" src="icona.svg" alt="">Fluxboard</a> <span class="sotto">/ Impostazioni avanzate</span></h1>
+    <div class="controlli">
+      <a class="pulsante" href="/">← Torna alla dashboard</a>
+    </div>
+  </header>
+
+  <div class="editor-layout">
+    <nav class="elenco-file" aria-label="File di configurazione">
+      <h2>Cornice</h2>
+      <ul id="lista-globale"></ul>
+      <h2>Tile <button type="button" class="aggiungi" data-genere="tile" title="Nuova tile">+</button></h2>
+      <ul id="lista-tile"></ul>
+      <h2>Sorgenti <button type="button" class="aggiungi" data-genere="sorgente" title="Nuova sorgente">+</button></h2>
+      <ul id="lista-sorgente"></ul>
+      <h2>Segreti <button type="button" id="nuovo-segreto" class="aggiungi" title="Nuovo segreto">+</button></h2>
+      <ul id="lista-segreti"></ul>
+      <h2>Disposizioni</h2>
+      <ul id="lista-layout"></ul>
+      <p class="nota-layout">Si creano dalla dashboard con <b>✎ Modifica</b>, una per display.</p>
+    </nav>
+
+    <section class="area" aria-label="Modifica">
+      <div class="area-testa">
+        <h2 id="percorso">Scegli un file</h2>
+        <span id="modificato" class="modificato" hidden>non salvato</span>
+        <div class="azioni">
+          <select id="versioni" aria-label="Versioni precedenti" hidden></select>
+          <button type="button" id="prova" hidden title="Esegue la lettura dei dati con il testo attuale, senza salvare">Prova</button>
+          <button type="button" id="elimina" hidden>Elimina</button>
+          <button type="button" id="salva" class="primario" disabled title="Salva (⌘S / Ctrl+S)">Salva</button>
+        </div>
+      </div>
+      <textarea id="testo" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" disabled
+        placeholder="Seleziona un file a sinistra, oppure crea una tile con +"></textarea>
+      <form id="pannello-segreto" class="pannello-segreto" hidden autocomplete="off">
+        <p id="segreto-stato"></p>
+        <label>Nuovo valore<input id="segreto-valore" type="password" autocomplete="new-password" spellcheck="false" placeholder="incolla qui il token nuovo"></label>
+        <p class="aiuto">Il valore non viene più mostrato dopo il salvataggio: si vedono solo le ultime 4 cifre per riconoscerlo. Le tile che lo usano si rileggono subito.</p>
+        <div class="azioni">
+          <button type="button" id="segreto-rimuovi">Rimuovi</button>
+          <button type="submit" class="primario">Salva</button>
+        </div>
+      </form>
+      <div id="messaggi" class="messaggi" aria-live="polite"></div>
+      <div id="risultato" class="risultato"></div>
+    </section>
+
+    <aside class="guida" aria-label="Guida rapida">
+      <h2>Guida rapida</h2>
+      <details open>
+        <summary>Una tile</summary>
+        <ul>
+          <li><code>tipo</code>: <span id="tipi-tile"></span></li>
+          <li><code>priorita</code>: più alta = più in alto</li>
+          <li><code>larghezza</code>: stretta · media · larga</li>
+          <li><code>mostra_se</code>: <b>dati</b> (sparisce se vuota) · <b>sempre</b></li>
+          <li><code>livello_minimo</code>: da quale livello compare</li>
+          <li><code>ogni</code>: 30s, 5m, 1h · <code>scadenza</code>: oltre, il dato è “vecchio”</li>
+          <li><code>attiva: false</code> la spegne senza cancellarla</li>
+        </ul>
+      </details>
+      <details open>
+        <summary>Testi e livelli</summary>
+        <p><code>riga</code> (elenco) e <code>testo</code> (valore) accettano una stringa oppure <code>base</code> / <code>intermedia</code> / <code>avanzata</code>.</p>
+        <p><code>{campo}</code> · <code>{campo:1}</code> decimali · <code>{campo:rel}</code> “5 minuti fa” · <code>{campo:ora}</code> · <code>{campo:data}</code> · <code>{campo:%}</code></p>
+      </details>
+      <details>
+        <summary>Elaborare i dati</summary>
+        <p>Dopo la lettura, in ordine, sotto <code>elabora:</code></p>
+        <ul>
+          <li><code>rinomina: {vecchio: nuovo}</code></li>
+          <li><code>scala: {campo: 0.1}</code></li>
+          <li><code>traduci: {campo: {da: a}}</code></li>
+          <li><code>filtra: "n &gt;= 3"</code> · <code>"codice % 2 == 1"</code> · <code>"host ~ firewall"</code> · condizioni unite con <code>e</code> / <code>o</code></li>
+          <li><code>ordina: campo</code> · <code>ordina: -campo</code></li>
+          <li><code>limita: 5</code> · <code>seleziona: [a, b]</code></li>
+        </ul>
+      </details>
+      <details>
+        <summary>Sorgenti</summary>
+        <p>Tipi disponibili: <span id="tipi-sorgente"></span>.</p>
+        <p>I segreti si scrivono <code>${NOME}</code> nella sorgente; il valore si imposta qui a sinistra in <b>Segreti</b> (sola scrittura).</p>
+      </details>
+    </aside>
+  </div>
+
+  <dialog id="nuovo">
+    <form method="dialog">
+      <h2 id="nuovo-titolo">Nuovo file</h2>
+      <label>Nome (minuscole, cifre e trattini)<input id="nuovo-nome" pattern="[a-z0-9][a-z0-9-]*" required></label>
+      <label>Tipo<select id="nuovo-tipo"></select></label>
+      <menu>
+        <button value="annulla" formnovalidate>Annulla</button>
+        <button value="crea" class="primario">Crea</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="compat.js"></script>
+  <script type="module" src="config.js"></script>
+</body>
+</html>

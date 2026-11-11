@@ -1,0 +1,37 @@
+mercato:
+  nome: Aggiornamenti disponibili
+  descrizione: I software per cui su GitHub c'è una versione più nuova di quella installata; sparisce quando è tutto aggiornato
+  genere: correlazione
+  icona: server
+  sorgente: versioni
+  parametri:
+    - nome: software
+      etichetta: Software da controllare
+      tipo: yaml
+      esempio: |-
+        - { nome: Grafana, repo: grafana/grafana, installata: { url: "http://192.168.1.30:3000/api/health", campo: version } }
+        - { nome: Node-RED, repo: node-red/node-red, installata: { url: "http://192.168.1.40:1880/settings", campo: version } }
+        - { nome: Uptime Kuma, repo: louislam/uptime-kuma, installata: "2.4.0" }
+tile:
+  titolo: Aggiornamenti disponibili
+  tipo: elenco
+  etichetta: allarmi
+  icona: server
+  priorita: 70
+  larghezza: media
+  ogni: 1h
+  scadenza: 1d
+  colore_se:
+    "da_aggiornare == true": { colore: giallo, sfondo: false }
+  dati:
+    sorgente: "{{sorgente}}"
+    software: "{{software}}"
+  mostra_se: dati
+  elabora:
+    - filtra: "da_aggiornare == true"
+    - ordina: nome
+  tabella:
+    - { etichetta: Software, valore: "{nome}" }
+    - { etichetta: Installata qui, valore: "{installata}" }
+    - { etichetta: Online, valore: "{ultima}" }
+    - { etichetta: Uscita, valore: "[{uscita:durata} fa]", allinea: destra, livello: intermedia }

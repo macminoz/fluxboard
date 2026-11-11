@@ -1,0 +1,32 @@
+genere:
+  nome: Correlazione dati
+  descrizione: Mette a confronto i valori di ogni elemento (versione installata e ultima uscita, spazio occupato e disponibile, carico) e mette in evidenza quelli che non tornano
+  icona: confronta
+  ordine: 4
+  campi:
+    - { nome: dati, etichetta: Da dove, tipo: dati, preferita: versioni }
+    - nome: colonne
+      etichetta: Colonne
+      tipo: query
+      obbligatorio: true
+      esempio: |-
+        - { etichetta: Software, valore: "{nome}" }
+        - { etichetta: Installata, valore: "{installata}" }
+        - { etichetta: Online, valore: "{ultima}" }
+      aiuto: Una per riga, l'intestazione e cosa mostrare (<code>{campo}</code>).
+    - { nome: filtro, etichetta: Mostra solo le righe dove, tipo: testo, esempio: "da_aggiornare == true", aiuto: Vuoto = tutte. }
+    - { nome: evidenzia, etichetta: In evidenza quando, tipo: testo, esempio: "da_aggiornare == true", aiuto: La tile diventa gialla se almeno una riga lo rispetta. }
+    - { nome: ordina, etichetta: Ordina per, tipo: testo, esempio: nome, aiuto: "Un campo; con il meno davanti dal più grande (<code>-cpu</code>)." }
+modello:
+  tipo: elenco
+  icona: confronta
+  larghezza: media
+  ogni: 1h
+  scadenza: 1d
+  colore_se:
+    "{{evidenzia}}": { colore: giallo, sfondo: false }
+  dati: "{{dati}}"
+  elabora:
+    - filtra: "{{filtro}}"
+    - ordina: "{{ordina}}"
+  tabella: "{{colonne}}"

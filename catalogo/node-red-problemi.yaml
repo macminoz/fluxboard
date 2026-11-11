@@ -1,0 +1,27 @@
+mercato:
+  nome: Node-RED, nodi con problemi
+  descrizione: I nodi con il pallino rosso o giallo (disconnesso, in errore); sparisce quando è tutto verde
+  genere: shell
+  icona: rete
+  sorgente: node-red
+  parametri: []
+tile:
+  titolo: Node-RED, nodi con problemi
+  tipo: elenco
+  etichetta: infrastruttura
+  icona: rete
+  priorita: 80
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  mostra_se: dati
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: stati
+  elabora:
+    - filtra: "codice == 0 o codice == 2"
+    - ordina: codice
+  tabella:
+    - { etichetta: Nodo, valore: "{nome:casella}" }
+    - { etichetta: Flusso, valore: "{flusso}", livello: intermedia }
+    - { etichetta: Stato, valore: "{stato}", tono: { "codice == 0": allarme, "codice == 2": attenzione } }

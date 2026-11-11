@@ -1,0 +1,12 @@
+genere:
+  nome: Nota
+  descrizione: Un testo scritto a mano (promemoria, istruzioni)
+  icona: nota
+  ordine: 7
+  campi:
+    - { nome: testo, etichetta: Testo, tipo: query, obbligatorio: true, esempio: "Cambiare il filtro della caldaia a marzo" }
+modello:
+  tipo: testo
+  icona: nota
+  larghezza: stretta
+  testo: "{{testo}}"

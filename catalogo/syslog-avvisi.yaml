@@ -1,0 +1,27 @@
+mercato:
+  nome: Avvisi dal syslog
+  descrizione: Non compare sulla pagina; porta fra i Messaggi critici i messaggi gravi del syslog, uno per host e testo, con quante volte sono arrivati
+  genere: messaggi
+  icona: allarme
+  sorgente: logsql
+  parametri: []
+tile:
+  titolo: Raccolta messaggi critici dal syslog
+  tipo: elenco
+  etichetta: allarmi
+  icona: allarme
+  priorita: 10
+  mostra_se: mai
+  ogni: 1m
+  scadenza: 5m
+  dati:
+    sorgente: "{{sorgente}}"
+    query: "_time:1h severita:in(crit,critical,alert,emerg,high) | stats by (host, origine_ip, appname, severita, _msg) count() volte, max(_time) ultimo"
+  riga: "{host|origine_ip:nome} · {_msg} · ×{volte}"
+  avvisi:
+    messaggio: "{_msg}"
+    host: "{host|origine_ip:nome}"
+    chiave: "{host|origine_ip} {_msg}"
+    ora: ultimo
+    volte: volte
+    gravita: { "severita ~ ^(emerg|alert|crit|critical)$": critico, "severita == high": attenzione }

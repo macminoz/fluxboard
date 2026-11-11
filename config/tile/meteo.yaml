@@ -1,0 +1,25 @@
+# Meteo da Open-Meteo (gratuito, senza chiave): cambia latitudine e longitudine con le tue.
+titolo: Meteo
+tipo: valori
+etichetta: meteo
+icona: sole
+priorita: 95
+larghezza: media
+ogni: 15m
+scadenza: 2h
+dati:
+  sorgente: "open-meteo"
+  url: "v1/forecast?latitude=41.89&longitude=12.49&current=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&timezone=auto"
+  campi:
+    temperatura: current.temperature_2m
+    pioggia: current.precipitation_probability
+    cielo: current.weather_code
+    vento: current.wind_speed_10m
+elabora:
+  - traduci:
+      cielo: { 0: sereno, 1: poco nuvoloso, 2: parzialmente nuvoloso, 3: coperto, 45: nebbia, 48: nebbia gelata, 51: pioviggine, 53: pioviggine, 55: pioviggine fitta, 61: pioggia debole, 63: pioggia, 65: pioggia forte, 71: neve debole, 73: neve, 75: neve forte, 80: rovesci, 81: rovesci, 82: rovesci forti, 95: temporale, 96: temporale con grandine, 99: temporale con grandine }
+voci:
+  - { etichetta: Adesso, valore: "{temperatura:1}°", tono: { "temperatura < 3": freddo, "temperatura >= 32": caldo } }
+  - { etichetta: Cielo, valore: "{cielo}" }
+  - { etichetta: Pioggia, valore: "{pioggia}%", livello: intermedia, tono: { "pioggia >= 60": info } }
+  - { etichetta: Vento, valore: "{vento:0} km/h", livello: avanzata }

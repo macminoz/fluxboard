@@ -1,0 +1,7 @@
+# Il centro avvisi: raccoglie i problemi segnalati dalle altre tile (qui: i servizi che non
+# rispondono), con Ack (24 ore) e Ignora (per sempre, con storico per riammetterli).
+genere: messaggi
+titolo: Messaggi critici
+campi: {}
+etichetta: allarmi
+priorita: 92

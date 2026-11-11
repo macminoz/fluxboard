@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fluxboard</title>
+  <link rel="icon" href="icona.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="stile.css">
+</head>
+<body>
+  <header class="barra">
+    <h1><a class="home" href="/" title="Torna alla dashboard"><img class="logo" src="icona.svg" alt=""><span class="titoli"><span class="riga-titolo"><span id="titolo">Fluxboard</span><span id="versione" class="versione"></span></span><span id="adesso" class="adesso"></span></span></a></h1>
+    <button type="button" id="segnale" class="segnale" hidden aria-haspopup="menu"><span class="luce" aria-hidden="true"></span><span class="testo-segnale"></span></button>
+    <nav id="riepilogo" class="riepilogo" aria-label="Sezioni" hidden></nav>
+    <div id="controlli" class="controlli" hidden>
+      <button type="button" id="giro" class="pulsante-icona" data-icona="aggiorna" data-tip="Giro dei workspace: uno dopo l'altro, ogni 30 secondi" aria-pressed="false" hidden></button>
+      <button type="button" id="scegli-workspace" class="pulsante-icona con-testo" data-icona="livelli" data-tip="Workspace: cambia, crea, elimina" aria-haspopup="menu"><span id="nome-workspace">default</span></button>
+      <nav id="viste" class="viste" aria-label="Vista"></nav>
+      <button type="button" id="modifica" class="pulsante-icona" data-icona="matita" data-tip="Modifica: aggiungi, sposta, ridimensiona" aria-label="Modifica la dashboard"></button>
+    </div>
+  </header>
+  <div id="avanzamento-giro" class="avanzamento-giro" hidden></div>
+
+  <!-- Barra di Modifica: a sinistra cosa si sta facendo, al centro le azioni sulle tile, a destra
+       gli strumenti della dashboard e "Fatto". -->
+  <div id="barra-modifica" class="barra-modifica" role="toolbar" aria-label="Modifica della dashboard" hidden>
+    <div class="gruppo-modifica stato-modifica">
+      <span class="titolo-modifica" data-icona="matita">Modifica</span>
+      <span id="modifica-misura" class="misura">trascina per spostare · tira l'angolo per ridimensionare</span>
+    </div>
+    <div class="gruppo-modifica azioni-tile">
+      <button type="button" id="modifica-aggiungi" class="primario con-icona" data-icona="piu">Aggiungi tile</button>
+      <button type="button" id="modifica-nascoste" class="con-icona" data-icona="occhio_chiuso" aria-pressed="false" data-tip="Mostra al loro posto, in trasparenza, le tile che adesso non si vedono">Nascoste <span class="conta-nascoste"></span></button>
+      <button type="button" id="modifica-riordina" class="con-icona" data-icona="ordina" data-tip="Riordina per argomento, tutte della stessa misura">Riordina</button>
+    </div>
+    <div class="gruppo-modifica strumenti-dashboard">
+      <button type="button" id="modifica-sorgenti" class="pulsante-icona" data-icona="database" data-tip="Sorgenti dei dati" aria-label="Sorgenti"></button>
+      <button type="button" id="modifica-snapshot" class="pulsante-icona" data-icona="storia" data-tip="Snapshot: salva e ripristina" aria-label="Snapshot"></button>
+      <button type="button" id="modifica-impostazioni" class="pulsante-icona" data-icona="ingranaggio" data-tip="Impostazioni della dashboard" aria-label="Impostazioni"></button>
+      <a class="pulsante pulsante-icona" href="/config" data-icona="codice" data-tip="Impostazioni avanzate (YAML)" aria-label="Impostazioni avanzate"></a>
+    </div>
+    <button type="button" id="modifica-fatto" class="primario con-icona" data-icona="fatto">Fatto</button>
+  </div>
+
+  <p id="avviso" class="avviso" role="status" hidden></p>
+  <main id="griglia" class="griglia" aria-live="polite"></main>
+  <p id="vuota" class="tutto-tranquillo" hidden>Niente da segnalare.</p>
+  <section id="ws-vuoto" class="ws-vuoto" hidden>
+    <h2>Questo workspace è vuoto</h2>
+    <p>È una pagina tutta tua: le sorgenti sono quelle di sempre, le tile e la loro disposizione sono solo di questo workspace.</p>
+    <button type="button" id="ws-prima-tile" class="primario">+ Aggiungi la prima tile</button>
+  </section>
+  <div id="avvisi" class="avvisi" aria-live="polite"></div>
+  <div id="misura-volante" class="misura-volante" hidden></div>
+
+  <!-- Scelta del tipo di una tile nuova -->
+  <dialog id="dlg-tipo" class="dlg" aria-labelledby="dlg-tipo-titolo">
+    <header class="dlg-testa">
+      <h2 id="dlg-tipo-titolo">Aggiungi una tile</h2>
+      <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+    </header>
+    <div class="galleria"></div>
+  </dialog>
+
+  <!-- Aggiungi tile (Tile market): i generi con le loro tile pronte, e gli interruttori delle tile del workspace -->
+  <dialog id="dlg-mercato" class="dlg dlg-largo" aria-labelledby="dlg-mercato-titolo">
+    <form novalidate>
+      <header class="dlg-testa">
+        <h2 id="dlg-mercato-titolo">Aggiungi una tile</h2>
+        <div class="schede-mercato" role="tablist">
+          <button type="button" role="tab" data-scheda="catalogo" aria-selected="true">Generi e tile pronte</button>
+          <button type="button" role="tab" data-scheda="mie" aria-selected="false">Le tue tile <span class="conta-mie"></span></button>
+        </div>
+        <input type="search" class="cerca-mercato" placeholder="Cerca…" aria-label="Cerca nel catalogo e fra le tue tile">
+        <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+      </header>
+      <div class="dlg-moduli corpo-mercato"></div>
+      <footer class="dlg-piede"><div class="esito"></div><button type="button" data-annulla>Chiudi</button></footer>
+    </form>
+  </dialog>
+
+  <!-- Impostazioni della dashboard (global.yaml) -->
+  <dialog id="dlg-impostazioni" class="dlg" aria-labelledby="dlg-impostazioni-titolo">
+    <form novalidate>
+      <header class="dlg-testa">
+        <h2 id="dlg-impostazioni-titolo">Impostazioni della dashboard</h2>
+        <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+      </header>
+      <div class="dlg-moduli corpo-impostazioni"></div>
+      <footer class="dlg-piede"><div class="esito"></div><button type="button" data-annulla>Annulla</button><button type="submit" class="primario">Salva</button></footer>
+    </form>
+  </dialog>
+
+  <!-- Snapshot, export e import della configurazione -->
+  <dialog id="dlg-snapshot" class="dlg" aria-labelledby="dlg-snapshot-titolo">
+    <form novalidate>
+      <header class="dlg-testa">
+        <h2 id="dlg-snapshot-titolo">Snapshot e copie della configurazione</h2>
+        <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+      </header>
+      <div class="dlg-moduli">
+        <p class="aiuto">Uno snapshot fotografa tutta la configurazione (tile, sorgenti, disposizioni, workspace; non i segreti). Fanne uno prima di una prova: se va male, <b>Ripristina</b> riporta tutto com'era. Anche un ripristino si può annullare: prima ne viene fatto uno automatico.</p>
+        <p class="aiuto conta-snapshot"></p>
+        <div class="nuovo-snapshot">
+          <input name="nome-snapshot" placeholder="Nome, es. prima di provare il nuovo meteo" autocomplete="off">
+          <button type="button" class="primario" data-crea>Crea snapshot</button>
+        </div>
+        <ul class="elenco-snapshot"></ul>
+        <section>
+          <h3>Copia su file</h3>
+          <div class="copia-file">
+            <a class="pulsante" href="/api/config/esporta" download>⬇ Esporta la configurazione</a>
+            <label class="pulsante">⬆ Importa da file…<input type="file" accept="application/json,.json" hidden data-importa></label>
+          </div>
+          <p class="aiuto">L'export è un file JSON senza segreti: dopo un import su un'altra installazione vanno reimpostati in Segreti.</p>
+        </section>
+      </div>
+      <footer class="dlg-piede"><div class="esito"></div><button type="button" data-annulla>Chiudi</button></footer>
+    </form>
+  </dialog>
+
+  <!-- Conferma di un'azione (ed eventuali campi da compilare) -->
+  <dialog id="dlg-azione" class="dlg" aria-labelledby="dlg-azione-titolo">
+    <form novalidate>
+      <header class="dlg-testa"><h2 id="dlg-azione-titolo">Azione</h2></header>
+      <div class="dlg-moduli">
+        <p class="domanda"></p>
+        <div class="campi-azione"></div>
+        <p class="aiuto">Se è la prima azione di questa sessione il browser chiede la password di Fluxboard (utente qualsiasi).</p>
+      </div>
+      <footer class="dlg-piede">
+        <button type="button" data-annulla>Annulla</button>
+        <button type="submit" class="primario" data-conferma>Conferma</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Sorgenti: elenco a sinistra, a destra la galleria dei tipi o il modulo della sorgente -->
+  <dialog id="dlg-sorgente" class="dlg dlg-largo" aria-labelledby="dlg-sorgente-titolo">
+    <form novalidate>
+      <header class="dlg-testa">
+        <h2 id="dlg-sorgente-titolo" class="dlg-titolo">Sorgenti</h2>
+        <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+      </header>
+      <div class="dlg-corpo sorgenti-corpo">
+        <nav class="elenco-sorgenti" aria-label="Sorgenti esistenti"></nav>
+        <div class="dlg-moduli pannello-sorgente"></div>
+      </div>
+      <footer class="dlg-piede">
+        <div class="esito"></div>
+        <button type="button" data-elimina hidden>Elimina</button>
+        <button type="button" data-prova hidden>Prova connessione</button>
+        <button type="button" data-annulla>Chiudi</button>
+        <button type="submit" class="primario" hidden>Salva</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Editor di una tile -->
+  <dialog id="dlg-tile" class="dlg dlg-largo" aria-labelledby="dlg-tile-titolo">
+    <form novalidate>
+      <header class="dlg-testa">
+        <h2 id="dlg-tile-titolo" class="dlg-titolo">Tile</h2>
+        <nav class="schede" role="tablist">
+          <button type="button" data-scheda="impostazioni" role="tab">Impostazioni</button>
+          <button type="button" data-scheda="codice" role="tab">Codice</button>
+        </nav>
+        <button type="button" class="tutta-finestra" data-tutta-finestra aria-pressed="false" title="A tutta finestra: nasconde l'anteprima e allarga codice e query">⤢</button>
+        <button type="button" class="chiudi" data-chiudi aria-label="Chiudi">✕</button>
+      </header>
+      <div class="dlg-corpo">
+        <div class="dlg-moduli">
+          <div class="impostazioni"></div>
+          <div class="codice" hidden>
+            <p class="nota-codice aiuto"></p>
+            <textarea class="mono" rows="24" wrap="off" spellcheck="false" aria-label="Codice YAML della tile"></textarea>
+          </div>
+        </div>
+        <div class="divisore-anteprima" role="separator" aria-orientation="vertical" aria-label="Trascina per cambiare la larghezza dell'anteprima" tabindex="0"></div>
+        <aside class="anteprima" aria-label="Anteprima">
+          <div class="anteprima-testa">
+            <h3>Anteprima</h3>
+            <span class="livelli-anteprima">
+              <button type="button" data-livello="base">Base</button>
+              <button type="button" data-livello="intermedia">Media</button>
+              <button type="button" data-livello="avanzata">Avanzata</button>
+            </span>
+          </div>
+          <div class="tile anteprima-tile"></div>
+          <p class="stato-anteprima aiuto"></p>
+          <div class="campi-disponibili"></div>
+        </aside>
+      </div>
+      <footer class="dlg-piede">
+        <div class="esito"></div>
+        <button type="button" data-salva-genere title="Un genere nuovo con questa tile come modello">Salva come genere…</button>
+        <button type="button" data-annulla>Annulla</button>
+        <button type="submit" class="primario">Salva</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="compat.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

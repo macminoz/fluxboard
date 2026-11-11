@@ -1,0 +1,23 @@
+genere:
+  nome: Cronologia
+  descrizione: Quando era acceso cosa, una riga per elemento (valvole, luci, presenze, servizi), con i valori di adesso in fondo
+  icona: storia
+  ordine: 2
+  campi:
+    - { nome: dati, etichetta: Da dove, tipo: dati, preferita: influx, aiuto: "Una riga per evento, con <code>_time</code>, il campo che dice l'elemento e i campi di stato." }
+    - { nome: gruppo, etichetta: Campo che dice l'elemento, tipo: testo, obbligatorio: true, esempio: stanza }
+    - { nome: se, etichetta: Acceso quando, tipo: testo, obbligatorio: true, esempio: "aperta == 1" }
+    - { nome: in_fondo, etichetta: Valori in fondo alla riga, tipo: query, esempio: "- { etichetta: Adesso, valore: \"[{live:1}°]\" }" }
+    - { nome: stato_se, etichetta: Sotto il grafico, per gli accesi, tipo: testo, esempio: "[{live:1}° → {set:1}°][ · da {_da:durata}]" }
+modello:
+  tipo: cronologia
+  icona: storia
+  larghezza: media
+  ogni: 1m
+  scadenza: 15m
+  finestre: [6h, 12h, 24h]
+  dati: "{{dati}}"
+  gruppo: "{{gruppo}}"
+  se: "{{se}}"
+  in_fondo: "{{in_fondo}}"
+  stato_se: "{{stato_se}}"

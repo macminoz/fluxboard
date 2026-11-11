@@ -1,0 +1,26 @@
+mercato:
+  nome: VM e LXC spenti
+  descrizione: Gli ospiti del cluster Proxmox fermi in questo momento
+  genere: correlazione
+  icona: server
+  sorgente: proxmox
+  parametri: []
+tile:
+  titolo: VM e LXC spenti
+  tipo: elenco
+  etichetta: infrastruttura
+  icona: server
+  priorita: 54
+  larghezza: media
+  ogni: 2m
+  scadenza: 10m
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: ospiti
+  elabora:
+    - filtra: "codice == stopped"
+    - ordina: nome
+  tabella:
+    - { etichetta: Nome, valore: "{nome}" }
+    - { etichetta: Tipo, valore: "{tipo} {id}" }
+    - { etichetta: Nodo, valore: "{nodo}", livello: intermedia }

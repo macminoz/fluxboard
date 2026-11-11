@@ -1,0 +1,21 @@
+{
+  "name": "fluxboard",
+  "version": "1.0.1-CURRENT",
+  "description": "Fotografia istantanea di casa e dell'homelab: tile configurabili in YAML, editor web, più display e livelli di lettura.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/macminoz/fluxboard.git" },
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch-path=server server/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "yaml": "2.6.1"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+.env
+cache/
+config/.storico/
+config/.cestino/
+.DS_Store
+.claude/
+config/segreti.env
+config/segreti.env.tmp

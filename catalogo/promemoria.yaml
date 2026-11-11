@@ -1,0 +1,19 @@
+mercato:
+  nome: Promemoria
+  descrizione: Un elenco di note scritte a mano (si modificano poi dall'editor della tile)
+  genere: nota
+  icona: nota
+  parametri:
+    - { nome: nota, etichetta: Prima nota, esempio: Cambiare il filtro della caldaia }
+tile:
+  titolo: Promemoria
+  tipo: elenco
+  icona: nota
+  priorita: 20
+  larghezza: media
+  mostra_se: dati
+  dati:
+    tipo: statico
+    righe:
+      - testo: "{{nota}}"
+  riga: "{testo}"

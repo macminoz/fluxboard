@@ -1,0 +1,23 @@
+genere:
+  nome: Misura
+  descrizione: Uno o più valori di adesso, grandi e leggibili (temperatura, potenza, sessioni), colorati dalle soglie
+  icona: termometro
+  ordine: 3
+  campi:
+    - { nome: dati, etichetta: Da dove, tipo: dati, preferita: influx, aiuto: Una riga sola con un campo per valore (con InfluxDB si ottiene con pivot). }
+    - nome: voci
+      etichetta: Valori da mostrare
+      tipo: query
+      obbligatorio: true
+      esempio: |-
+        - { etichetta: Sala, valore: "{Sala:1}°" }
+        - { etichetta: Cucina, valore: "{Cucina:1}°" }
+      aiuto: 'Uno per riga. <code>{campo:1}</code> = con un decimale; <code>tono</code> per colorarlo, es. <code>tono: { "Sala &lt; 18": freddo }</code>.'
+modello:
+  tipo: valori
+  icona: termometro
+  larghezza: media
+  ogni: 1m
+  scadenza: 15m
+  dati: "{{dati}}"
+  voci: "{{voci}}"

@@ -1,0 +1,4 @@
+# Sonde: Fluxboard controlla da sé porte TCP, pagine web e server DNS. Nessuna configurazione:
+# l'elenco dei servizi da controllare sta nelle tile.
+tipo: sonde
+timeout: 15s

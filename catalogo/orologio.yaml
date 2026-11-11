@@ -1,0 +1,11 @@
+mercato:
+  nome: Orologio
+  descrizione: Ora e data, grandi; utile sui pannelli a muro
+  genere: nota
+  icona: orologio
+  parametri: []
+tile:
+  titolo: Adesso
+  tipo: orologio
+  priorita: 100
+  larghezza: stretta

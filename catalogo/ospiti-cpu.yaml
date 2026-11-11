@@ -1,0 +1,27 @@
+mercato:
+  nome: Chi consuma più CPU
+  descrizione: I cinque ospiti Proxmox accesi che usano più processore adesso, con la memoria
+  genere: correlazione
+  icona: grafico
+  sorgente: proxmox
+  parametri: []
+tile:
+  titolo: Chi consuma più CPU
+  tipo: elenco
+  etichetta: infrastruttura
+  icona: grafico
+  priorita: 50
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  dati:
+    sorgente: "{{sorgente}}"
+    risorsa: ospiti
+  elabora:
+    - filtra: "codice == running"
+    - ordina: "-cpu"
+    - limita: 5
+  tabella:
+    - { etichetta: Nome, valore: "{nome}" }
+    - { etichetta: CPU, valore: "{cpu:1} %", tono: { "cpu >= 80": allarme, "cpu >= 50": attenzione } }
+    - { etichetta: Memoria, valore: "{memoria:0} %", livello: intermedia }

@@ -1,0 +1,28 @@
+mercato:
+  nome: Monitor giù (Uptime Kuma)
+  descrizione: I monitor di una pagina di stato di Uptime Kuma che non sono verdi; sparisce quando è tutto a posto
+  genere: shell
+  icona: allarme
+  sorgente: uptime-kuma
+  parametri:
+    - { nome: pagina, etichetta: Pagina di stato (slug), esempio: fluxboard }
+tile:
+  titolo: Monitor con problemi
+  tipo: elenco
+  etichetta: allarmi
+  icona: allarme
+  priorita: 96
+  larghezza: media
+  ogni: 1m
+  scadenza: 10m
+  mostra_se: dati
+  dati:
+    sorgente: "{{sorgente}}"
+    pagina: "{{pagina}}"
+  elabora:
+    - filtra: "codice != 1"
+    - ordina: codice
+  tabella:
+    - { etichetta: Monitor, valore: "{nome}" }
+    - { etichetta: Stato, valore: "{stato}", tono: { "codice == 0": allarme, "codice == 2": attenzione } }
+    - { etichetta: Da, valore: "{dal:durata}", allinea: destra, livello: intermedia }

@@ -1,0 +1,40 @@
+genere:
+  nome: Shell output
+  descrizione: L'esito di controlli e stati (servizi, monitor, nodi), una riga per elemento con ok, attenzione o guasto; i guasti vanno anche fra i Messaggi critici
+  icona: terminale
+  ordine: 8
+  campi:
+    - { nome: dati, etichetta: Da dove, tipo: dati, preferita: sonde }
+    - { nome: guasto, etichetta: Guasto quando, tipo: testo, predefinito: "codice == 0" }
+    - { nome: attenzione, etichetta: Attenzione quando, tipo: testo, predefinito: "codice == 2" }
+    - { nome: ok, etichetta: A posto quando, tipo: testo, predefinito: "codice == 1" }
+    - { nome: filtro, etichetta: Mostra solo le righe dove, tipo: testo, esempio: "codice != 1", aiuto: Vuoto = tutte, anche quelle a posto. }
+    - { nome: ordina, etichetta: Ordina per, tipo: testo, esempio: "codice, nome", aiuto: "Uno o più campi; <code>codice</code> per primo mette i guasti in cima." }
+    - nome: colonne
+      etichetta: Colonne
+      tipo: query
+      predefinito: |-
+        - { etichetta: Nome, valore: "{nome}" }
+        - { etichetta: Stato, valore: "{stato}", tono: { "{{guasto}}": allarme, "{{attenzione}}": attenzione, "{{ok}}": ok } }
+        - { etichetta: Dettaglio, valore: "{dettaglio}", livello: intermedia }
+      aiuto: "Una per riga, l'intestazione e cosa mostrare (<code>{campo}</code>); <code>{{guasto}}</code>, <code>{{attenzione}}</code> e <code>{{ok}}</code> valgono le condizioni scritte sopra."
+modello:
+  tipo: elenco
+  icona: terminale
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  colore_se:
+    "{{guasto}}": { colore: rosso, sfondo: true }
+    "{{attenzione}}": { colore: giallo, sfondo: false }
+  avvisi:
+    quando: "{{guasto}} o {{attenzione}}"
+    messaggio: "{nome}: {dettaglio|stato}"
+    host: "{nome}"
+    chiave: "{nome}"
+    gravita: { "{{guasto}}": critico, "{{attenzione}}": attenzione }
+  dati: "{{dati}}"
+  elabora:
+    - filtra: "{{filtro}}"
+    - ordina: "{{ordina}}"
+  tabella: "{{colonne}}"

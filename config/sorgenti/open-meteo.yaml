@@ -1,0 +1,5 @@
+# Open-Meteo: previsioni senza chiave per uso non commerciale. La chiamata parte dal server,
+# il browser non contatta mai Internet.
+tipo: http
+url: https://api.open-meteo.com/
+timeout: 10s

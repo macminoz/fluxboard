@@ -1,0 +1,28 @@
+mercato:
+  nome: Ultimi log critici
+  descrizione: I messaggi di gravità critica o peggiore dal syslog, raggruppati (lo stesso messaggio ripetuto è una riga sola). Per tenerli finché non li confermi, usa Messaggi critici
+  genere: messaggi
+  icona: allarme
+  sorgente: logsql
+  parametri:
+    - { nome: periodo, etichetta: Quanto indietro, tipo: durata, esempio: 7d }
+    - { nome: quanti, etichetta: Quanti messaggi, tipo: numero, esempio: 5 }
+tile:
+  titolo: Ultimi log critici
+  tipo: elenco
+  etichetta: allarmi
+  icona: allarme
+  priorita: 92
+  larghezza: larga
+  ogni: 1m
+  scadenza: 5m
+  vuoto: Nessun log critico nel periodo
+  dati:
+    sorgente: "{{sorgente}}"
+    limite: "{{quanti}}"
+    query: "_time:{{periodo}} severita:in(crit,critical,alert,emerg,high) | stats by (host, origine_ip, _msg) count() volte, max(_time) ultimo | sort by (ultimo desc) | limit {{quanti}}"
+  tabella:
+    - { etichetta: Quando, valore: "{ultimo:durata} fa", livello: intermedia }
+    - { etichetta: Host, valore: "{host|origine_ip:nome}" }
+    - { etichetta: Messaggio, valore: "{_msg}" }
+    - { etichetta: Volte, valore: "×{volte}", livello: intermedia }

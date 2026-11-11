@@ -1,0 +1,42 @@
+mercato:
+  nome: Servizi critici
+  descrizione: Il servizio risponde? Porte TCP, pagine web e server DNS controllati da Fluxboard, i guasti per primi; segnala anche i certificati scaduti e manda i problemi fra i Messaggi critici
+  genere: shell
+  icona: server
+  sorgente: sonde
+  parametri:
+    - nome: servizi
+      etichetta: Servizi da controllare
+      tipo: yaml
+      esempio: |-
+        - { nome: DNS, gruppo: Rete, dns: 192.168.1.1, risolve: example.com }
+        - { nome: Sito interno, gruppo: Casa, http: "http://192.168.1.10/" }
+        - { nome: Broker MQTT, gruppo: Casa, tcp: "192.168.1.20:1883" }
+tile:
+  titolo: Servizi critici
+  tipo: elenco
+  etichetta: allarmi
+  icona: server
+  priorita: 91
+  larghezza: media
+  ogni: 1m
+  scadenza: 5m
+  colore_se:
+    "codice == 0": { colore: rosso, sfondo: true }
+    "codice == 2": { colore: giallo, sfondo: false }
+  avvisi:
+    quando: "codice != 1"
+    messaggio: "{nome}: {dettaglio}"
+    host: "{nome}"
+    chiave: "{nome}"
+    gravita: { "codice == 0": critico, "codice == 2": attenzione }
+  dati:
+    sorgente: "{{sorgente}}"
+    servizi: "{{servizi}}"
+  elabora:
+    - ordina: "codice, gruppo, nome"
+  tabella:
+    - { etichetta: Servizio, valore: "{nome}" }
+    - { etichetta: Stato, valore: "{stato}", tono: { "codice == 0": allarme, "codice == 2": attenzione, "codice == 1": ok } }
+    - { etichetta: Dettaglio, valore: "{dettaglio}", livello: intermedia }
+    - { etichetta: Tempo, valore: "{ms} ms", livello: avanzata }
